@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket de Compra #{{ venta.id }} - cases.com</title>
+    <!-- Incluir solo la fuente base "Roboto Mono" (Letra de ticketera 80mm) -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #555555; /* Fondo oscuro simulando el escritorio detrás del papel */
+            margin: 0;
+            padding: 30px;
+            display: flex;
+            justify-content: center;
+            font-family: 'Roboto Mono', monospace, sans-serif;
+        }
+        
+        .ticket {
+            background-color: #FFFFFF;
+            width: 100%;
+            max-width: 380px; /* Ancho de impresora térmica 80mm */
+            padding: 25px 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            color: #1A1A1A; /* Negro de nuestra paleta */
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #1A1A1A;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            letter-spacing: -1.5px;
+        }
+
+        .info {
+            font-size: 0.9rem;
+            margin: 3px 0;
+            line-height: 1.5;
+        }
+
+        .table-items {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .table-items th {
+            text-align: left;
+            border-bottom: 1px solid #1A1A1A;
+            padding-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .table-items td {
+            padding: 10px 0;
+            vertical-align: top;
+        }
+
+        .col-qty { width: 15%; text-align: center; }
+        .col-prod { width: 55%; padding-right: 10px; }
+        .col-sub { width: 30%; text-align: right; }
+
+        .totals {
+            border-top: 2px dashed #1A1A1A;
+            padding-top: 20px;
+            margin-bottom: 25px;
+        }
+
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.4rem;
+            font-weight: 700;
+            /* Branding Inyectado: Resalte estricto en Azul Turquesa (#A3D8DE) */
+            background-color: #A3D8DE;
+            padding: 12px 15px;
+            border-radius: 6px;
+            border: 1px solid #1A1A1A;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.85rem;
+            margin-top: 30px;
+        }
+
+        .btn-print {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #1A1A1A;
+            color: #FFFFFF;
+            border: 2px solid #1A1A1A;
+            font-size: 1.1rem;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 30px;
+            font-family: inherit;
+            transition: 0.2s;
+        }
+
+        .btn-print:hover {
+            background-color: #FFFFFF;
+            color: #1A1A1A;
+        }
+
+        /* MEDIA QUERY DE IMPRESIÓN RIGUROSA: Las reglas CSS aquí omiten UI inútil al imprimir en papel */
+        @media print {
+            body { background-color: #FFFFFF; padding: 0; display: block; }
+            .ticket { box-shadow: none; max-width: 100%; padding: 0; margin: 0 auto; width: 80mm; border: none; }
+            .btn-print { display: none; }
+            .total-row { background-color: transparent !important; border: none !important; padding: 10px 0 !important; }
+            .total-row * { color: #1A1A1A !important; } /* Desactivar Azul para impresiones monocromas */
+        }
+    </style>
+</head>
+<body>
+
+<div class="ticket">
+    <div class="header">
+        <h1 class="logo">cases.com</h1>
+        <p class="info">Folio / Ticket: #{{ venta.id }}</p>
+        <p class="info">Expedido: {{ venta.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</p>
+        <p class="info">Cajero Asignado: {{ venta.vendedor.nombre }}</p>
+        <p class="info" style="font-weight: bold; text-transform: uppercase;">
+            Método de Pago: {{ venta.metodo_pago }}
+        </p>
+    </div>
+
+    <table class="table-items">
+        <thead>
+            <tr>
+                <th class="col-qty">CANT</th>
+                <th class="col-prod">CONCEPTO</th>
+                <th class="col-sub">IMPORTE</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detalle in venta.detalles %}
+            <tr>
+                <td class="col-qty">{{ detalle.cantidad_vendida }}</td>
+                <!-- Cortar la longitud del título si es gigantesco para no descuadrar la ticketera -->
+                <td class="col-prod">
+                    {{ detalle.producto.nombre[:25] }}{% if detalle.producto.nombre|length > 25 %}...{% endif %}
+                </td>
+                <td class="col-sub">${{ "%.2f"|format(detalle.precio_venta_final * detalle.cantidad_vendida) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div class="total-row">
+            <span>TOTAL:</span>
+            <span>${{ "%.2f"|format(venta.monto_total) }}</span>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p style="font-size: 1rem; font-weight: bold;">¡Gracias por tu compra!</p>
+        <p>Políticas de Tienda: Devoluciones únicamente presentando ticket impreso o digital.</p>
+        <p>Soporte: ventas@cases.com</p>
+    </div>
+
+    <button class="btn-print" onclick="window.print()">
+        [ IMPRIMIR TICKET ]
+    </button>
+</div>
+
+<!-- Lógica de Auto-Impresión Reactiva -->
+<script>
+    // Evento silencioso que detona el pop-up de impresora nativo de Windows al renderizar
+    window.onload = function() {
+        setTimeout(() => {
+            window.print();
+        }, 700); // 700ms de retraso para asegurar carga asíncrona de tipografías de Google
+    };
+</script>
+
+</body>
+</html>

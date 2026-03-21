@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Título de Pantalla Renombrado (Requerimento) -->
+<div class="d-flex align-items-center mb-4">
+    <h2 class="fw-bold text-brand-black m-0"><i class="fa-solid fa-cash-register me-2" style="color: var(--brand-pink);"></i>Caja Central</h2>
+</div>
+
+<div class="row">
+    <!-- UI Escáner y Carrito -->
+    <div class="col-lg-8 mb-4">
+        
+        <!-- Panel de Escaneo -->
+        <div class="card card-custom p-4 mb-4 border-0">
+            <label class="form-label fw-bold text-brand-black">Buscar o Escanear Código</label>
+            <div class="input-group input-group-lg shadow-sm border-0 rounded-3 overflow-hidden">
+                <span class="input-group-text bg-white border-0"><i class="fa-solid fa-barcode text-muted"></i></span>
+                <input type="text" class="form-control border-0" id="sku_input" placeholder="Ingresa SKU exacto..." autofocus>
+                <!-- Botón Secundario Rosa Pastel -->
+                <button class="btn btn-pink px-4" type="button" id="btn_add_product">
+                    <i class="fa-solid fa-check ms-1"></i> Agregar
+                </button>
+            </div>
+        </div>
+
+        <!-- Tabla Carrito de Compras -->
+        <div class="card card-custom p-0 overflow-hidden border-0">
+            <div class="table-responsive">
+                <table class="table table-custom mb-0 align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Producto Seleccionado</th>
+                            <th class="text-center" width="130">Cantidad</th>
+                            <th class="text-end" width="120">Precio U.</th>
+                            <th class="text-end" width="120">Subtotal</th>
+                            <th class="text-center" width="70"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cart_body">
+                        <!-- ESPACIO RESERVADO PARA INYECCIÓN JS DINÁMICA -->
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted" id="empty_cart_msg">
+                                <!-- Icono Rosa Pastel -->
+                                <i class="fa-solid fa-cart-arrow-down fs-2 mb-2 d-block text-brand-pink opacity-50"></i>
+                                La venta está vacía actualmente.
+                            </td>
+                        </tr>
+                        <!-- Fin items JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Panel Vertical Cobro Total -->
+    <div class="col-lg-4">
+        <div class="card card-custom p-4 position-sticky border-0 shadow-sm" style="top: 100px;">
+            <h4 class="fw-bold text-brand-black mb-4 pb-3 border-bottom">Balance</h4>
+            
+            <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted fw-bold">Unidades Totales:</span>
+                <span class="fw-bold fs-5" id="total_items">0</span>
+            </div>
+            
+            <div class="d-flex justify-content-between mb-4">
+                <span class="text-muted fw-bold align-self-center">Total a Cobrar:</span>
+                <span class="fw-bolder fs-1 text-brand-black" id="total_amount">$0.00</span>
+            </div>
+
+            <hr class="mb-4">
+
+            <!-- Método de Pago Seleccionable -->
+            <div class="mb-4">
+                <label for="metodo-pago" class="form-label fw-bold text-brand-black small text-uppercase">Método de Pago</label>
+                <select id="metodo-pago" class="form-select form-select-lg border-0 shadow-sm bg-light" style="cursor: pointer;">
+                    <option value="efectivo">💵 Efectivo</option>
+                    <option value="transferencia">🏦 Transferencia Báncaria</option>
+                </select>
+            </div>
+
+            <!-- Botón de Cobro Masivo Azul Turquesa -->
+            <div class="d-grid gap-2 mt-2">
+                <button type="button" class="btn btn-blue btn-lg rounded-3 py-3 shadow-sm text-uppercase" id="btn_process_sale">
+                    <i class="fa-solid fa-credit-card me-2"></i> Procesar Cobro
+                </button>
+                <button type="button" class="btn btn-light mt-2 fw-bold text-muted" id="btn_clear_cart">
+                    Limpiar Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Motor Javascript Vanilla para procesar Cajas Dinámicas sin recargar -->
+<script>
+    let carrito = [];
+    const csrf_token = "{{ csrf_token() }}";
+
+    // Capturar el ESCANER ("Enter" en el teclado sin enviar un formulario)
+    document.getElementById('sku_input').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            buscarYAgregarProducto();
+        }
+    });
+
+    document.getElementById('btn_add_product').addEventListener('click', buscarYAgregarProducto);
+    document.getElementById('btn_clear_cart').addEventListener('click', () => {
+        carrito = [];
+        renderizarCarrito();
+    });
+    document.getElementById('btn_process_sale').addEventListener('click', procesarPago);
+
+    async function buscarYAgregarProducto() {
+        const inputStr = document.getElementById('sku_input');
+        const sku = inputStr.value.trim();
+        if (!sku) return;
+
+        try {
+            // Mandar solicitud JSON rápida a nuestra ruta Flask
+            const response = await fetch(`/sales/api/producto/${sku}`);
+            if (!response.ok) {
+                alert(`Error: El SKU '${sku}' no existe en la base de datos.`);
+                inputStr.value = '';
+                return;
+            }
+
+            const producto = await response.json();
+
+            // Buscar si ya lo habíamos pistoleado antes...
+            const existente = carrito.find(item => item.id === producto.id);
+            if (existente) {
+                // Validación Estricta: Sobreventa (Stock)
+                if (existente.cantidad + 1 > producto.cantidad_stock) {
+                    alert(`¡Stock insuficiente! Solo te quedan ${producto.cantidad_stock} unidades de ${producto.nombre}.`);
+                } else {
+                    existente.cantidad++;
+                }
+            } else {
+                if (producto.cantidad_stock <= 0) {
+                    alert(`¡Sin Stock Físico! No puedes vender o agregar ${producto.nombre}.`);
+                    return;
+                }
+                
+                // Si es nuevo, inicializar con el array
+                carrito.push({
+                    id: producto.id,
+                    sku: producto.sku,
+                    nombre: producto.nombre,
+                    cantidad: 1,
+                    precio_final: producto.precio_sugerido, // Cargar Precio de anaquel
+                    precio_minimo: producto.precio_minimo,
+                    cantidad_stock: producto.cantidad_stock
+                });
+            }
+
+            inputStr.value = ''; // Limpiar cajón para el próximo escaneo
+            renderizarCarrito();
+            
+        } catch (error) {
+            console.error('Error Catcher:', error);
+            alert('Error comunicándose con el Backend (Flask). Verifica el servidor.');
+        }
+    }
+
+    // Detector interactivo de Casillas Precio/Cantidad editadas en Real-Time
+    function actualizarItem(index, campo, valor) {
+        const item = carrito[index];
+        
+        if (campo === 'cantidad') {
+            const nuevaCantidad = parseInt(valor);
+            if (nuevaCantidad <= 0) {
+                alert('La cantidad no debe reducirse en negativo, presiona el cesto de basura para borrar.'); 
+                renderizarCarrito();
+                return;
+            }
+            if (nuevaCantidad > item.cantidad_stock) {
+                alert(`La empresa no cuenta con Stock suficiente. Inventario Máximo: ${item.cantidad_stock}`);
+                renderizarCarrito();
+                return;
+            }
+            item.cantidad = nuevaCantidad;
+        }
+
+        if (campo === 'precio_final') {
+            const nuevoPrecio = parseFloat(valor);
+            
+            // Regla de Negocio: Control de precio Mínimo (Impedir estafas del vendedor)
+            if (nuevoPrecio < item.precio_minimo) {
+                alert(`¡OPERACIÓN BLOQUEADA! El precio pactado ($${nuevoPrecio}) es INFERIOR al Mínimo Autorizado por la empresa ($${item.precio_minimo}). No se puede vender a este precio para evitar pérdidas.`);
+                renderizarCarrito(); // Re-renderizar ignorando el valor digitado
+                return;
+            }
+            item.precio_final = nuevoPrecio;
+        }
+        
+        renderizarCarrito(); // Redibujar siempre al procesar total
+    }
+
+    function eliminarItem(index) {
+        carrito.splice(index, 1);
+        renderizarCarrito();
+    }
+
+    function renderizarCarrito() {
+        const tbody = document.getElementById('cart_body');
+        const totalAmountEl = document.getElementById('total_amount');
+        const totalItemsEl = document.getElementById('total_items');
+        
+        tbody.innerHTML = '';
+        let granTotal = 0;
+        let totalItems = 0;
+
+        if (carrito.length === 0) {
+            tbody.innerHTML = `<tr>
+                <td colspan="5" class="text-center py-5 text-muted" id="empty_cart_msg">
+                    <i class="fa-solid fa-cart-arrow-down fs-2 mb-2 d-block text-brand-pink opacity-50"></i>
+                    La venta está vacía actualmente.
+                </td>
+            </tr>`;
+            totalAmountEl.innerText = '$0.00';
+            totalItemsEl.innerText = '0';
+            return;
+        }
+
+        // Iterar los productos virtuales agregados y dibujar cascarones DOM
+        carrito.forEach((item, index) => {
+            const subtotal = item.cantidad * item.precio_final;
+            granTotal += subtotal;
+            totalItems += item.cantidad;
+
+            const tr = document.createElement('tr');
+            // Celdas DOM
+            tr.innerHTML = `
+                <td>
+                    <div class="fw-bold text-brand-black">${item.nombre}</div>
+                    <small class="text-muted">${item.sku}</small>
+                </td>
+                <td width="130">
+                    <input type="number" class="form-control form-control-sm text-center" value="${item.cantidad}" onchange="actualizarItem(${index}, 'cantidad', this.value)">
+                </td>
+                <td width="140">
+                    <div class="input-group input-group-sm">
+                        <span class="input-group-text bg-light">$</span>
+                        <input type="number" step="0.01" class="form-control text-end" value="${item.precio_final.toFixed(2)}" onchange="actualizarItem(${index}, 'precio_final', this.value)">
+                    </div>
+                </td>
+                <td class="text-end fw-bold text-brand-black" width="120">
+                    $${subtotal.toFixed(2)}
+                </td>
+                <td class="text-center" width="70">
+                    <button class="btn btn-sm text-danger" onclick="eliminarItem(${index})"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Actualizar el DOM maestro Total
+        totalAmountEl.innerText = `$${granTotal.toFixed(2)}`;
+        totalItemsEl.innerText = totalItems;
+    }
+
+    // Evento Transaccional JSON de Salida
+    async function procesarPago() {
+        if (carrito.length === 0) {
+            return alert('Agregue un número de serie válido. El carrito está vacío.');
+        }
+
+        const metodoPago = document.getElementById('metodo-pago').value;
+
+        // Estructura de Diccionario aceptada estrictamente por el Backend que creamos hace un momento (routes/sales.py)
+        const payload = {
+            items: carrito.map(item => ({
+                product_id: item.id,
+                cantidad: item.cantidad,
+                precio_final: item.precio_final
+            })),
+            metodo_pago: metodoPago
+        };
+
+        try {
+            const response = await fetch('/sales/nueva', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrf_token // Clave Maestra de Seguridad Requerida por Flask-WTF
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // FIX: Abre el Recibo PRIMERO antes de detener el código con la alerta. Así Chrome no lo detecta como Spam
+                let reciboWindow = window.open(`/sales/recibo/${data.sale_id}`, '_blank');
+                
+                // Si el navegador tiene un bloqueador de ventanas emergentes muy agresivo:
+                if (!reciboWindow) {
+                    alert('⚠️ Chrome bloqueó la pestaña emergente del recibo. Por favor, permite las ventanas emergentes (pop-ups) para cases.com en la barra superior.');
+                }
+                
+                // Alerta nativa solicitada para feedback directo (Mantiene pausada la pantalla de la Caja)
+                alert(`✅ ¡Cobro en Caja Procesado! El inventario ha sido descontado correctamente. ID: ${data.sale_id}`);
+                
+                // Purgar carrito para el próximo comprador
+                carrito = [];
+                
+                // Reinicia dinámicamente el CSS/Contador de caja visual a $0.00
+                renderizarCarrito(); 
+                
+            } else {
+                alert(`Error devuelto del sistema de validación Backend: ${data.error}`);
+            }
+
+        } catch (error) {
+            console.error(error);
+            alert('Falló la validación final y la Transacción colapsó. Comprueba el Servidor.');
+        }
+    }
+</script>
+{% endblock %}
