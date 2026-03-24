@@ -3,10 +3,15 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-brand-black m-0">Inventario Central</h2>
-    <!-- Botón Nuevo Producto ahora en Azul Turquesa -->
-    <a href="/inventory/nuevo" class="btn btn-blue rounded-pill px-4">
-        <i class="fa-solid fa-plus me-1"></i> Nuevo Producto
-    </a>
+    <div>
+        <a href="{{ url_for('inventory_bp.historial_ajustes') }}" class="btn btn-outline-secondary rounded-pill px-4 me-2">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i> Ver Historial de Ajustes
+        </a>
+        <!-- Botón Nuevo Producto ahora en Azul Turquesa -->
+        <a href="/inventory/nuevo" class="btn btn-blue rounded-pill px-4">
+            <i class="fa-solid fa-plus me-1"></i> Nuevo Producto
+        </a>
+    </div>
 </div>
 
 <div class="card card-custom p-0 overflow-hidden">

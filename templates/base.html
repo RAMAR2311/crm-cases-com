@@ -142,13 +142,19 @@
                     <li class="nav-item">
                         <a class="nav-link text-brand-black fw-bold" href="/sales/catalogo"><i class="fa-solid fa-book-open text-brand-pink"></i> Catálogo Físico</a>
                     </li>
+                    <li class="nav-item border-start ps-3 border-dark border-opacity-25">
+                        <a class="nav-link text-brand-black fw-bold" href="/arqueo/nuevo"><i class="fa-solid fa-calculator text-brand-blue" style="color: #A3D8DE;"></i> Arqueo de Caja</a>
+                    </li>
                     {% elif current_user.rol == 'vendedor' %}
                     <!-- Vistas Estrictamente Operativas (Cajeros) -->
                     <li class="nav-item">
                         <a class="nav-link text-brand-black fw-bold" href="/sales/catalogo"><i class="fa-solid fa-book-open text-muted"></i> Catálogo Rápido</a>
                     </li>
-                    <li class="nav-item border-end pe-3 border-dark border-opacity-25">
+                    <li class="nav-item">
                         <a class="nav-link text-brand-black fw-bold" href="/sales/nueva"><i class="fa-solid fa-cash-register text-brand-pink"></i> Módulo de Caja</a>
+                    </li>
+                    <li class="nav-item border-start ps-3 border-dark border-opacity-25">
+                        <a class="nav-link text-brand-black fw-bold" href="/arqueo/nuevo"><i class="fa-solid fa-calculator text-brand-blue" style="color: #A3D8DE;"></i> Arqueo</a>
                     </li>
                     {% endif %}
                     

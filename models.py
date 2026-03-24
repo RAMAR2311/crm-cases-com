@@ -20,6 +20,8 @@ class User(UserMixin, db.Model):
     rol = db.Column(db.String(50), nullable=False, default='vendedor')
     
     ventas = db.relationship('Sale', backref='vendedor', lazy=True)
+    ajustes_stock = db.relationship('StockAdjustment', backref='admin', lazy=True)
+    arqueos = db.relationship('ArqueoCaja', backref='cajero', lazy=True)
 
 class Product(db.Model):
     __tablename__ = 'products'
@@ -34,6 +36,7 @@ class Product(db.Model):
     fecha_creacion = db.Column(db.DateTime, default=obtener_hora_bogota)
     
     detalles_venta = db.relationship('SaleDetail', backref='producto', lazy=True)
+    ajustes_stock = db.relationship('StockAdjustment', backref='producto_rel', lazy=True)
 
 class Sale(db.Model):
     __tablename__ = 'sales'
@@ -54,3 +57,26 @@ class SaleDetail(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     cantidad_vendida = db.Column(db.Integer, nullable=False)
     precio_venta_final = db.Column(db.Numeric(10, 2), nullable=False)
+
+class StockAdjustment(db.Model):
+    __tablename__ = 'stock_adjustments'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    stock_anterior = db.Column(db.Integer, nullable=False)
+    stock_nuevo = db.Column(db.Integer, nullable=False)
+    fecha_ajuste = db.Column(db.DateTime, default=obtener_hora_bogota)
+
+class ArqueoCaja(db.Model):
+    __tablename__ = 'arqueo_caja'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    vendedor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    fecha_arqueo = db.Column(db.Date, nullable=False)
+    base_inicial = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    gastos_del_dia = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    observaciones_gastos = db.Column(db.String(255), nullable=True)
+    total_efectivo_sistema = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    total_transferencia_sistema = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    fecha_creacion = db.Column(db.DateTime, default=obtener_hora_bogota)

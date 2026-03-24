@@ -1,7 +1,11 @@
-from flask import Blueprint, request, jsonify, flash, redirect, render_template
+from flask import Blueprint, request, jsonify, flash, redirect, render_template, abort
 from flask_login import login_required, current_user
-from models import db, Product, Sale, SaleDetail
+from models import db, Product, Sale, SaleDetail, obtener_hora_bogota
+from decorators import admin_required
 from decimal import Decimal
+from datetime import datetime, timedelta
+from sqlalchemy import or_
+from sqlalchemy.orm import joinedload
 
 sales_bp = Blueprint('sales_bp', __name__)
 
@@ -111,15 +115,8 @@ def imprimir_ticket(sale_id):
 # Endpoint Historial de Ventas (Administradores)
 @sales_bp.route('/historial', methods=['GET'])
 @login_required
+@admin_required
 def historial():
-    # Regla Dinámica Estricta: Proteger si un vendedor averigua la URL
-    from flask import abort
-    if current_user.rol != 'admin':
-        abort(403)
-        
-    from datetime import datetime, timedelta
-    from models import obtener_hora_bogota
-    
     # Calcular el valor exacto de 'HOY' en Bogotá
     hoy_bogota = obtener_hora_bogota().strftime('%Y-%m-%d')
     
@@ -127,7 +124,8 @@ def historial():
     fecha_inicio = request.args.get('fecha_inicio', hoy_bogota)
     fecha_fin = request.args.get('fecha_fin', hoy_bogota)
     
-    query = Sale.query
+    # Optimización: eager loading (evita N+1 con joinedload)
+    query = Sale.query.options(joinedload(Sale.vendedor))
     
     # Motor de búsqueda por Rango Restricto
     if fecha_inicio:
@@ -158,7 +156,6 @@ def historial():
 @sales_bp.route('/catalogo', methods=['GET'])
 @login_required 
 def catalogo():
-    from sqlalchemy import or_
     query_str = request.args.get('q', '').strip()
     
     if query_str:

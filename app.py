@@ -1,8 +1,8 @@
 import os
-from flask import Flask
+from flask import Flask, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from flask_login import LoginManager
+from flask_login import LoginManager, current_user
 from flask_wtf.csrf import CSRFProtect
 
 # Importar la instancia de db desde models
@@ -33,10 +33,12 @@ def create_app():
     from routes.sales import sales_bp
     from routes.inventory import inventory_bp
     from routes.auth import auth_bp
+    from routes.arqueo import arqueo_bp
     
     app.register_blueprint(sales_bp, url_prefix='/sales')
     app.register_blueprint(inventory_bp, url_prefix='/inventory')
     app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(arqueo_bp, url_prefix='/arqueo')
     
     # Registro de Blueprint Admin
     from routes.admin import admin_bp
@@ -44,10 +46,7 @@ def create_app():
 
     @app.route('/')
     def index():
-        from flask import redirect, url_for
-        from flask_login import current_user
-        
-        # Verificar estado de sesión y rol del usuario
+        # Redirección de sesión y rol de usuario
         if not current_user.is_authenticated:
             return redirect(url_for('auth_bp.login'))
             
