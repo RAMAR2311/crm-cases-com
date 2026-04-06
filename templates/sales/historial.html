@@ -34,7 +34,7 @@
         <div class="card card-custom h-100" style="border-left: 6px solid var(--brand-blue) !important;">
             <div class="card-body py-3 ps-3">
                 <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</p>
-                <h4 class="fw-bolder m-0" style="color: var(--brand-blue);">${{ "%.2f"|format(total_efectivo) }}</h4>
+                <h4 class="fw-bolder m-0" style="color: var(--brand-blue);">${{ (total_efectivo)|cop }}</h4>
             </div>
         </div>
     </div>
@@ -43,7 +43,7 @@
         <div class="card card-custom h-100" style="border-left: 6px solid #6f42c1 !important;">
             <div class="card-body py-3 ps-3">
                 <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-mobile-button me-1"></i> Nequi</p>
-                <h4 class="fw-bolder m-0" style="color: #6f42c1;">${{ "%.2f"|format(total_nequi) }}</h4>
+                <h4 class="fw-bolder m-0" style="color: #6f42c1;">${{ (total_nequi)|cop }}</h4>
             </div>
         </div>
     </div>
@@ -52,7 +52,7 @@
         <div class="card card-custom h-100" style="border-left: 6px solid #fd7e14 !important;">
             <div class="card-body py-3 ps-3">
                 <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-building-columns me-1"></i> Bancolombia</p>
-                <h4 class="fw-bolder m-0" style="color: #fd7e14;">${{ "%.2f"|format(total_bancolombia) }}</h4>
+                <h4 class="fw-bolder m-0" style="color: #fd7e14;">${{ (total_bancolombia)|cop }}</h4>
             </div>
         </div>
     </div>
@@ -61,7 +61,7 @@
         <div class="card card-custom h-100" style="border-left: 6px solid #dc3545 !important;">
             <div class="card-body py-3 ps-3">
                 <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-mobile-screen me-1"></i> Daviplata</p>
-                <h4 class="fw-bolder m-0" style="color: #dc3545;">${{ "%.2f"|format(total_daviplata) }}</h4>
+                <h4 class="fw-bolder m-0" style="color: #dc3545;">${{ (total_daviplata)|cop }}</h4>
             </div>
         </div>
     </div>
@@ -71,7 +71,7 @@
         <div class="card card-custom h-100" style="border-left: 6px solid var(--brand-pink) !important;">
             <div class="card-body py-3 ps-3">
                 <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-clock-rotate-left me-1"></i> Transf. Históricas</p>
-                <h4 class="fw-bolder m-0" style="color: var(--brand-pink);">${{ "%.2f"|format(total_transferencia_legacy) }}</h4>
+                <h4 class="fw-bolder m-0" style="color: var(--brand-pink);">${{ (total_transferencia_legacy)|cop }}</h4>
             </div>
         </div>
     </div>
@@ -140,7 +140,7 @@
                         {% endif %}
                     </td>
                     <td class="text-end align-middle fw-bolder text-brand-black fs-5">
-                        ${{ "%.2f"|format(venta.monto_total) }}
+                        ${{ (venta.monto_total)|cop }}
                     </td>
                     <td class="text-center align-middle">
                         <!-- Botón Secundario Rosa Pastel -->

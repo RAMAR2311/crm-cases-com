@@ -30,21 +30,21 @@
                         <label class="form-label fw-bold text-brand-black text-truncate">Costo Compra</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-0">$</span>
-                            <input type="number" step="0.01" class="form-control bg-light border-0" name="precio_costo" required value="{{ producto.precio_costo if producto else '' }}">
+                            <input type="number" step="1" class="form-control bg-light border-0" name="precio_costo" required value="{{ producto.precio_costo if producto else '' }}">
                         </div>
                     </div>
                     <div class="col-md-3 mt-4">
                         <label class="form-label fw-bold text-brand-black text-truncate">Precio Mínimo</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-0">$</span>
-                            <input type="number" step="0.01" class="form-control bg-light border-0" name="precio_minimo" required value="{{ producto.precio_minimo if producto else '' }}">
+                            <input type="number" step="1" class="form-control bg-light border-0" name="precio_minimo" required value="{{ producto.precio_minimo if producto else '' }}">
                         </div>
                     </div>
                     <div class="col-md-3 mt-4">
                         <label class="form-label fw-bold text-brand-black text-truncate">Precio Sugerido</label>
                         <div class="input-group">
                             <span class="input-group-text bg-white border-0">$</span>
-                            <input type="number" step="0.01" class="form-control bg-light border-0" name="precio_sugerido" required value="{{ producto.precio_sugerido if producto else '' }}">
+                            <input type="number" step="1" class="form-control bg-light border-0" name="precio_sugerido" required value="{{ producto.precio_sugerido if producto else '' }}">
                         </div>
                     </div>
                     

@@ -26,7 +26,7 @@
                     <td class="ps-4 fw-bold text-brand-black">{{ c.nombre_o_razon_social }}</td>
                     <td class="text-muted">{{ c.documento_o_nit }}</td>
                     <td class="text-center fw-bolder {% if c.deuda_total > 0 %}text-danger{% else %}text-success{% endif %}">
-                        ${{ "%.2f"|format(c.deuda_total) }}
+                        ${{ (c.deuda_total)|cop }}
                     </td>
                     <td class="text-center">
                         {% if c.estado_global == 'Al Día' %}

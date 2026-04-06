@@ -33,8 +33,8 @@
                     <td class="text-muted"><small><strong>{{ p.sku }}</strong></small></td>
                     <td class="fw-semibold text-brand-black">{{ p.nombre }}</td>
                     <td>
-                        <!-- Regla Estricta: Badge rojo si el stock <= 10 -->
-                        {% if p.total_stock <= 10 %}
+                        <!-- Regla Estricta: Badge rojo si el stock <= 3 -->
+                        {% if p.total_stock <= 3 %}
                             <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock }} (Stock Bajo)</span>
                         {% else %}
                             <!-- Badge en Rosa Pastel para stock normal -->
@@ -49,20 +49,20 @@
                             </div>
                         {% endif %}
                     </td>
-                    <td class="text-end fw-bold" style="color: var(--brand-pink);">${{ "%.2f"|format(p.precio_costo) }}</td>
-                    <td class="text-end text-muted fw-bold">${{ "%.2f"|format(p.precio_minimo) }}</td>
+                    <td class="text-end fw-bold" style="color: var(--brand-pink);">${{ (p.precio_costo)|cop }}</td>
+                    <td class="text-end text-muted fw-bold">${{ (p.precio_minimo)|cop }}</td>
                     <td class="text-end fw-bold text-brand-black pe-4">
                         {% if p.rango_precios %}
                             {% if p.rango_precios is number %}
-                                ${{ "%.2f"|format(p.rango_precios) }}
+                                ${{ (p.rango_precios)|cop }}
                             {% else %}
                                 <div class="small text-muted fw-normal" style="line-height:1;">Desde</div>
-                                ${{ "%.2f"|format(p.rango_precios[0]) }}<br>
+                                ${{ (p.rango_precios[0])|cop }}<br>
                                 <div class="small text-muted fw-normal mt-1" style="line-height:1;">hasta</div>
-                                ${{ "%.2f"|format(p.rango_precios[1]) }}
+                                ${{ (p.rango_precios[1])|cop }}
                             {% endif %}
                         {% else %}
-                            ${{ "%.2f"|format(p.precio_sugerido) }}
+                            ${{ (p.precio_sugerido)|cop }}
                         {% endif %}
                     </td>
                     <td class="text-center">
@@ -73,9 +73,15 @@
                             <i class="fa-solid fa-eye"></i>
                         </a>
                         <!-- Enlace dinámico con ID insertado (Jinja2 url_for) -->
-                        <a href="{{ url_for('inventory_bp.editar_producto', id=p.id) }}" class="btn btn-sm text-secondary hover-primary" title="Editar">
+                        <a href="{{ url_for('inventory_bp.editar_producto', id=p.id) }}" class="btn btn-sm text-secondary hover-primary me-1" title="Editar">
                             <i class="fa-solid fa-pen"></i>
                         </a>
+                        <form method="POST" action="{{ url_for('inventory_bp.eliminar_producto', id=p.id) }}" class="d-inline" onsubmit="return confirm('ATENCIÓN: ¿Está seguro de que desea ELIMINAR PERMANENTEMENTE este producto del sistema en la Nube? Esto no se puede deshacer.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm text-danger hover-danger" title="Eliminar Producto">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </form>
                     </td>
                 </tr>
                 {% else %}
@@ -124,21 +130,21 @@
                                     <label class="form-label small text-muted mb-1 fw-bold">P. Costo (Opcional)</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light text-muted border-end-0">$</span>
-                                        <input type="number" step="0.01" name="precio_costo" class="form-control border-start-0 ps-0" placeholder="{{ "%.2f"|format(p.precio_costo) }}">
+                                        <input type="number" step="1" name="precio_costo" class="form-control border-start-0 ps-0" placeholder="{{ "%.0f"|format(p.precio_costo) }}">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small text-muted mb-1 fw-bold">P. Mínimo (Opcional)</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light text-muted border-end-0">$</span>
-                                        <input type="number" step="0.01" name="precio_minimo" class="form-control border-start-0 ps-0" placeholder="{{ "%.2f"|format(p.precio_minimo) }}">
+                                        <input type="number" step="1" name="precio_minimo" class="form-control border-start-0 ps-0" placeholder="{{ "%.0f"|format(p.precio_minimo) }}">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label small fw-bold mb-1" style="color: var(--brand-pink);">P. Sugerido (Opcional)</label>
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light text-muted border-end-0">$</span>
-                                        <input type="number" step="0.01" name="precio_sugerido" class="form-control border-start-0 ps-0 border-pink border-1" placeholder="{{ "%.2f"|format(p.precio_sugerido) }}">
+                                        <input type="number" step="1" name="precio_sugerido" class="form-control border-start-0 ps-0 border-pink border-1" placeholder="{{ "%.0f"|format(p.precio_sugerido) }}">
                                     </div>
                                 </div>
                             </div>
@@ -176,29 +182,36 @@
                                         <label class="form-label text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">COSTO REAL</label>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text bg-transparent border-end-0 text-muted px-2">$</span>
-                                            <input type="number" step="0.01" name="precio_costo" class="form-control border-start-0 ps-0 text-secondary" value="{{ "%.2f"|format(v.precio_costo|float) if v.precio_costo else "%.2f"|format(p.precio_costo|float) }}">
+                                            <input type="number" step="1" name="precio_costo" class="form-control border-start-0 ps-0 text-secondary" value="{{ "%.0f"|format(v.precio_costo|float) if v.precio_costo else "%.0f"|format(p.precio_costo|float) }}">
                                         </div>
                                     </div>
                                     <div class="col-4">
                                         <label class="form-label text-muted mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px;">P. MÍNIMO DEV.</label>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text bg-transparent border-end-0 text-muted px-2">$</span>
-                                            <input type="number" step="0.01" name="precio_minimo" class="form-control border-start-0 ps-0 text-secondary" value="{{ "%.2f"|format(v.precio_minimo|float) if v.precio_minimo else "%.2f"|format(p.precio_minimo|float) }}">
+                                            <input type="number" step="1" name="precio_minimo" class="form-control border-start-0 ps-0 text-secondary" value="{{ "%.0f"|format(v.precio_minimo|float) if v.precio_minimo else "%.0f"|format(p.precio_minimo|float) }}">
                                         </div>
                                     </div>
                                     <div class="col-4">
                                         <label class="form-label mb-1" style="font-size: 0.65rem; letter-spacing: 0.5px; color: var(--brand-pink);">P. SUGERIDO</label>
                                         <div class="input-group input-group-sm">
                                             <span class="input-group-text bg-transparent border-end-0 fw-bold px-2" style="color: var(--brand-pink);">$</span>
-                                            <input type="number" step="0.01" name="precio_sugerido" class="form-control border-start-0 ps-0 fw-bold" style="color: var(--brand-pink);" value="{{ "%.2f"|format(v.precio_sugerido|float) if v.precio_sugerido else "%.2f"|format(p.precio_sugerido|float) }}">
+                                            <input type="number" step="1" name="precio_sugerido" class="form-control border-start-0 ps-0 fw-bold" style="color: var(--brand-pink);" value="{{ "%.0f"|format(v.precio_sugerido|float) if v.precio_sugerido else "%.0f"|format(p.precio_sugerido|float) }}">
                                         </div>
                                     </div>
                                 </div>
-                                <div class="text-end mt-3 pt-2">
+                                <div class="d-flex justify-content-between align-items-center mt-3 pt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger border-0 hover-danger px-2" title="Eliminar Permanente" onclick="if(confirm('¿Eliminar la subcategoría {{ v.nombre_variante }} del inventario? Esta acción es irreversible.')) { document.getElementById('delVarForm{{ v.id }}').submit(); }">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
                                     <button type="submit" class="btn btn-sm btn-outline-primary rounded-pill px-4" title="Guardar Cambios">
                                         <i class="fa-solid fa-arrows-rotate me-1"></i> Actualizar Variante
                                     </button>
                                 </div>
+                            </form>
+                            <!-- Formulario Oculto para Eliminar Variante (RESTful POST Seguro) -->
+                            <form id="delVarForm{{ v.id }}" method="POST" action="{{ url_for('inventory_bp.eliminar_variante', id=v.id) }}" class="d-none">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             </form>
                         </div>
                     </div>

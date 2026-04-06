@@ -16,7 +16,7 @@
                 <h5 class="text-brand-black fw-bold mb-0">Total Gastos Diarios (Mes)</h5>
                 <i class="fa-solid fa-cart-shopping fs-2" style="color: var(--brand-blue);"></i>
             </div>
-            <h2 class="fw-bolder m-0">${{ "%.2f"|format(total_diarios) }}</h2>
+            <h2 class="fw-bolder m-0">${{ (total_diarios)|cop }}</h2>
             <p class="text-muted small mt-2 m-0">Operativos: comida, transportes, aseo.</p>
         </div>
     </div>
@@ -26,7 +26,7 @@
                 <h5 class="text-brand-black fw-bold mb-0">Total Costos Indirectos (Mes)</h5>
                 <i class="fa-solid fa-building-columns fs-2" style="color: var(--brand-pink);"></i>
             </div>
-            <h2 class="fw-bolder m-0">${{ "%.2f"|format(total_indirectos) }}</h2>
+            <h2 class="fw-bolder m-0">${{ (total_indirectos)|cop }}</h2>
             <p class="text-muted small mt-2 m-0">Fijos: arriendo, nómina, servicios.</p>
         </div>
     </div>
@@ -68,7 +68,7 @@
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-bold text-brand-black">Monto ($)</label>
-                <input type="number" step="0.01" min="0" name="monto" class="form-control bg-light border-0" required>
+                <input type="number" step="1" min="0" name="monto" class="form-control bg-light border-0" required>
             </div>
             <div class="col-md-2">
                 <label class="form-label fw-bold text-brand-black">Fecha</label>
@@ -113,7 +113,7 @@
                     </td>
                     <td class="fw-bold">{{ gasto.categoria }}</td>
                     <td class="text-muted"><small>{{ gasto.descripcion }}</small></td>
-                    <td class="text-end pe-4 fw-bolder text-brand-black">${{ "%.2f"|format(gasto.monto) }}</td>
+                    <td class="text-end pe-4 fw-bolder text-brand-black">${{ (gasto.monto)|cop }}</td>
                 </tr>
                 {% else %}
                 <tr>

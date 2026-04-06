@@ -117,8 +117,8 @@
                             {{ p.cantidad_stock }} uds.
                         </span>
                     </td>
-                    <td class="money">${{ "%.2f"|format(p.precio_minimo) }}</td>
-                    <td class="money-highlight">${{ "%.2f"|format(p.precio_sugerido) }}</td>
+                    <td class="money">${{ (p.precio_minimo)|cop }}</td>
+                    <td class="money-highlight">${{ (p.precio_sugerido)|cop }}</td>
                 </tr>
                 {% else %}
                 <tr>

@@ -54,6 +54,16 @@ def create_app():
     from routes.bodega import bodega_bp
     app.register_blueprint(bodega_bp, url_prefix='/bodega')
 
+    @app.template_filter('cop')
+    def cop_filter(value):
+        if value is None:
+            return "0"
+        try:
+            # Formateo a moneda colombiana (sin decimales, separador de miles con punto)
+            return "{:,.0f}".format(float(value)).replace(',', '.')
+        except (ValueError, TypeError):
+            return value
+
     @app.route('/')
     def index():
         # Redirección de sesión y rol de usuario

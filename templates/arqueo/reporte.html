@@ -49,25 +49,25 @@
                 <div class="col-sm-6 col-md-3">
                     <div class="card p-3 border rounded shadow-sm bg-light text-center h-100">
                         <small class="text-secondary fw-bold text-uppercase d-block mb-1">Efectivo Sistema (Ventas)</small>
-                        <h4 class="mb-0 text-success fw-bold">${{ "%.2f"|format(resumen.total_efectivo) }}</h4>
+                        <h4 class="mb-0 text-success fw-bold">${{ (resumen.total_efectivo)|cop }}</h4>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-3">
                     <div class="card p-3 border rounded shadow-sm bg-light text-center h-100">
                         <small class="text-secondary fw-bold text-uppercase d-block mb-1">Bancos / Transf. Sistema</small>
-                        <h4 class="mb-0 text-info fw-bold">${{ "%.2f"|format(resumen.total_transferencia) }}</h4>
+                        <h4 class="mb-0 text-info fw-bold">${{ (resumen.total_transferencia)|cop }}</h4>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-3">
                     <div class="card p-3 border rounded shadow-sm bg-light text-center h-100">
                         <small class="text-secondary fw-bold text-uppercase d-block mb-1">Gastos Operativos Retirados</small>
-                        <h4 class="mb-0 text-danger fw-bold">$-{{ "%.2f"|format(resumen.total_gastos) }}</h4>
+                        <h4 class="mb-0 text-danger fw-bold">$-{{ (resumen.total_gastos)|cop }}</h4>
                     </div>
                 </div>
                 <div class="col-sm-6 col-md-3">
                     <div class="card p-3 border rounded shadow-sm bg-light text-center h-100" style="border-left: 4px solid #A3D8DE !important;">
                         <small class="text-secondary fw-bold d-block mb-1">CAJA FÍSICA ESPERADA FINAL</small>
-                        <h4 class="mb-0 text-dark fw-bold">${{ "%.2f"|format(resumen.efectivo_esperado) }}</h4>
+                        <h4 class="mb-0 text-dark fw-bold">${{ (resumen.efectivo_esperado)|cop }}</h4>
                         <small class="text-muted d-block mt-1" style="font-size:0.7rem;">(Base Inicial + VentasCash) - Gastos</small>
                     </div>
                 </div>
@@ -99,13 +99,13 @@
                             <td class="text-truncate" style="max-width:120px;" title="{{ arqueo.cajero.nombre }}">{{ arqueo.cajero.nombre }}</td>
                             {% endif %}
 
-                            <td class="text-end text-primary fw-bold">${{ "%.2f"|format(arqueo.base_inicial) }}</td>
-                            <td class="text-end text-success fw-bold">${{ "%.2f"|format(arqueo.total_efectivo_sistema) }}</td>
-                            <td class="text-end text-info fw-bold">${{ "%.2f"|format(arqueo.total_transferencia_sistema) }}</td>
+                            <td class="text-end text-primary fw-bold">${{ (arqueo.base_inicial)|cop }}</td>
+                            <td class="text-end text-success fw-bold">${{ (arqueo.total_efectivo_sistema)|cop }}</td>
+                            <td class="text-end text-info fw-bold">${{ (arqueo.total_transferencia_sistema)|cop }}</td>
                             
                             <!-- Gastos con validación de color si es nulo -->
                             <td class="text-end {% if arqueo.gastos_del_dia > 0 %}text-danger{% else %}text-muted{% endif %} fw-bold">
-                                ${{ "%.2f"|format(arqueo.gastos_del_dia) }}
+                                ${{ (arqueo.gastos_del_dia)|cop }}
                             </td>
                             
                             <td class="text-muted fst-italic" style="font-size: 0.8rem;">

@@ -138,6 +138,47 @@ def ver_producto(id):
     ajustes = StockAdjustment.query.filter_by(product_id=id).order_by(StockAdjustment.fecha_ajuste.desc()).all()
     return render_template('inventory/ver.html', producto=producto, ajustes=ajustes)
 
+@inventory_bp.route('/eliminar/<int:id>', methods=['POST'])
+@login_required
+@admin_or_bodega_required
+def eliminar_producto(id):
+    producto = Product.query.get_or_404(id)
+    tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
+    
+    if producto.tipo_inventario != tipo:
+        abort(403)
+        
+    from models import SaleDetail, Maneo, FacturaBodegaDetalle
+    
+    # 1. Validación de seguridad en cascada (No eliminar lo que tiene historia financiera/logística)
+    if SaleDetail.query.filter_by(product_id=producto.id).first():
+        flash('Acción denegada: El producto ya está vinculado a Historial de Ventas. Sugerencia: Ajustar stock a 0.', 'warning')
+        return redirect(url_for('inventory_bp.index'))
+        
+    if Maneo.query.filter_by(product_id=producto.id).first():
+        flash('Acción denegada: El producto tiene registros históticos en Maneos (Préstamos).', 'warning')
+        return redirect(url_for('inventory_bp.index'))
+        
+    if FacturaBodegaDetalle.query.filter_by(producto_id=producto.id).first():
+        flash('Acción denegada: El producto forma parte del detalle de una Factura Asignada.', 'warning')
+        return redirect(url_for('inventory_bp.index'))
+        
+    try:
+        # 2. Purgar dependencias suaves (Ajustes de Kardex)
+        for ajuste in producto.ajustes_stock:
+            db.session.delete(ajuste)
+            
+        # 3. Eliminar el producto madre (las Variantes se van automáticamente por regla delete-orphan de SQLAlchemy)
+        nombre = producto.nombre
+        db.session.delete(producto)
+        db.session.commit()
+        flash(f'Producto "{nombre}" fue borrado permanentemente del inventario.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ocurrió un error bloqueante en la base de datos: {str(e)}', 'danger')
+        
+    return redirect(url_for('inventory_bp.index'))
+
 @inventory_bp.route('/producto/<int:id>/agregar_variante', methods=['POST'])
 @login_required
 @admin_or_bodega_required
@@ -196,6 +237,29 @@ def editar_variante(id):
     except Exception as e:
         db.session.rollback()
         flash('Error al editar la variante.', 'danger')
+        
+    return redirect(url_for('inventory_bp.index'))
+
+@inventory_bp.route('/variante/<int:id>/eliminar', methods=['POST'])
+@login_required
+@admin_or_bodega_required
+def eliminar_variante(id):
+    variante = ProductVariant.query.get_or_404(id)
+    
+    from models import SaleDetail
+    # Validar si ya hay ventas facturadas con esta variante para evitar conflictos en el Balance Financiero
+    if SaleDetail.query.filter_by(variant_id=variante.id).first():
+        flash('Acción denegada: No se puede eliminar una variante que tiene ventas facturadas (por integridad financiera). Sugerencia: Actualiza su stock a 0.', 'warning')
+        return redirect(url_for('inventory_bp.index'))
+        
+    try:
+        nombre = variante.nombre_variante
+        db.session.delete(variante)
+        db.session.commit()
+        flash(f'La subcategoría "{nombre}" fue borrada exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error grave en servidor al eliminar la variante: {str(e)}', 'danger')
         
     return redirect(url_for('inventory_bp.index'))
 

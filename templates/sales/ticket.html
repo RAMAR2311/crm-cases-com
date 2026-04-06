@@ -153,7 +153,7 @@
                 <td class="col-prod">
                     {{ detalle.producto.nombre[:25] }}{% if detalle.producto.nombre|length > 25 %}...{% endif %}
                 </td>
-                <td class="col-sub">${{ "%.2f"|format(detalle.precio_venta_final * detalle.cantidad_vendida) }}</td>
+                <td class="col-sub">${{ (detalle.precio_venta_final * detalle.cantidad_vendida)|cop }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -162,7 +162,7 @@
     <div class="totals">
         <div class="total-row">
             <span>TOTAL:</span>
-            <span>${{ "%.2f"|format(venta.monto_total) }}</span>
+            <span>${{ (venta.monto_total)|cop }}</span>
         </div>
     </div>
 

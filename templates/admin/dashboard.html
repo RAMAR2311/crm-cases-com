@@ -51,7 +51,7 @@
                 <i class="fa-solid fa-sack-dollar fs-1" style="color: var(--brand-blue);"></i>
             </div>
             <h5 class="text-brand-black fw-bold">Ingresos Totales (Ventas)</h5>
-            <h2 class="fw-bolder" style="color: var(--brand-blue);">${{ "%.2f"|format(total_ventas) }}</h2>
+            <h2 class="fw-bolder" style="color: var(--brand-blue);">${{ (total_ventas)|cop }}</h2>
             <div class="mt-auto pt-4">
                 <a href="{{ url_for('sales_bp.historial') }}" class="btn btn-blue w-100 rounded-pill"><i class="fa-solid fa-file-invoice-dollar me-2"></i> Ver Ventas</a>
             </div>

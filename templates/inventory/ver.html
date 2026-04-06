@@ -31,13 +31,13 @@
 
                 <div class="d-flex justify-content-between px-4 py-3 bg-light rounded mb-3">
                     <span class="text-muted">Stock Actual</span>
-                    <span class="fw-bold fs-5 {% if producto.cantidad_stock <= 10 %}text-danger{% else %}text-success{% endif %}">
+                    <span class="fw-bold fs-5 {% if producto.cantidad_stock <= 3 %}text-danger{% else %}text-success{% endif %}">
                         {{ producto.cantidad_stock }} uds
                     </span>
                 </div>
                 <div class="d-flex justify-content-between px-4 py-3 bg-light rounded mb-3">
                     <span class="text-muted">Precio Sugerido</span>
-                    <span class="fw-bold fs-5 text-brand-black">${{ "%.2f"|format(producto.precio_sugerido) }}</span>
+                    <span class="fw-bold fs-5 text-brand-black">${{ (producto.precio_sugerido)|cop }}</span>
                 </div>
                 
                 {% if producto.observacion %}
