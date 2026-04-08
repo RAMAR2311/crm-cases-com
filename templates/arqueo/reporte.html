@@ -20,13 +20,13 @@
             </form>
 
             <button onclick="window.print()" class="btn px-4 rounded-pill fw-bold text-dark border shadow-sm" style="background-color: #F9C8D3; border-color: #ebaebc;">
-                <i class="fa-solid fa-print me-1"></i> Imprimir a PDF
+                <i class="fa-solid fa-print me-1"></i> Imprimir Tirilla
             </button>
         </div>
     </div>
 
-    <!-- Contenido del Reporte: Documento PDF Print -->
-    <div class="col-12 col-xl-10 report-print-container">
+    <!-- Contenido del Reporte EN PANTALLA e IMPRESIÓN A4 -->
+    <div class="col-12 col-xl-10">
         <div class="card bg-white p-5 border-0 shadow-sm rounded-4 printable-document">
             
             <!-- Encabezado Ticket / Documento Contable -->
@@ -103,7 +103,6 @@
                             <td class="text-end text-success fw-bold">${{ (arqueo.total_efectivo_sistema)|cop }}</td>
                             <td class="text-end text-info fw-bold">${{ (arqueo.total_transferencia_sistema)|cop }}</td>
                             
-                            <!-- Gastos con validación de color si es nulo -->
                             <td class="text-end {% if arqueo.gastos_del_dia > 0 %}text-danger{% else %}text-muted{% endif %} fw-bold">
                                 ${{ (arqueo.gastos_del_dia)|cop }}
                             </td>
@@ -120,8 +119,61 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
 
-            <!-- Firmas Contables -->
+    <!-- TABLA DE VENTAS DETALLADAS (Pantalla Completa A4) -->
+    <div class="col-12 col-xl-10 mt-4">
+        <div class="card bg-white p-5 border-0 shadow-sm rounded-4 printable-document">
+            <h5 class="fw-bold text-brand-black mb-3 border-bottom pb-2">
+                <i class="fa-solid fa-list-check me-2"></i> Detalle de Ventas y Productos Involucrados
+            </h5>
+            <div class="table-responsive">
+                <table class="table table-bordered table-sm fw-semibold mb-0 table-hover align-middle">
+                    <thead class="table-light text-center text-uppercase" style="font-size: 0.85rem;">
+                        <tr>
+                            <th width="10%">Ticket ID</th>
+                            <th width="12%">Hora</th>
+                            <th width="15%">Método Pago</th>
+                            <th width="35%">Productos y Cantidades</th>
+                            <th width="15%" class="text-end">Total Ticket</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 0.9rem;">
+                        {% for v in ventas_periodo %}
+                        <tr>
+                            <td class="text-center text-secondary fw-bold">#{{ "%05d"|format(v.id) }}</td>
+                            <td class="text-center text-muted">{{ v.fecha_venta.strftime('%H:%M') }}</td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-dark border rounded-pill px-3 py-1">
+                                    {{ v.metodo_pago|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <ul class="mb-0 ps-3" style="font-size: 0.85rem;">
+                                    {% for detalle in v.detalles %}
+                                    <li>
+                                        <strong>{{ detalle.cantidad_vendida }}x</strong> 
+                                        {{ detalle.producto.nombre }} 
+                                        {% if detalle.variant_id %}
+                                            <span class="text-muted">(Var: {{ detalle.variante.nombre_variante }})</span>
+                                        {% endif %}
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                            <td class="text-end fw-bold text-brand-black fs-6">${{ (v.monto_total)|cop }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center text-muted p-4">No se registraron ventas en este período.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Firmas Contables (Solo visibles al imprimir el PDF de tamaño carta) -->
             <div class="row mt-5 pt-5 d-none d-print-flex">
                 <div class="col-6 text-center">
                     <hr class="w-75 mx-auto border-dark border-1 opacity-100">
@@ -134,13 +186,12 @@
                     <p class="text-muted small">Cierre conforme y Entregado</p>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
 
 <style>
-/* ====== Estilos Exclusivos para PDF/Impresión ====== */
+/* ====== Estilos Exclusivos para PDF/Impresión Tamaño Carta (A4) ====== */
 @media print {
     body {
         background-color: white !important;
@@ -158,15 +209,11 @@
         box-shadow: none !important;
         border: none !important;
         padding: 0 !important;
+        margin-bottom: 2rem !important;
+        page-break-inside: avoid;
     }
     
-    .report-print-container {
-        width: 100% !important;
-        max-width: 100% !important;
-        flex: 0 0 100% !important;
-    }
-    
-    /* Forzar los colores de Bootstrap/Custom para que la impresora (Nativo PDF de navegadores) los dibuje literalmente */
+    /* Forzar los colores de Bootstrap/Custom para que la impresora los dibuje literalmente */
     * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;

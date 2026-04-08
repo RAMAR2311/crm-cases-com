@@ -143,11 +143,23 @@
                         ${{ (venta.monto_total)|cop }}
                     </td>
                     <td class="text-center align-middle">
-                        <!-- Botón Secundario Rosa Pastel -->
-                        <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank" class="btn btn-pink btn-sm rounded-pill px-3 fw-bold shadow-sm w-100">
-                            <i class="fa-solid fa-receipt me-1"></i> Ver Recibo
-                        </a>
+                        <div class="d-flex flex-column gap-2">
+                            <!-- Botón Secundario Rosa Pastel -->
+                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank" class="btn btn-pink btn-sm rounded-pill px-3 fw-bold shadow-sm w-100">
+                                <i class="fa-solid fa-receipt me-1"></i> Ver Recibo
+                            </a>
+                            
+                            {% if current_user.rol == 'admin' %}
+                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST" onsubmit="return confirm('ATENCIÓN: ¿Está seguro de anular esta venta? Esta acción NO se puede deshacer y retornará el stock de los productos vendidos.');" class="m-0 p-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm w-100">
+                                    <i class="fa-solid fa-trash me-1"></i> Anular
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
                     </td>
+
                 </tr>
                 {% else %}
                 <tr>

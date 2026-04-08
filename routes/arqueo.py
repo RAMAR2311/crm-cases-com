@@ -109,6 +109,16 @@ def reporte():
     resumen['total_recaudado'] = resumen['total_efectivo'] + resumen['total_transferencia']
     resumen['efectivo_esperado'] = (resumen['total_base'] + resumen['total_efectivo']) - resumen['total_gastos']
 
+    # Obtener todas las ventas del periodo para el detalle en la "tirilla"
+    ventas_query = Sale.query.filter(
+        db.func.date(Sale.fecha_venta) >= fecha_inicio,
+        db.func.date(Sale.fecha_venta) <= fecha_fin
+    )
+    if current_user.rol != 'admin':
+        ventas_query = ventas_query.filter(Sale.vendedor_id == current_user.id)
+    
+    ventas_periodo = ventas_query.order_by(Sale.fecha_venta.asc()).all()
+
     fecha_generacion = obtener_hora_bogota().strftime('%Y-%m-%d %H:%M')
 
     return render_template(
@@ -117,5 +127,6 @@ def reporte():
         resumen=resumen,
         fecha_inicio=fecha_inicio_str,
         fecha_fin=fecha_fin_str,
-        fecha_generacion=fecha_generacion
+        fecha_generacion=fecha_generacion,
+        ventas_periodo=ventas_periodo
     )

@@ -259,10 +259,13 @@
                     La venta está vacía actualmente.
                 </td>
             </tr>`;
-            totalAmountEl.innerText = '$0.00';
+            totalAmountEl.innerText = '$0';
             totalItemsEl.innerText = '0';
             return;
         }
+
+        // Función para formato COP
+        const formatoCOP = (num) => "$" + Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
         // Iterar los productos virtuales agregados y dibujar cascarones DOM
         carrito.forEach((item, index) => {
@@ -296,11 +299,11 @@
                 <td width="140">
                     <div class="input-group input-group-sm">
                         <span class="input-group-text bg-light">$</span>
-                        <input type="number" step="1" class="form-control text-end" value="${item.precio_final.toFixed(2)}" onchange="actualizarItem(${index}, 'precio_final', this.value)">
+                        <input type="number" step="1" class="form-control text-end" value="${Math.round(item.precio_final)}" onchange="actualizarItem(${index}, 'precio_final', this.value)">
                     </div>
                 </td>
                 <td class="text-end fw-bold text-brand-black" width="120">
-                    $${subtotal.toFixed(2)}
+                    ${formatoCOP(subtotal)}
                 </td>
                 <td class="text-center" width="70">
                     <button class="btn btn-sm text-danger" onclick="eliminarItem(${index})"><i class="fa-solid fa-trash"></i></button>
@@ -310,7 +313,7 @@
         });
 
         // Actualizar el DOM maestro Total
-        totalAmountEl.innerText = `$${granTotal.toFixed(2)}`;
+        totalAmountEl.innerText = formatoCOP(granTotal);
         totalItemsEl.innerText = totalItems;
     }
 

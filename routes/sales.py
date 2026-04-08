@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, flash, redirect, render_template, abort
+from flask import Blueprint, request, jsonify, flash, redirect, render_template, abort, url_for
 from flask_login import login_required, current_user
 from models import db, Product, ProductVariant, Sale, SaleDetail, obtener_hora_bogota
 from decorators import admin_required
@@ -171,6 +171,36 @@ def historial():
                            fecha_fin=fecha_fin)
 
 
+# Endpoint para Anular/Eliminar Venta Histórica
+@sales_bp.route('/eliminar/<int:sale_id>', methods=['POST'])
+@login_required
+@admin_required
+def eliminar_venta(sale_id):
+    venta = Sale.query.get_or_404(sale_id)
+    
+    try:
+        # Revertir Stock
+        for detalle in venta.detalles:
+            if detalle.variant_id:
+                variante = ProductVariant.query.with_for_update().get(detalle.variant_id)
+                if variante:
+                    variante.cantidad_stock += detalle.cantidad_vendida
+            else:
+                producto = Product.query.with_for_update().get(detalle.product_id)
+                if producto:
+                    producto.cantidad_stock += detalle.cantidad_vendida
+                    
+        # Eliminar Venta y Detalles (Cascada)
+        db.session.delete(venta)
+        db.session.commit()
+        flash('Venta anulada y stock devuelto exitosamente.', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Ocurrió un error al anular la venta.', 'danger')
+        
+    return redirect(url_for('sales_bp.historial'))
+
 # Endpoint Catálogo Estricto de solo vista para Operarios
 @sales_bp.route('/catalogo', methods=['GET'])
 @login_required 
@@ -191,3 +221,4 @@ def catalogo():
         productos = Product.query.filter_by(tipo_inventario='tienda').limit(50).all()
         
     return render_template('sales/catalogo.html', productos=productos, q=query_str)
+
