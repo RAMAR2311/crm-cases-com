@@ -284,6 +284,50 @@ def historial():
                            fecha_fin=fecha_fin)
 
 
+# Endpoint Visor de Ventas del Día para Cajeros (Solo lectura, se resetea cada día)
+@sales_bp.route('/ventas_hoy', methods=['GET'])
+@login_required
+def ventas_hoy():
+    # Obtener la fecha de hoy
+    hoy_bogota = obtener_hora_bogota().date()
+    # Para la consulta requerimos abarcar desde las 00:00:00 hasta las 23:59:59
+    inicio_dt = datetime.combine(hoy_bogota, datetime.min.time())
+    fin_dt = datetime.combine(hoy_bogota, datetime.max.time())
+    
+    # Consultar todas las ventas de este día (sin importar si es admin o vendedor)
+    ventas = Sale.query.options(joinedload(Sale.vendedor)).filter(
+        Sale.fecha_venta >= inicio_dt,
+        Sale.fecha_venta <= fin_dt
+    ).order_by(Sale.fecha_venta.desc()).all()
+    
+    # Acumuladores de las ventas de hoy
+    total_efectivo = Decimal('0')
+    total_transferencias = Decimal('0')
+    total_mixto = 0
+    
+    for v in ventas:
+        if v.pagos:
+            for pago in v.pagos:
+                if pago.metodo_pago == 'efectivo':
+                    total_efectivo += pago.monto
+                else: 
+                    total_transferencias += pago.monto
+            if len(v.pagos) > 1:
+                total_mixto += 1
+        else:
+            if v.metodo_pago == 'efectivo':
+                total_efectivo += v.monto_total
+            else:
+                total_transferencias += v.monto_total
+                
+    return render_template('sales/ventas_hoy.html',
+                           ventas=ventas,
+                           total_efectivo=total_efectivo,
+                           total_transferencias=total_transferencias,
+                           total_mixto=total_mixto,
+                           hoy=hoy_bogota.strftime('%Y-%m-%d'))
+
+
 # Endpoint para Anular/Eliminar Venta Histórica
 @sales_bp.route('/eliminar/<int:sale_id>', methods=['POST'])
 @login_required

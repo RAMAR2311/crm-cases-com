@@ -268,11 +268,12 @@ def eliminar_variante(id):
 @admin_or_bodega_required
 def descargar_plantilla():
     # Crear un DataFrame de estructura requerida
-    df = pd.DataFrame(columns=['sku', 'nombre', 'cantidad_stock', 'precio_costo', 'precio_minimo', 'precio_sugerido', 'observacion'])
+    df = pd.DataFrame(columns=['sku', 'nombre', 'subcategoria', 'cantidad_stock', 'precio_costo', 'precio_minimo', 'precio_sugerido', 'observacion'])
     
     # Filas de ejemplo para guiar al usuario
-    df.loc[0] = ['SKU-EXAMPLE-01', 'Audífonos Bluetooth Inalambricos', 50, 10.50, 14.00, 20.00, 'Color azul noche']
-    df.loc[1] = ['SKU-EXAMPLE-02', 'Cargador Original Carga Rápida', 100, 5.00, 7.50, 12.00, '']
+    df.loc[0] = ['SKU-EJEMPLO-01', 'Audífonos Bluetooth Inalambricos', '', 50, 10000, 14000, 20000, 'Producto sencillo sin variantes']
+    df.loc[1] = ['SKU-EJEMPLO-02', 'Cargador Original Carga Rápida', 'Color Negro', 100, 5000, 7500, 12000, 'Ejemplo de Variante/Subcategoría']
+    df.loc[2] = ['SKU-EJEMPLO-02', 'Cargador Original Carga Rápida', 'Color Blanco', 30, 5000, 7500, 12000, 'Se agrupará al mismo SKU']
     
     output = BytesIO()
     df.to_excel(output, index=False, engine='openpyxl')
@@ -314,6 +315,9 @@ def importar_inventario():
             flash(f"El archivo rechazado. Faltan las siguientes columnas: {', '.join(missing)}", 'danger')
             return redirect(url_for('inventory_bp.index'))
             
+        if 'subcategoria' not in df.columns:
+            df['subcategoria'] = ''
+            
         tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
         creados = 0
         actualizados = 0
@@ -329,6 +333,10 @@ def importar_inventario():
             minimo = float(row['precio_minimo']) if pd.notna(row['precio_minimo']) else 0.0
             sugerido = float(row['precio_sugerido']) if pd.notna(row['precio_sugerido']) else 0.0
             nombre_val = str(row['nombre']).strip()
+            
+            subcat_val = str(row['subcategoria']).strip() if 'subcategoria' in row and pd.notna(row['subcategoria']) else ''
+            if subcat_val.lower() == 'nan': subcat_val = ''
+            
             obs_val = str(row['observacion']).strip() if pd.notna(row['observacion']) else ''
             if obs_val.lower() == 'nan':
                 obs_val = ''
@@ -336,33 +344,75 @@ def importar_inventario():
             prod = Product.query.filter_by(sku=sku_raw, tipo_inventario=tipo).first()
             
             if prod:
-                # Si EXISTE, sumamos la cantidad como especificó y actualizamos los precios.
-                stock_anterior = prod.cantidad_stock
-                prod.cantidad_stock += cant
-                prod.precio_costo = costo
-                prod.precio_minimo = minimo
-                prod.precio_sugerido = sugerido
-                # Se podría o no actualizar el nombre, pero la instrucción dice "actualiza los precios"
-                prod.nombre = nombre_val 
-                prod.observacion = obs_val
-                
-                if cant > 0:
-                    ajuste = StockAdjustment(
-                        product_id=prod.id,
-                        admin_id=current_user.id,
-                        tipo_movimiento='Suma por Ingreso Masivo (Excel)',
-                        stock_anterior=stock_anterior,
-                        stock_nuevo=prod.cantidad_stock
-                    )
-                    db.session.add(ajuste)
-                actualizados += 1
+                # Si EXISTE el producto padre
+                if subcat_val:
+                    variante = ProductVariant.query.filter_by(product_id=prod.id, nombre_variante=subcat_val).first()
+                    if variante:
+                        # Actualizar variante existente
+                        stock_anterior = variante.cantidad_stock
+                        variante.cantidad_stock += cant
+                        variante.precio_costo = costo
+                        variante.precio_minimo = minimo
+                        variante.precio_sugerido = sugerido
+                        
+                        if cant > 0:
+                            ajuste = StockAdjustment(
+                                product_id=prod.id,
+                                admin_id=current_user.id,
+                                tipo_movimiento=f'Ingreso Masivo Subcategoría {subcat_val}',
+                                stock_anterior=stock_anterior,
+                                stock_nuevo=variante.cantidad_stock
+                            )
+                            db.session.add(ajuste)
+                        actualizados += 1
+                    else:
+                        # Crear nueva variante dentro del producto existente
+                        nueva_variante = ProductVariant(
+                            product_id=prod.id,
+                            nombre_variante=subcat_val,
+                            cantidad_stock=cant,
+                            precio_costo=costo,
+                            precio_minimo=minimo,
+                            precio_sugerido=sugerido
+                        )
+                        db.session.add(nueva_variante)
+                        # También sumar al historial para el Kardex
+                        ajuste = StockAdjustment(
+                            product_id=prod.id,
+                            admin_id=current_user.id,
+                            tipo_movimiento=f'Creación Excel Subcategoría {subcat_val}',
+                            stock_anterior=0,
+                            stock_nuevo=cant
+                        )
+                        db.session.add(ajuste)
+                        creados += 1
+                else:
+                    # Sin variante, actualizar producto base
+                    stock_anterior = prod.cantidad_stock
+                    prod.cantidad_stock += cant
+                    prod.precio_costo = costo
+                    prod.precio_minimo = minimo
+                    prod.precio_sugerido = sugerido
+                    prod.nombre = nombre_val 
+                    prod.observacion = obs_val
+                    
+                    if cant > 0:
+                        ajuste = StockAdjustment(
+                            product_id=prod.id,
+                            admin_id=current_user.id,
+                            tipo_movimiento='Suma por Ingreso Masivo (Excel)',
+                            stock_anterior=stock_anterior,
+                            stock_nuevo=prod.cantidad_stock
+                        )
+                        db.session.add(ajuste)
+                    actualizados += 1
             else:
-                # CREAR NUEVO
+                # CREAR NUEVO PRODUCTO MAESTRO
                 nuevo_prod = Product(
                     sku=sku_raw,
                     nombre=nombre_val,
                     tipo_inventario=tipo,
-                    cantidad_stock=cant,
+                    cantidad_stock=cant if not subcat_val else 0, # Si provee subcat, todo el stock se va a la subcat
                     precio_costo=costo,
                     precio_minimo=minimo,
                     precio_sugerido=sugerido,
@@ -371,14 +421,35 @@ def importar_inventario():
                 db.session.add(nuevo_prod)
                 db.session.flush() # Generar ID autoincremental
                 
-                ajuste = StockAdjustment(
-                    product_id=nuevo_prod.id,
-                    admin_id=current_user.id,
-                    tipo_movimiento='Creación Inicial (Excel)',
-                    stock_anterior=0,
-                    stock_nuevo=nuevo_prod.cantidad_stock
-                )
-                db.session.add(ajuste)
+                if subcat_val:
+                    # Insertar variante atada al nuevo producto
+                    nueva_variante = ProductVariant(
+                        product_id=nuevo_prod.id,
+                        nombre_variante=subcat_val,
+                        cantidad_stock=cant,
+                        precio_costo=costo,
+                        precio_minimo=minimo,
+                        precio_sugerido=sugerido
+                    )
+                    db.session.add(nueva_variante)
+                    
+                    ajuste = StockAdjustment(
+                        product_id=nuevo_prod.id,
+                        admin_id=current_user.id,
+                        tipo_movimiento=f'Cr. Inicial Excel + Subcat {subcat_val}',
+                        stock_anterior=0,
+                        stock_nuevo=cant
+                    )
+                    db.session.add(ajuste)
+                else:
+                    ajuste = StockAdjustment(
+                        product_id=nuevo_prod.id,
+                        admin_id=current_user.id,
+                        tipo_movimiento='Creación Inicial (Excel)',
+                        stock_anterior=0,
+                        stock_nuevo=nuevo_prod.cantidad_stock
+                    )
+                    db.session.add(ajuste)
                 creados += 1
                 
         db.session.commit()

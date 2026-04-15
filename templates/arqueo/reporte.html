@@ -82,16 +82,14 @@
                 </div>
             </div>
 
-            <!-- Tabla Desglosada Registro a Registro -->
+        <!-- Tabla Desglosada Registro a Registro -->
             <h5 class="fw-bold text-brand-black mb-3 border-bottom pb-2">📋 Desglose Analítico por Cierres de Día</h5>
             <div class="table-responsive">
                 <table class="table table-bordered table-sm fw-semibold mb-0 table-hover align-middle">
                     <thead class="table-light text-center text-uppercase" style="font-size: 0.85rem;">
                         <tr>
                             <th width="10%">Fecha</th>
-                            {% if current_user.rol == 'admin' %}
                             <th width="15%">Cajero(a)</th>
-                            {% endif %}
                             <th width="12%" class="text-primary">Base Inicial</th>
                             <th width="12%" class="text-success">Ventas Cash</th>
                             <th width="12%" class="text-info">Transf Bancos</th>
@@ -103,11 +101,7 @@
                         {% for arqueo in arqueos %}
                         <tr>
                             <td class="text-center text-secondary">{{ arqueo.fecha_arqueo }}</td>
-                            
-                            {% if current_user.rol == 'admin' %}
                             <td class="text-truncate" style="max-width:120px;" title="{{ arqueo.cajero.nombre }}">{{ arqueo.cajero.nombre }}</td>
-                            {% endif %}
-
                             <td class="text-end text-primary fw-bold">${{ (arqueo.base_inicial)|cop }}</td>
                             <td class="text-end text-success fw-bold">${{ (arqueo.total_efectivo_sistema)|cop }}</td>
                             <td class="text-end text-info fw-bold">${{ (arqueo.total_transferencia_sistema)|cop }}</td>

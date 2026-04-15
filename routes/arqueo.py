@@ -54,10 +54,15 @@ def nuevo():
     ).all()
     gastos_automaticos = float(sum(g.monto for g in gastos_diarios_registros))
 
-    # Verificar si ya existe arqueo para esa fecha por este vendedor (Opcional, pero recomendado)
-    arqueo_existente = ArqueoCaja.query.filter_by(fecha_arqueo=fecha_seleccionada, vendedor_id=current_user.id).first()
+    # Verificar si ya existe un arqueo GLOBAL para esa fecha (unificado para todos los usuarios)
+    arqueo_existente = ArqueoCaja.query.filter_by(fecha_arqueo=fecha_seleccionada).first()
 
     if request.method == 'POST':
+        # Doble verificación en el backend para evitar duplicados por concurrencia
+        if ArqueoCaja.query.filter_by(fecha_arqueo=fecha_seleccionada).first():
+            flash('Ya existe un arqueo cerrado para esta fecha. No se puede duplicar.', 'warning')
+            return redirect(url_for('arqueo_bp.reporte', fecha_inicio=fecha_str, fecha_fin=fecha_str))
+
         base_inicial = float(request.form.get('base_inicial', 0.0))
         
         # Recalcular gastos automáticos por seguridad en el backend
@@ -110,11 +115,8 @@ def reporte():
         fecha_inicio = obtener_hora_bogota().date()
         fecha_fin = obtener_hora_bogota().date()
 
-    # Si es admin puede ver todos los arqueos, si no, solo los suyos
+    # Arqueo unificado: todos los usuarios ven los mismos arqueos (ya no se filtra por vendedor)
     query = ArqueoCaja.query.filter(ArqueoCaja.fecha_arqueo >= fecha_inicio, ArqueoCaja.fecha_arqueo <= fecha_fin)
-    
-    if current_user.rol != 'admin':
-        query = query.filter(ArqueoCaja.vendedor_id == current_user.id)
 
     arqueos = query.order_by(ArqueoCaja.fecha_arqueo.desc()).all()
 
@@ -129,13 +131,11 @@ def reporte():
     resumen['total_recaudado'] = resumen['total_efectivo'] + resumen['total_transferencia']
     resumen['efectivo_esperado'] = (resumen['total_base'] + resumen['total_efectivo']) - resumen['total_gastos']
 
-    # Obtener todas las ventas del periodo para el detalle en la "tirilla"
+    # Obtener todas las ventas del periodo para el detalle en la "tirilla" (unificado)
     ventas_query = Sale.query.filter(
         db.func.date(Sale.fecha_venta) >= fecha_inicio,
         db.func.date(Sale.fecha_venta) <= fecha_fin
     )
-    if current_user.rol != 'admin':
-        ventas_query = ventas_query.filter(Sale.vendedor_id == current_user.id)
     
     ventas_periodo = ventas_query.order_by(Sale.fecha_venta.asc()).all()
 

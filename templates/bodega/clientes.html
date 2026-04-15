@@ -36,11 +36,55 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <a href="{{ url_for('bodega_bp.cliente_detalle', id=c.id) }}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
-                            <i class="fa-solid fa-eye me-1"></i> Ver Estado de Cuenta
-                        </a>
+                        <div class="d-flex gap-2 justify-content-center">
+                            <a href="{{ url_for('bodega_bp.cliente_detalle', id=c.id) }}" class="btn btn-sm btn-outline-dark rounded-pill px-3">
+                                <i class="fa-solid fa-eye me-1"></i> Ver Cuenta
+                            </a>
+                            {% if c.deuda_total <= 0 %}
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalEliminarCliente{{ c.id }}">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" disabled title="No se puede eliminar: tiene deuda pendiente">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                            {% endif %}
+                        </div>
                     </td>
                 </tr>
+
+                {% if c.deuda_total <= 0 %}
+                <!-- Modal de Confirmación para Eliminar Cliente -->
+                <div class="modal fade" id="modalEliminarCliente{{ c.id }}" tabindex="-1" aria-labelledby="modalEliminarClienteLabel{{ c.id }}" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
+                            <div class="modal-header bg-danger text-white border-0">
+                                <h5 class="modal-title fw-bold" id="modalEliminarClienteLabel{{ c.id }}">
+                                    <i class="fa-solid fa-triangle-exclamation me-2"></i> Confirmar Eliminación
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <p class="mb-2">¿Estás seguro de que deseas eliminar al cliente:</p>
+                                <p class="fw-bold fs-5 text-brand-black mb-3">{{ c.nombre_o_razon_social }}</p>
+                                <div class="alert alert-warning border-0 rounded-3 mb-0">
+                                    <i class="fa-solid fa-info-circle me-1"></i> Esta acción eliminará también todas sus facturas y registros asociados. <strong>No se puede deshacer.</strong>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-0 pt-0">
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                                <form action="{{ url_for('bodega_bp.eliminar_cliente', id=c.id) }}" method="POST" class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
+                                        <i class="fa-solid fa-trash-can me-1"></i> Sí, Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
                 {% else %}
                 <tr>
                     <td colspan="5" class="text-center py-5 text-muted">

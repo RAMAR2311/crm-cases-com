@@ -224,10 +224,12 @@ class FacturaBodegaDetalle(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     factura_id = db.Column(db.Integer, db.ForeignKey('facturas_bodega.id'), nullable=False)
     producto_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey('product_variants.id'), nullable=True)
     cantidad = db.Column(db.Integer, nullable=False)
     precio_venta = db.Column(db.Numeric(10, 2), nullable=True) # Opcional para futuros análisis
 
     producto = db.relationship('Product', backref='detalles_factura_bodega', lazy=True)
+    variante = db.relationship('ProductVariant', backref='detalles_factura_bodega_rel', lazy=True)
 
 class AbonoBodega(db.Model):
     __tablename__ = 'abonos_bodega'
