@@ -13,7 +13,12 @@
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Fijar al Cliente <span class="text-danger">*</span></label>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold mb-0">Fijar al Cliente <span class="text-danger">*</span></label>
+                        <a href="{{ url_for('bodega_bp.nuevo_cliente') }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Se abrirá en una nueva pestaña. Recuerda recargar esta página después de crearlo para que aparezca.">
+                            <i class="fa-solid fa-plus me-1"></i> Nuevo Cliente
+                        </a>
+                    </div>
                     <select name="cliente_id" class="form-select border-0 bg-light shadow-sm" required>
                         <option value="" disabled selected>-- Selecciona el destinatario --</option>
                         {% for c in clientes %}
@@ -22,13 +27,24 @@
                     </select>
                 </div>
                 
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label fw-bold">Número de Factura o Remisión <span class="text-danger">*</span></label>
-                        <input type="text" name="numero_factura" class="form-control bg-light border-0 shadow-sm" required placeholder="Ej: FAC-987019">
+                <div class="row g-3 mb-4">
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label fw-bold">Número Factura <span class="text-danger">*</span></label>
+                        <input type="text" name="numero_factura" class="form-control bg-light border-0 shadow-sm" required placeholder="Ej: FAC-987">
                     </div>
-                    <div class="col-md-6 mb-4">
-                        <label class="form-label fw-bold">Monto Total de la Deuda <span class="text-danger">*</span></label>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label fw-bold">Fecha de Factura <span class="text-danger">*</span></label>
+                        <input type="date" name="fecha_factura" class="form-control bg-light border-0 shadow-sm" required>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label fw-bold">Modalidad <span class="text-danger">*</span></label>
+                        <select name="modalidad_pago" class="form-select bg-light border-0 shadow-sm" required>
+                            <option value="credito">⏳ A Crédito</option>
+                            <option value="contado">💵 De Contado</option>
+                        </select>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <label class="form-label fw-bold">Monto Total <span class="text-danger">*</span></label>
                         <div class="input-group shadow-sm">
                             <span class="input-group-text border-0 bg-light text-success fw-bold">$</span>
                             <input type="number" step="1" min="0" name="monto_total" id="inputMontoTotal" class="form-control bg-light border-0" required placeholder="0.00" title="Calculado automáticamente, pero puedes ajustarlo si hay descuentos finales">
@@ -76,8 +92,8 @@
                 </div>
 
                 <div class="mb-4">
-                    <label class="form-label fw-bold border-bottom pb-2 w-100">Documento Escaneado o PDF <span class="text-danger">*</span></label>
-                    <input class="form-control form-control-lg bg-light border-0 shadow-sm mt-3" type="file" name="archivo_factura" accept=".pdf,.png,.jpg,.jpeg,.webp" required>
+                    <label class="form-label fw-bold border-bottom pb-2 w-100">Documento Escaneado o PDF <span class="text-muted">(Opcional)</span></label>
+                    <input class="form-control form-control-lg bg-light border-0 shadow-sm mt-3" type="file" name="archivo_factura" accept=".pdf,.png,.jpg,.jpeg,.webp">
                     <small class="text-muted mt-2 d-block"><i class="fa-solid fa-circle-info me-1"></i> Formatos PDF, JPG, PNG. Máx. 3MB.</small>
                 </div>
 
@@ -329,5 +345,13 @@
         }
         document.getElementById('facturaForm').submit();
     }
+
+    // Set default date to today
+    document.addEventListener('DOMContentLoaded', function() {
+        const dateInput = document.querySelector('input[name="fecha_factura"]');
+        if (dateInput && !dateInput.value) {
+            dateInput.value = new Date().toISOString().split('T')[0];
+        }
+    });
 </script>
 {% endblock %}

@@ -204,7 +204,7 @@ class FacturaBodega(db.Model):
     cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
     usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     numero_factura = db.Column(db.String(100), nullable=False)
-    archivo_ruta = db.Column(db.String(255), nullable=False)
+    archivo_ruta = db.Column(db.String(255), nullable=True)
     monto_total = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
     estado = db.Column(db.String(50), nullable=False, default='Pendiente') # Pendiente, Parcial, Pagado
     fecha_subida = db.Column(db.DateTime, default=obtener_hora_bogota)

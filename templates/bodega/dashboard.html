@@ -41,7 +41,9 @@
                                 {% else %}
                                     <span class="badge bg-danger rounded-pill px-2 py-1">Pend.</span>
                                 {% endif %}
+                                {% if f.archivo_ruta %}
                                 <a href="{{ url_for('static', filename=f.archivo_ruta) }}" target="_blank" class="btn btn-outline-secondary btn-sm ms-2 rounded-pill"><i class="fa-solid fa-download"></i></a>
+                                {% endif %}
                             </td>
                         </tr>
                         {% else %}

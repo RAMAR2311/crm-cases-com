@@ -54,9 +54,11 @@
                     </td>
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
+                            {% if f.archivo_ruta %}
                             <a href="{{ url_for('static', filename=f.archivo_ruta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill" title="Ver Documento">
                                 <i class="fa-solid fa-file-pdf"></i> Archivo
                             </a>
+                            {% endif %}
                             
                             {% if f.saldo_pendiente > 0 %}
                             <button type="button" class="btn btn-sm btn-success rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#abonoModal{{ f.id }}">
@@ -68,6 +70,10 @@
                             
                             {% if f.abonos|length > 0 %}
                             <button class="btn btn-sm btn-outline-info rounded-pill" data-bs-toggle="modal" data-bs-target="#historyModal{{ f.id }}">Historial</button>
+                            {% endif %}
+
+                            {% if f.detalles|length > 0 %}
+                            <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#productosModal{{ f.id }}"><i class="fa-solid fa-box-open me-1"></i> Productos</button>
                             {% endif %}
                         </div>
                     </td>
@@ -161,6 +167,44 @@
                             </tr>
                             {% else %}
                             <tr><td colspan="5" class="text-muted text-center pt-3">No hay abonos registrados en esta factura.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="productosModal{{ f.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header border-0 bg-light">
+                    <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-box-open me-2"></i>Productos Facturados - Factura #{{ f.numero_factura }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-start">
+                    <table class="table table-sm table-striped">
+                        <thead>
+                            <tr>
+                                <th>CÓDIGO (SKU)</th>
+                                <th>PRODUCTO</th>
+                                <th>SUBCATEGORÍA</th>
+                                <th>CANTIDAD</th>
+                                <th>PRECIO VENTA</th>
+                                <th>SUBTOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for det in f.detalles %}
+                            <tr>
+                                <td>{{ det.producto.sku }}</td>
+                                <td>{{ det.producto.nombre }}</td>
+                                <td>{{ det.variante.nombre_variante if det.variante else 'N/A' }}</td>
+                                <td class="fw-bold">{{ det.cantidad }}</td>
+                                <td>${{ (det.precio_venta)|cop }}</td>
+                                <td class="fw-bold text-success">${{ (det.cantidad * det.precio_venta)|cop }}</td>
+                            </tr>
+                            {% else %}
+                            <tr><td colspan="6" class="text-muted text-center pt-3">No hay productos registrados en esta factura.</td></tr>
                             {% endfor %}
                         </tbody>
                     </table>
