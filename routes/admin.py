@@ -16,31 +16,33 @@ def vendedores():
         email = request.form.get('email')
         telefono = request.form.get('telefono')
         password = request.form.get('password')
+        rol = request.form.get('rol', 'vendedor')
         
         # Se previene registrar vendedores con un mismo email para preservar la unicidad de las credenciales de acceso
         if User.query.filter_by(email=email).first():
-            flash('Acción Denegada: Ese correo ya le pertenece a otro vendedor.', 'danger')
+            flash('Acción Denegada: Ese correo ya le pertenece a otro usuario.', 'danger')
         else:
             try:
                 # Se aplica un hash a la contraseña para evitar guardar texto plano, previniendo exposición en caso de brechas
-                nuevo_vendedor = User(
+                nuevo_usuario = User(
                     nombre=nombre.strip(),
                     email=email.strip(),
                     telefono=telefono.strip() if telefono else None,
                     password_hash=generate_password_hash(password),
-                    rol='vendedor'
+                    rol=rol
                 )
-                db.session.add(nuevo_vendedor)
+                db.session.add(nuevo_usuario)
                 db.session.commit()
-                flash(f"¡Vendedor '{nombre}' registrado y autorizado para Cajas!", "success")
+                flash(f"¡Usuario '{nombre}' registrado con rol '{rol}' exitosamente!", "success")
             except Exception as e:
                 db.session.rollback()
-                flash('Ocurrió un error en la base de datos al intentar registrar al vendedor.', 'danger')
+                flash('Ocurrió un error en la base de datos al intentar registrar al usuario.', 'danger')
             
         return redirect(url_for('admin_bp.vendedores'))
         
     # Se pasa la lista para poblar la tabla HTML de gestión de personal
-    lista_vendedores = User.query.filter_by(rol='vendedor').order_by(User.nombre).all()
+    # Mostramos todos los usuarios que no son admin para gestión centralizada
+    lista_vendedores = User.query.filter(User.rol != 'admin').order_by(User.nombre).all()
     return render_template('admin/vendedores.html', vendedores=lista_vendedores)
 
 @admin_bp.route('/dashboard')

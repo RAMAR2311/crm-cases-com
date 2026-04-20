@@ -14,8 +14,45 @@ inventory_bp = Blueprint('inventory_bp', __name__)
 @admin_or_bodega_required
 def index():
     tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
-    productos = Product.query.filter_by(tipo_inventario=tipo).order_by(Product.nombre).all()
-    return render_template('inventory/index.html', productos=productos)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    # Paginación del listado principal
+    paginacion = Product.query.filter_by(tipo_inventario=tipo).order_by(Product.nombre).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    productos = paginacion.items
+
+    # --- KPIs de Inventario ---
+    # Se calcula sobre TODO el inventario (no solo la página actual)
+    todos = Product.query.filter_by(tipo_inventario=tipo).all()
+    total_productos = len(todos)
+
+    valor_costo = 0.0
+    valor_sugerido = 0.0
+    for p in todos:
+        if p.variantes:
+            for v in p.variantes:
+                costo = float(v.precio_costo or p.precio_costo or 0)
+                sugerido = float(v.precio_sugerido or p.precio_sugerido or 0)
+                stock = v.cantidad_stock or 0
+                valor_costo += costo * stock
+                valor_sugerido += sugerido * stock
+        else:
+            costo = float(p.precio_costo or 0)
+            sugerido = float(p.precio_sugerido or 0)
+            stock = p.cantidad_stock or 0
+            valor_costo += costo * stock
+            valor_sugerido += sugerido * stock
+
+    return render_template(
+        'inventory/index.html',
+        productos=productos,
+        paginacion=paginacion,
+        total_productos=total_productos,
+        valor_costo=valor_costo,
+        valor_sugerido=valor_sugerido,
+    )
 
 @inventory_bp.route('/nuevo', methods=['GET', 'POST'])
 @login_required

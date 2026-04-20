@@ -33,3 +33,14 @@ def admin_or_bodega_required(f):
             abort(403)
         return f(*args, **kwargs)
     return decorated_function
+
+def any_bodega_required(f):
+    """
+    Permite acceso tanto al perfil 'bodega' como al 'vendedor_bodega' (y admin).
+    """
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if current_user.rol not in ['admin', 'bodega', 'vendedor_bodega']:
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function

@@ -22,7 +22,12 @@
                     <select name="cliente_id" class="form-select border-0 bg-light shadow-sm" required>
                         <option value="" disabled selected>-- Selecciona el destinatario --</option>
                         {% for c in clientes %}
-                            <option value="{{ c.id }}">{{ c.nombre_o_razon_social }} - (NIT: {{ c.documento_o_nit }})</option>
+                            <option value="{{ c.id }}">
+                                {{ c.nombre_o_razon_social }} - (NIT: {{ c.documento_o_nit }})
+                                {% if current_user.rol != 'vendedor_bodega' or c.creado_por_id == current_user.id %}
+                                    | [{{ c.estado_global }}: ${{ c.deuda_total|cop }}]
+                                {% endif %}
+                            </option>
                         {% endfor %}
                     </select>
                 </div>

@@ -8,7 +8,7 @@
 <div class="row g-4 mb-4">
     <div class="col-md-6 col-lg-4">
         <div class="card card-custom h-100 border-0 p-4 text-center">
-            <h5 class="text-muted fw-bold">Total Clientes</h5>
+            <h5 class="text-muted fw-bold">{% if current_user.rol == 'vendedor_bodega' %}Mis Clientes{% else %}Total Clientes{% endif %}</h5>
             <h1 class="display-4 fw-bolder text-brand-black" style="color: var(--brand-blue) !important;">{{ clientes_count }}</h1>
             <a href="{{ url_for('bodega_bp.nuevo_cliente') }}" class="btn btn-blue rounded-pill mt-3"><i class="fa-solid fa-plus me-1"></i> Nuevo Cliente</a>
         </div>

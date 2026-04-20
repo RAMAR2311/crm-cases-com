@@ -222,6 +222,20 @@
                     <li class="nav-item">
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:20px; text-align:center;"></i> Subir Factura</a>
                     </li>
+                {% elif current_user.rol == 'vendedor_bodega' %}
+                    <!-- Vistas para el Vendedor de Bodega (Sin Inventario) -->
+                    <li class="nav-item">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.dashboard') }}"><i class="fa-solid fa-house-chimney text-brand-blue me-2" style="width:20px; text-align:center;"></i> Mi Panel</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.clientes') }}"><i class="fa-solid fa-address-book text-muted me-2" style="width:20px; text-align:center;"></i> Mis Clientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nuevo_cliente') }}"><i class="fa-solid fa-user-plus text-muted me-2" style="width:20px; text-align:center;"></i> Crear Cliente</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:20px; text-align:center;"></i> Facturar a Bodega</a>
+                    </li>
                 {% endif %}
             </ul>
             

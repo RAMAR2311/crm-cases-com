@@ -378,4 +378,3 @@ def catalogo():
         productos = Product.query.filter_by(tipo_inventario='tienda').limit(50).all()
         
     return render_template('sales/catalogo.html', productos=productos, q=query_str)
-

@@ -73,7 +73,7 @@ def create_app():
         if current_user.rol == 'admin':
             return redirect(url_for('admin_bp.dashboard'))
             
-        if current_user.rol == 'bodega':
+        if current_user.rol == 'bodega' or current_user.rol == 'vendedor_bodega':
             return redirect(url_for('bodega_bp.dashboard'))
             
         # Por defecto, Vendedores van directo a Cajas

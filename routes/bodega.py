@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
 from flask_login import login_required, current_user
-from decorators import bodega_required
+from decorators import any_bodega_required
 from models import db, Cliente, FacturaBodega, AbonoBodega, Product, StockAdjustment, FacturaBodegaDetalle
 import os
 from werkzeug.utils import secure_filename
@@ -14,15 +14,21 @@ def allowed_file(filename):
 
 @bodega_bp.route('/dashboard')
 @login_required
-@bodega_required
+@any_bodega_required
 def dashboard():
-    total_clientes = Cliente.query.count()
-    facturas_recientes = FacturaBodega.query.order_by(FacturaBodega.fecha_subida.desc()).limit(10).all()
+    if current_user.rol == 'vendedor_bodega':
+        total_clientes = Cliente.query.filter_by(creado_por_id=current_user.id).count()
+        facturas_recientes = FacturaBodega.query.filter_by(usuario_id=current_user.id).order_by(FacturaBodega.fecha_subida.desc()).limit(10).all()
+    else:
+        # Rol 'bodega' o 'admin' ve todo
+        total_clientes = Cliente.query.count()
+        facturas_recientes = FacturaBodega.query.order_by(FacturaBodega.fecha_subida.desc()).limit(10).all()
+    
     return render_template('bodega/dashboard.html', clientes_count=total_clientes, facturas=facturas_recientes)
 
 @bodega_bp.route('/clientes/nuevo', methods=['GET', 'POST'])
 @login_required
-@bodega_required
+@any_bodega_required
 def nuevo_cliente():
     if request.method == 'POST':
         nombre = request.form.get('nombre')
@@ -44,7 +50,8 @@ def nuevo_cliente():
             documento_o_nit=documento.strip(),
             telefono=telefono.strip(),
             email=email.strip() if email else None,
-            direccion=direccion.strip() if direccion else None
+            direccion=direccion.strip() if direccion else None,
+            creado_por_id=current_user.id
         )
         try:
             db.session.add(nuevo)
@@ -59,7 +66,7 @@ def nuevo_cliente():
 
 @bodega_bp.route('/clientes/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
-@bodega_required
+@any_bodega_required
 def editar_cliente(id):
     cliente = Cliente.query.get_or_404(id)
     if request.method == 'POST':
@@ -96,7 +103,7 @@ def editar_cliente(id):
 
 @bodega_bp.route('/facturas/nueva', methods=['GET', 'POST'])
 @login_required
-@bodega_required
+@any_bodega_required
 def nueva_factura():
     if request.method == 'POST':
         cliente_id = request.form.get('cliente_id')
@@ -254,7 +261,7 @@ def nueva_factura():
 
 @bodega_bp.route('/api/producto/<path:sku>', methods=['GET'])
 @login_required
-@bodega_required
+@any_bodega_required
 def api_buscar_producto_bodega(sku):
     producto = Product.query.filter_by(sku=sku, tipo_inventario='bodega').first()
     
@@ -274,21 +281,26 @@ def api_buscar_producto_bodega(sku):
 
 @bodega_bp.route('/clientes')
 @login_required
-@bodega_required
+@any_bodega_required
 def clientes():
-    lista_clientes = Cliente.query.order_by(Cliente.nombre_o_razon_social).all()
+    if current_user.rol == 'vendedor_bodega':
+        # Vendedor de bodega solo ve sus propios clientes en el listado de resumen
+        lista_clientes = Cliente.query.filter_by(creado_por_id=current_user.id).order_by(Cliente.nombre_o_razon_social).all()
+    else:
+        # Bodega ve todo
+        lista_clientes = Cliente.query.order_by(Cliente.nombre_o_razon_social).all()
     return render_template('bodega/clientes.html', clientes=lista_clientes)
 
 @bodega_bp.route('/clientes/<int:id>')
 @login_required
-@bodega_required
+@any_bodega_required
 def cliente_detalle(id):
     cliente = Cliente.query.get_or_404(id)
     return render_template('bodega/cliente_detalle.html', cliente=cliente)
 
 @bodega_bp.route('/facturas/<int:factura_id>/abono', methods=['POST'])
 @login_required
-@bodega_required
+@any_bodega_required
 def nuevo_abono(factura_id):
     factura = FacturaBodega.query.get_or_404(factura_id)
     monto_abono = float(request.form.get('monto_abono', 0.0))
@@ -331,7 +343,7 @@ def nuevo_abono(factura_id):
 
 @bodega_bp.route('/clientes/<int:id>/eliminar', methods=['POST'])
 @login_required
-@bodega_required
+@any_bodega_required
 def eliminar_cliente(id):
     cliente = Cliente.query.get_or_404(id)
 
