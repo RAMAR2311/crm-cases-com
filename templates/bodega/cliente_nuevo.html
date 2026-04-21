@@ -9,7 +9,7 @@
         </div>
 
         <div class="card card-custom p-4 border-0">
-            <form method="POST" action="{{ url_for('bodega_bp.nuevo_cliente') }}">
+            <form method="POST" action="{{ url_for('bodega_bp.nuevo_cliente', **request.args) }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 
                 <div class="mb-3">

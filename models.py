@@ -189,10 +189,24 @@ class Cliente(db.Model):
     fecha_registro = db.Column(db.DateTime, default=obtener_hora_bogota)
 
     facturas = db.relationship('FacturaBodega', backref='cliente', lazy=True)
+    abonos = db.relationship('AbonoBodega', backref='cliente', lazy=True)
+
+    @property
+    def total_contado(self):
+        return sum(f.monto_total for f in self.facturas if f.modalidad == 'contado')
+
+    @property
+    def total_credito(self):
+        return sum(f.monto_total for f in self.facturas if f.modalidad == 'credito')
+
+    @property
+    def total_abonado(self):
+        return sum(a.monto for a in self.abonos)
 
     @property
     def deuda_total(self):
-        return sum(f.saldo_pendiente for f in self.facturas)
+        # La deuda es el total de crédito menos lo abonado globalmente
+        return self.total_credito - self.total_abonado
 
     @property
     def estado_global(self):
@@ -207,6 +221,7 @@ class FacturaBodega(db.Model):
     numero_factura = db.Column(db.String(100), nullable=False)
     archivo_ruta = db.Column(db.String(255), nullable=True)
     monto_total = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    modalidad = db.Column(db.String(50), nullable=False, default='credito') # contado o credito
     estado = db.Column(db.String(50), nullable=False, default='Pendiente') # Pendiente, Parcial, Pagado
     fecha_subida = db.Column(db.DateTime, default=obtener_hora_bogota)
 
@@ -216,8 +231,11 @@ class FacturaBodega(db.Model):
 
     @property
     def saldo_pendiente(self):
-        total_abonado = sum(abono.monto for abono in self.abonos)
-        return float(self.monto_total) - float(total_abonado)
+        # Esta propiedad se vuelve menos relevante con abonos globales, 
+        # pero podemos mantenerla como una referencia teórica si no hay abonos.
+        # Sin embargo, para no romper código existente, la dejamos así por ahora.
+        total_abonado_factura = sum(abono.monto for abono in self.abonos) or 0
+        return self.monto_total - total_abonado_factura
 
 class FacturaBodegaDetalle(db.Model):
     __tablename__ = 'facturas_bodega_detalles'
@@ -236,7 +254,8 @@ class AbonoBodega(db.Model):
     __tablename__ = 'abonos_bodega'
 
     id = db.Column(db.Integer, primary_key=True)
-    factura_id = db.Column(db.Integer, db.ForeignKey('facturas_bodega.id'), nullable=False)
+    cliente_id = db.Column(db.Integer, db.ForeignKey('clientes.id'), nullable=False)
+    factura_id = db.Column(db.Integer, db.ForeignKey('facturas_bodega.id'), nullable=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     monto = db.Column(db.Numeric(10, 2), nullable=False)
     metodo_pago = db.Column(db.String(50), nullable=False, default='efectivo')

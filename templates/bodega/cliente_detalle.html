@@ -11,13 +11,37 @@
 
 <div class="row g-4 mb-4">
     <div class="col-md-6 col-lg-3">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm" style="border-left: 6px solid var(--brand-pink) !important;">
-            <p class="text-muted fw-bold text-uppercase mb-1 small"><i class="fa-solid fa-file-invoice-dollar me-1"></i> Deuda Global Pendiente</p>
-            <h2 class="fw-bolder m-0 {% if cliente.deuda_total > 0 %}text-danger{% else %}text-success{% endif %}">
-                ${{ (cliente.deuda_total)|cop }}
-            </h2>
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 4px solid #00c853 !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1 small">Total Contado</p>
+            <h4 class="fw-bolder m-0 text-success">${{ cliente.total_contado|cop }}</h4>
         </div>
     </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 4px solid #ffab00 !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1 small">Total Crédito</p>
+            <h4 class="fw-bolder m-0 text-warning">${{ cliente.total_credito|cop }}</h4>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 4px solid #2979ff !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1 small">Total Abonado</p>
+            <h4 class="fw-bolder m-0 text-primary">${{ cliente.total_abonado|cop }}</h4>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 6px solid var(--brand-pink) !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1 small">Saldo Deudor Actual</p>
+            <h3 class="fw-bolder m-0 {% if cliente.deuda_total > 0 %}text-danger{% else %}text-success{% endif %}">
+                ${{ (cliente.deuda_total)|cop }}
+            </h3>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end mb-4">
+    <button type="button" class="btn btn-blue rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#abonoGlobalModal">
+        <i class="fa-solid fa-plus-circle me-2"></i>Registrar Abono a la Cuenta
+    </button>
 </div>
 
 <div class="card card-custom border-0 p-0 shadow-sm overflow-hidden mb-4">
@@ -31,7 +55,7 @@
                     <th class="ps-4">FACTURA N°</th>
                     <th>FECHA EMISIÓN</th>
                     <th class="text-end">MONTO TOTAL</th>
-                    <th class="text-end">SALDO PENDIENTE</th>
+                    <th class="text-center">MODALIDAD</th>
                     <th class="text-center">ESTADO</th>
                     <th class="text-center">ACCIONES</th>
                 </tr>
@@ -42,7 +66,13 @@
                     <td class="ps-4 fw-bold text-brand-black">#{{ f.numero_factura }}</td>
                     <td class="text-muted"><small>{{ f.fecha_subida.strftime('%d/%m/%Y') }}</small></td>
                     <td class="text-end fw-semibold text-brand-black">${{ (f.monto_total)|cop }}</td>
-                    <td class="text-end fw-bolder text-danger">${{ (f.saldo_pendiente)|cop }}</td>
+                    <td class="text-center">
+                        {% if f.modalidad == 'contado' %}
+                            <span class="badge bg-light text-success border border-success rounded-pill px-3 py-2">💵 Contado</span>
+                        {% else %}
+                            <span class="badge bg-light text-warning border border-warning rounded-pill px-3 py-2">⏳ Crédito</span>
+                        {% endif %}
+                    </td>
                     <td class="text-center">
                         {% if f.estado == 'Pagado' %}
                             <span class="badge bg-success rounded-pill px-3 py-2">Pagado</span>
@@ -75,12 +105,59 @@
                             {% if f.detalles|length > 0 %}
                             <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#productosModal{{ f.id }}"><i class="fa-solid fa-box-open me-1"></i> Productos</button>
                             {% endif %}
+
+                            <form method="POST" action="{{ url_for('bodega_bp.eliminar_factura', id=f.id) }}" class="d-inline" onsubmit="return confirm('¿Estás seguro de eliminar esta factura? El stock será reintegrado automáticamente y los abonos se perderán.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill" title="Eliminar Factura">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
                     <td colspan="6" class="text-center py-5 text-muted">Aún no se han anexado facturas para este cliente.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="card card-custom border-0 p-0 shadow-sm overflow-hidden mb-4">
+    <div class="d-flex justify-content-between align-items-center bg-light p-3 border-bottom">
+        <h5 class="fw-bold m-0"><i class="fa-solid fa-timeline text-brand-pink me-2"></i> Historial Completo de Abonos (Cuenta Global)</h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0 align-middle">
+            <thead class="bg-light text-muted">
+                <tr>
+                    <th class="ps-4">FECHA Y HORA</th>
+                    <th>REFERENCIA</th>
+                    <th>MÉTODO</th>
+                    <th class="text-end">MONTO</th>
+                    <th>OBSERVACIÓN</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for abono in cliente.abonos|sort(attribute='fecha_abono', reverse=True) %}
+                <tr>
+                    <td class="ps-4 text-muted"><small>{{ abono.fecha_abono.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                    <td>
+                        {% if abono.factura %}
+                            <span class="badge bg-light text-dark border rounded-pill">Factura #{{ abono.factura.numero_factura }}</span>
+                        {% else %}
+                            <span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill">Abono a Cuenta</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-capitalize">{{ abono.metodo_pago }}</td>
+                    <td class="text-end fw-bold text-success">${{ abono.monto|cop }}</td>
+                    <td class="text-muted small">{{ abono.observacion or '-' }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">No se han registrado abonos en esta cuenta aún.</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -108,7 +185,7 @@
                             <label class="form-label fw-bold">Monto a Abonar</label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light border-0">$</span>
-                                <input type="number" step="1" min="0.01" max="{{ "%.0f"|format(f.saldo_pendiente) }}" name="monto_abono" class="form-control border-0 bg-light" required placeholder="0.00">
+                                <input type="number" step="any" min="1" max="{{ f.saldo_pendiente }}" name="monto_abono" class="form-control border-0 bg-light" required placeholder="0">
                             </div>
                         </div>
                         
@@ -213,4 +290,52 @@
         </div>
     </div>
 {% endfor %}
+
+<!-- Modal Abono Global a la Cuenta -->
+<div class="modal fade" id="abonoGlobalModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <form method="POST" action="{{ url_for('bodega_bp.abono_global', cliente_id=cliente.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                <div class="modal-header border-0 bg-light">
+                    <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-money-bill-trend-up me-2"></i>Abono a la Cuenta del Cliente</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4 text-start">
+                    <p>Registra un pago global para la cuenta de <strong>{{ cliente.nombre_o_razon_social }}</strong>. Este monto se restará del saldo deudor total.</p>
+                    <h5 class="fw-bold text-danger mb-4">Saldo Deudor Actual: ${{ (cliente.deuda_total)|cop }}</h5>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Monto a Abonar</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">$</span>
+                            <input type="number" step="any" min="1" name="monto_abono" class="form-control border-0 bg-light" required placeholder="0">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Medio de Pago</label>
+                        <select name="metodo_pago" class="form-select bg-light border-0" required>
+                            <option value="efectivo">💵 Efectivo Físico</option>
+                            <option value="nequi">📱 Nequi</option>
+                            <option value="bancolombia">🏦 Bancolombia</option>
+                            <option value="daviplata">📱 Daviplata</option>
+                            <option value="transferencia">🏦 Otra Transferencia</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Observación <span class="text-muted">(Opcional)</span></label>
+                        <textarea name="observacion" class="form-control border-0 bg-light" rows="2" placeholder="Referencia o nota de pago global"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-blue rounded-pill fw-bold px-4">Confirmar Abono a Cuenta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 {% endblock %}

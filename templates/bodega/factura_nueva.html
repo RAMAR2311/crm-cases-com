@@ -15,14 +15,14 @@
                 <div class="mb-4">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <label class="form-label fw-bold mb-0">Fijar al Cliente <span class="text-danger">*</span></label>
-                        <a href="{{ url_for('bodega_bp.nuevo_cliente') }}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3" title="Se abrirá en una nueva pestaña. Recuerda recargar esta página después de crearlo para que aparezca.">
+                        <a href="{{ url_for('bodega_bp.nuevo_cliente', from_factura=1) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
                             <i class="fa-solid fa-plus me-1"></i> Nuevo Cliente
                         </a>
                     </div>
                     <select name="cliente_id" class="form-select border-0 bg-light shadow-sm" required>
-                        <option value="" disabled selected>-- Selecciona el destinatario --</option>
+                        <option value="" disabled {% if not preselected_id %}selected{% endif %}>-- Selecciona el destinatario --</option>
                         {% for c in clientes %}
-                            <option value="{{ c.id }}">
+                            <option value="{{ c.id }}" {% if preselected_id == c.id %}selected{% endif %}>
                                 {{ c.nombre_o_razon_social }} - (NIT: {{ c.documento_o_nit }})
                                 {% if current_user.rol != 'vendedor_bodega' or c.creado_por_id == current_user.id %}
                                     | [{{ c.estado_global }}: ${{ c.deuda_total|cop }}]
@@ -43,7 +43,7 @@
                     </div>
                     <div class="col-lg-3 col-md-6">
                         <label class="form-label fw-bold">Modalidad <span class="text-danger">*</span></label>
-                        <select name="modalidad_pago" class="form-select bg-light border-0 shadow-sm" required>
+                        <select name="modalidad_pago" id="selectModalidad" class="form-select bg-light border-0 shadow-sm" required>
                             <option value="credito">⏳ A Crédito</option>
                             <option value="contado">💵 De Contado</option>
                         </select>
@@ -52,9 +52,37 @@
                         <label class="form-label fw-bold">Monto Total <span class="text-danger">*</span></label>
                         <div class="input-group shadow-sm">
                             <span class="input-group-text border-0 bg-light text-success fw-bold">$</span>
-                            <input type="number" step="1" min="0" name="monto_total" id="inputMontoTotal" class="form-control bg-light border-0" required placeholder="0.00" title="Calculado automáticamente, pero puedes ajustarlo si hay descuentos finales">
+                            <input type="number" step="any" min="0" name="monto_total" id="inputMontoTotal" class="form-control bg-light border-0" required placeholder="0" title="Calculado automáticamente, pero puedes ajustarlo si hay descuentos finales">
                         </div>
                     </div>
+                </div>
+
+                <div class="card bg-light border-0 p-3 mb-4">
+                    <div class="row g-3 align-items-end">
+                        <div class="col-md-5">
+                            <label class="form-label fw-bold text-primary"><i class="fa-solid fa-hand-holding-dollar me-1"></i> Registrar Abono Inicial (Opcional)</label>
+                            <div class="input-group shadow-sm">
+                                <span class="input-group-text border-0 bg-white text-primary fw-bold">$</span>
+                                <input type="number" step="any" min="0" name="monto_abono_inicial" id="inputAbonoInicial" class="form-control bg-white border-0" placeholder="¿Cuánto paga ahora?">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Método de Pago</label>
+                            <select name="metodo_pago_abono" class="form-select bg-white border-0 shadow-sm">
+                                <option value="efectivo">💵 Efectivo</option>
+                                <option value="nequi">📱 Nequi</option>
+                                <option value="bancolombia">🏦 Bancolombia</option>
+                                <option value="daviplata">📱 Daviplata</option>
+                                <option value="transferencia">🏦 Transferencia</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="button" class="btn btn-outline-primary w-100 rounded-pill fw-bold" onclick="copiarTotal()">
+                                <i class="fa-solid fa-check-double me-1"></i> Paga Total
+                            </button>
+                        </div>
+                    </div>
+                    <small class="text-muted mt-2 d-block"><i class="fa-solid fa-circle-info me-1"></i> Si es **De Contado**, el sistema asumirá el pago total si dejas este campo vacío.</small>
                 </div>
 
                 <!-- SECCIÓN DE BÚSQUEDA Y CARRITO DE FACTURA -->
@@ -212,7 +240,7 @@
                 <td>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">$</span>
-                        <input type="number" step="1" min="0" name="precio_unitario[]" value="${row_precio.toFixed(2)}" class="form-control text-end fw-bold" id="input_precio_${uniqueKey}" onchange="actualizarPrecio('${uniqueKey}', this.value)">
+                        <input type="number" step="any" min="0" name="precio_unitario[]" value="${row_precio.toFixed(2)}" class="form-control text-end fw-bold" id="input_precio_${uniqueKey}" onchange="actualizarPrecio('${uniqueKey}', this.value)">
                     </div>
                 </td>
                 <td class="fw-bolder text-success" id="subtotal_${uniqueKey}">$${row_precio.toFixed(2)}</td>
@@ -340,6 +368,11 @@
         }
         // Actualizamos el input de Monto Total Principal para que se envíe formateado
         document.getElementById('inputMontoTotal').value = suma.toFixed(2);
+    }
+
+    function copiarTotal() {
+        const total = document.getElementById('inputMontoTotal').value;
+        document.getElementById('inputAbonoInicial').value = total;
     }
 
     function validarEnvio() {

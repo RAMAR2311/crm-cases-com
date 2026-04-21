@@ -3,6 +3,7 @@ from flask_login import login_required, current_user
 from decorators import any_bodega_required
 from models import db, Cliente, FacturaBodega, AbonoBodega, Product, StockAdjustment, FacturaBodegaDetalle
 import os
+from decimal import Decimal
 from werkzeug.utils import secure_filename
 
 bodega_bp = Blueprint('bodega_bp', __name__)
@@ -57,6 +58,10 @@ def nuevo_cliente():
             db.session.add(nuevo)
             db.session.commit()
             flash(f'Cliente {nombre} registrado exitosamente.', 'success')
+            
+            if request.args.get('from_factura'):
+                return redirect(url_for('bodega_bp.nueva_factura', preselected_id=nuevo.id))
+                
             return redirect(url_for('bodega_bp.dashboard'))
         except Exception as e:
             db.session.rollback()
@@ -151,30 +156,51 @@ def nueva_factura():
                 pass
 
         modalidad_pago = request.form.get('modalidad_pago', 'credito')
+        monto_abono_inicial_str = request.form.get('monto_abono_inicial', '0')
+        metodo_pago_abono = request.form.get('metodo_pago_abono', 'efectivo')
         
+        try:
+            monto_abono_inicial = Decimal(monto_abono_inicial_str or 0)
+        except:
+            monto_abono_inicial = Decimal(0)
+
+        # Si es de contado y no pusieron abono manual, asumimos el total
+        if modalidad_pago == 'contado' and monto_abono_inicial <= 0:
+            monto_abono_inicial = Decimal(monto_total or 0)
+
         try:
             nueva_fact = FacturaBodega(
                 cliente_id=cliente_id,
                 usuario_id=current_user.id,
                 numero_factura=num_factura,
-                monto_total=float(monto_total),
+                monto_total=Decimal(monto_total or 0),
                 archivo_ruta=archivo_ruta_bd,
-                estado='Pagado' if modalidad_pago == 'contado' else 'Pendiente'
+                modalidad=modalidad_pago
             )
+            
+            # Ajustar estado inicial según el abono
+            if monto_abono_inicial >= Decimal(monto_total or 0):
+                nueva_fact.estado = 'Pagado'
+            elif monto_abono_inicial > 0:
+                nueva_fact.estado = 'Parcial'
+            else:
+                nueva_fact.estado = 'Pendiente'
+
             if fecha_obj:
                 nueva_fact.fecha_subida = fecha_obj
                 
             db.session.add(nueva_fact)
             db.session.flush() # Para obtener el ID de nueva_fact
 
-            # Si es de contado, registrar el pago completo automáticamente
-            if modalidad_pago == 'contado':
+            # Registrar el abono si existe
+            if monto_abono_inicial > 0:
                 abono = AbonoBodega(
+                    cliente_id=cliente_id,
                     factura_id=nueva_fact.id,
                     usuario_id=current_user.id,
-                    monto=float(monto_total),
-                    metodo_pago='efectivo',
-                    observacion='Pago automático: Factura de Contado'
+                    monto=monto_abono_inicial,
+                    metodo_pago=metodo_pago_abono,
+                    observacion=f'Abono inicial Factura #{num_factura}'
                 )
                 if fecha_obj:
                     abono.fecha_abono = fecha_obj
@@ -184,7 +210,7 @@ def nueva_factura():
             for i in range(len(productos_ids)):
                 p_id = productos_ids[i]
                 cant = int(cantidades[i])
-                precio_uni = float(precios_unitarios[i])
+                precio_uni = Decimal(precios_unitarios[i] or 0)
                 v_id_str = variantes_ids[i] if len(variantes_ids) > i else ""
                 variant_id = int(v_id_str) if v_id_str.strip() else None
 
@@ -257,7 +283,13 @@ def nueva_factura():
     clientes = Cliente.query.order_by(Cliente.nombre_o_razon_social).all()
     # Enviamos los productos disponibles a la vista, restringidos al inventario de bodega
     productos_disp = Product.query.filter_by(tipo_inventario='bodega').filter(Product.cantidad_stock > 0).order_by(Product.nombre).all()
-    return render_template('bodega/factura_nueva.html', clientes=clientes, productos=productos_disp)
+    
+    preselected_id = request.args.get('preselected_id', type=int)
+    
+    return render_template('bodega/factura_nueva.html', 
+                           clientes=clientes, 
+                           productos=productos_disp, 
+                           preselected_id=preselected_id)
 
 @bodega_bp.route('/api/producto/<path:sku>', methods=['GET'])
 @login_required
@@ -303,7 +335,11 @@ def cliente_detalle(id):
 @any_bodega_required
 def nuevo_abono(factura_id):
     factura = FacturaBodega.query.get_or_404(factura_id)
-    monto_abono = float(request.form.get('monto_abono', 0.0))
+    monto_abono_str = request.form.get('monto_abono', '0')
+    try:
+        monto_abono = Decimal(monto_abono_str)
+    except:
+        monto_abono = Decimal(0)
     metodo_pago = request.form.get('metodo_pago', 'efectivo')
     observacion = request.form.get('observacion', '')
 
@@ -316,6 +352,7 @@ def nuevo_abono(factura_id):
         return redirect(url_for('bodega_bp.cliente_detalle', id=factura.cliente_id))
 
     abono = AbonoBodega(
+        cliente_id=factura.cliente_id,
         factura_id=factura.id,
         usuario_id=current_user.id,
         monto=monto_abono,
@@ -340,6 +377,84 @@ def nuevo_abono(factura_id):
         flash('Hubo un error al registrar el abono.', 'danger')
 
     return redirect(url_for('bodega_bp.cliente_detalle', id=factura.cliente_id))
+
+@bodega_bp.route('/clientes/<int:cliente_id>/abono_global', methods=['POST'])
+@login_required
+@any_bodega_required
+def abono_global(cliente_id):
+    cliente = Cliente.query.get_or_404(cliente_id)
+    monto_abono_str = request.form.get('monto_abono', '0')
+    try:
+        monto_abono = Decimal(monto_abono_str)
+    except:
+        monto_abono = Decimal(0)
+    metodo_pago = request.form.get('metodo_pago', 'efectivo')
+    observacion = request.form.get('observacion', '')
+
+    if monto_abono <= 0:
+        flash('El monto del abono debe ser mayor a cero.', 'danger')
+        return redirect(url_for('bodega_bp.cliente_detalle', id=cliente_id))
+
+    abono = AbonoBodega(
+        cliente_id=cliente.id,
+        usuario_id=current_user.id,
+        monto=monto_abono,
+        metodo_pago=metodo_pago,
+        observacion=observacion
+    )
+    
+    try:
+        db.session.add(abono)
+        db.session.commit()
+        flash(f'Abono global de ${monto_abono} registrado correctamente a la cuenta de {cliente.nombre_o_razon_social}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Hubo un error al registrar el abono.', 'danger')
+
+    return redirect(url_for('bodega_bp.cliente_detalle', id=cliente_id))
+
+@bodega_bp.route('/facturas/<int:id>/eliminar', methods=['POST'])
+@login_required
+@any_bodega_required
+def eliminar_factura(id):
+    factura = FacturaBodega.query.get_or_404(id)
+    cliente_id = factura.cliente_id
+    num_factura = factura.numero_factura
+    
+    try:
+        # Devolver stock
+        for det in factura.detalles:
+            if det.variante:
+                stock_anterior = det.variante.cantidad_stock
+                det.variante.cantidad_stock += det.cantidad
+                ajuste = StockAdjustment(
+                    product_id=det.producto_id,
+                    admin_id=current_user.id,
+                    tipo_movimiento=f"Reintegro por eliminación de Factura Bodega #{num_factura}",
+                    stock_anterior=stock_anterior,
+                    stock_nuevo=det.variante.cantidad_stock
+                )
+                db.session.add(ajuste)
+            else:
+                stock_anterior = det.producto.cantidad_stock
+                det.producto.cantidad_stock += det.cantidad
+                ajuste = StockAdjustment(
+                    product_id=det.producto_id,
+                    admin_id=current_user.id,
+                    tipo_movimiento=f"Reintegro por eliminación de Factura Bodega #{num_factura}",
+                    stock_anterior=stock_anterior,
+                    stock_nuevo=det.producto.cantidad_stock
+                )
+                db.session.add(ajuste)
+        
+        db.session.delete(factura)
+        db.session.commit()
+        flash(f'Factura #{num_factura} eliminada y stock reintegrado correctamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error al intentar eliminar la factura.', 'danger')
+
+    return redirect(url_for('bodega_bp.cliente_detalle', id=cliente_id))
 
 @bodega_bp.route('/clientes/<int:id>/eliminar', methods=['POST'])
 @login_required
