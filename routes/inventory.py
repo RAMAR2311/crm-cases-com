@@ -70,37 +70,64 @@ def nuevo():
 
         # La instanciación agrupa todos los parámetros del nuevo producto
         tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
+        
+        # Recibir variantes
+        v_nombres = request.form.getlist('v_nombre[]')
+        v_stocks = request.form.getlist('v_stock[]')
+        v_costos = request.form.getlist('v_costo[]')
+        v_mins = request.form.getlist('v_min[]')
+        v_sugs = request.form.getlist('v_sug[]')
+
+        # Si hay variantes, el stock base del producto maestro se ignora o se pone en 0
+        stock_base = 0 if v_nombres else int(request.form.get('cantidad_stock', 0))
+
         nuevo_prod = Product(
             sku=request.form.get('sku').strip(),
             nombre=request.form.get('nombre').strip(),
             tipo_inventario=tipo,
-            cantidad_stock=int(request.form.get('cantidad_stock', 0)),
+            cantidad_stock=stock_base,
             precio_costo=float(request.form.get('precio_costo', 0.0)),
             precio_minimo=float(request.form.get('precio_minimo', 0.0)),
             precio_sugerido=float(request.form.get('precio_sugerido', 0.0)),
             imagen=imagen_filename,
             observacion=request.form.get('observacion')
         )
+        
         try:
             db.session.add(nuevo_prod)
+            db.session.flush() # Para obtener el ID del producto
+            
+            # Crear variantes si existen
+            for i in range(len(v_nombres)):
+                if not v_nombres[i]: continue
+                nueva_v = ProductVariant(
+                    product_id=nuevo_prod.id,
+                    nombre_variante=v_nombres[i],
+                    cantidad_stock=int(v_stocks[i] or 0),
+                    precio_costo=float(v_costos[i]) if v_costos[i] else nuevo_prod.precio_costo,
+                    precio_minimo=float(v_mins[i]) if v_mins[i] else nuevo_prod.precio_minimo,
+                    precio_sugerido=float(v_sugs[i]) if v_sugs[i] else nuevo_prod.precio_sugerido
+                )
+                db.session.add(nueva_v)
+
             db.session.commit()
             
             # Crear ajuste inicial automáticamente en el Kardex
             ajuste_inicial = StockAdjustment(
                 product_id=nuevo_prod.id,
                 admin_id=current_user.id,
-                tipo_movimiento='Creación Inicial',
+                tipo_movimiento='Creación Inicial' + (' (con Variantes)' if v_nombres else ''),
                 stock_anterior=0,
-                stock_nuevo=nuevo_prod.cantidad_stock
+                stock_nuevo=nuevo_prod.total_stock
             )
             db.session.add(ajuste_inicial)
             db.session.commit()
 
-            flash('Producto creado exitosamente.', 'success')
+            flash('Producto Maestro y sus subcategorías creados exitosamente.', 'success')
             return redirect(url_for('inventory_bp.index'))
         except Exception as e:
             db.session.rollback()
-            flash('Error al intentar guardar el producto en la base de datos.', 'danger')
+            flash(f'Error al intentar guardar el producto: {str(e)}', 'danger')
             
     return render_template('inventory/form.html')
 
@@ -115,8 +142,7 @@ def editar_producto(id):
         abort(403)
     
     if request.method == 'POST':
-        stock_anterior = producto.cantidad_stock
-        cantidad_stock_nueva = int(request.form.get('cantidad_stock', 0))
+        stock_total_anterior = producto.total_stock
         
         # Actualizar Imagen si se sube una nueva
         if 'imagen' in request.files:
@@ -126,32 +152,88 @@ def editar_producto(id):
                 file.save(os.path.join(current_app.config['UPLOAD_FOLDER'], filename))
                 producto.imagen = filename
                 
-        # Se actualizan directamente las propiedades del objeto SQLAlchemy trackeado
+        # Datos básicos
         producto.sku = request.form.get('sku').strip()
         producto.nombre = request.form.get('nombre').strip()
-        producto.cantidad_stock = cantidad_stock_nueva
         producto.precio_costo = float(request.form.get('precio_costo', 0.0))
         producto.precio_minimo = float(request.form.get('precio_minimo', 0.0))
         producto.precio_sugerido = float(request.form.get('precio_sugerido', 0.0))
         producto.observacion = request.form.get('observacion')
         
+        # Sincronización de Variantes
+        v_ids = request.form.getlist('variant_id[]')
+        v_nombres = request.form.getlist('v_nombre[]')
+        v_stocks = request.form.getlist('v_stock[]')
+        v_costos = request.form.getlist('v_costo[]')
+        v_mins = request.form.getlist('v_min[]')
+        v_sugs = request.form.getlist('v_sug[]')
+
+        ids_en_formulario = [int(vid) for vid in v_ids if vid]
+        
+        # 1. Eliminar las que ya no están en el formulario
+        for v_existente in producto.variantes[:]:
+            if v_existente.id not in ids_en_formulario:
+                db.session.delete(v_existente)
+        
+        # 2. Actualizar o crear
+        if not v_nombres:
+            # Si no hay variantes, el stock es el base
+            producto.cantidad_stock = int(request.form.get('cantidad_stock', 0))
+        else:
+            # Si hay variantes, el stock base es 0
+            producto.cantidad_stock = 0
+            for i in range(len(v_nombres)):
+                nombre_v = v_nombres[i]
+                if not nombre_v: continue
+                
+                vid = v_ids[i] if i < len(v_ids) else None
+                stock_v = int(v_stocks[i] or 0)
+                costo_v = float(v_costos[i]) if v_costos[i] else producto.precio_costo
+                min_v = float(v_mins[i]) if v_mins[i] else producto.precio_minimo
+                sug_v = float(v_sugs[i]) if v_sugs[i] else producto.precio_sugerido
+
+                if vid:
+                    # Actualizar existente
+                    v_obj = ProductVariant.query.get(int(vid))
+                    if v_obj:
+                        v_obj.nombre_variante = nombre_v
+                        v_obj.cantidad_stock = stock_v
+                        v_obj.precio_costo = costo_v
+                        v_obj.precio_minimo = min_v
+                        v_obj.precio_sugerido = sug_v
+                else:
+                    # Crear nueva
+                    nueva_v = ProductVariant(
+                        product_id=producto.id,
+                        nombre_variante=nombre_v,
+                        cantidad_stock=stock_v,
+                        precio_costo=costo_v,
+                        precio_minimo=min_v,
+                        precio_sugerido=sug_v
+                    )
+                    db.session.add(nueva_v)
+
         try:
-            if stock_anterior != cantidad_stock_nueva:
+            db.session.commit()
+            
+            # Registrar ajuste de stock si el TOTAL cambió
+            stock_total_nuevo = producto.total_stock
+            if stock_total_anterior != stock_total_nuevo:
                 ajuste = StockAdjustment(
                     product_id=producto.id,
                     admin_id=current_user.id,
-                    tipo_movimiento='Ajuste Manual',
-                    stock_anterior=stock_anterior,
-                    stock_nuevo=cantidad_stock_nueva
+                    tipo_movimiento='Ajuste en Edición Maestro',
+                    stock_anterior=stock_total_anterior,
+                    stock_nuevo=stock_total_nuevo
                 )
                 db.session.add(ajuste)
+                db.session.commit()
                 
-            db.session.commit()
-            flash('Producto actualizado correctamente en base de datos.', 'success')
+            flash('Producto Maestro actualizado correctamente.', 'success')
             return redirect(url_for('inventory_bp.index'))
         except Exception as e:
             db.session.rollback()
-            flash('Error en la base de datos al actualizar el producto.', 'danger')
+            flash(f'Error en la base de datos: {str(e)}', 'danger')
 
     # El objeto producto se pasa a Jinja para auto-poblar (pre-llenar) el formulario en modo edición
     return render_template('inventory/form.html', producto=producto)

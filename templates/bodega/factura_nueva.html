@@ -52,7 +52,7 @@
                         <label class="form-label fw-bold">Monto Total <span class="text-danger">*</span></label>
                         <div class="input-group shadow-sm">
                             <span class="input-group-text border-0 bg-light text-success fw-bold">$</span>
-                            <input type="number" step="any" min="0" name="monto_total" id="inputMontoTotal" class="form-control bg-light border-0" required placeholder="0" title="Calculado automáticamente, pero puedes ajustarlo si hay descuentos finales">
+                            <input type="text" name="monto_total" id="inputMontoTotal" class="form-control bg-light border-0" required placeholder="0" title="Calculado automáticamente, pero puedes ajustarlo si hay descuentos finales" oninput="formatInputCOP(this)">
                         </div>
                     </div>
                 </div>
@@ -63,7 +63,7 @@
                             <label class="form-label fw-bold text-primary"><i class="fa-solid fa-hand-holding-dollar me-1"></i> Registrar Abono Inicial (Opcional)</label>
                             <div class="input-group shadow-sm">
                                 <span class="input-group-text border-0 bg-white text-primary fw-bold">$</span>
-                                <input type="number" step="any" min="0" name="monto_abono_inicial" id="inputAbonoInicial" class="form-control bg-white border-0" placeholder="¿Cuánto paga ahora?">
+                                <input type="text" name="monto_abono_inicial" id="inputAbonoInicial" class="form-control bg-white border-0" placeholder="¿Cuánto paga ahora?" oninput="formatInputCOP(this)">
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -91,10 +91,15 @@
                     
                     <div class="row g-2 mb-4 align-items-end">
                         <div class="col-md-10">
-                            <label class="form-label fw-semibold small text-muted">Código SKU (Decodificador)</label>
+                            <label class="form-label fw-semibold small text-muted">Código SKU o Nombre del Producto</label>
                             <div class="input-group">
                                 <span class="input-group-text border-0 bg-white"><i class="fa-solid fa-search text-muted"></i></span>
-                                <input type="text" id="skuBuscador" class="form-control border-0 shadow-sm form-control-lg" placeholder="Pistolea o escribe el código aquí..." autofocus autocomplete="off">
+                                <input type="text" id="skuBuscador" class="form-control border-0 shadow-sm form-control-lg" placeholder="Pistolea o escribe el nombre/código aquí..." autofocus autocomplete="off" list="productosList">
+                                <datalist id="productosList">
+                                    {% for p in productos %}
+                                        <option value="{{ p.sku }}">{{ p.nombre }}</option>
+                                    {% endfor %}
+                                </datalist>
                             </div>
                         </div>
                         <div class="col-md-2">
@@ -138,6 +143,19 @@
 
 <script>
     let carrito = {};
+
+    function formatCOP(val) {
+        return Math.round(val).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    }
+
+    function formatInputCOP(input) {
+        let raw = input.value.replace(/\D/g, '');
+        if (raw) {
+            input.value = parseInt(raw, 10).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        } else {
+            input.value = '';
+        }
+    }
 
     // Escucha el evento Enter en la pistola o teclado
     document.getElementById('skuBuscador').addEventListener('keypress', function(e) {
@@ -240,10 +258,10 @@
                 <td>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">$</span>
-                        <input type="number" step="any" min="0" name="precio_unitario[]" value="${row_precio.toFixed(2)}" class="form-control text-end fw-bold" id="input_precio_${uniqueKey}" onchange="actualizarPrecio('${uniqueKey}', this.value)">
+                        <input type="text" name="precio_unitario[]" value="${formatCOP(row_precio)}" class="form-control text-end fw-bold" id="input_precio_${uniqueKey}" oninput="formatInputCOP(this); actualizarPrecio('${uniqueKey}', this.value)">
                     </div>
                 </td>
-                <td class="fw-bolder text-success" id="subtotal_${uniqueKey}">$${row_precio.toFixed(2)}</td>
+                <td class="fw-bolder text-success" id="subtotal_${uniqueKey}">$${formatCOP(row_precio)}</td>
                 <td class="pe-3">
                     <button type="button" class="btn btn-sm btn-outline-danger rounded-circle shadow-sm" onclick="eliminarProducto('${uniqueKey}')"><i class="fa-solid fa-times"></i></button>
                 </td>
@@ -301,8 +319,8 @@
             const precioInput = tr.querySelector(`input[id="input_precio_${uniqueKeyOld}"]`);
             if(precioInput) {
                 precioInput.id = 'input_precio_' + uniqueKeyNew;
-                precioInput.value = new_precio.toFixed(2);
-                precioInput.setAttribute('onchange', `actualizarPrecio('${uniqueKeyNew}', this.value)`);
+                precioInput.value = formatCOP(new_precio);
+                precioInput.setAttribute('oninput', `formatInputCOP(this); actualizarPrecio('${uniqueKeyNew}', this.value)`);
             }
             
             const subTot = tr.querySelector(`td[id="subtotal_${uniqueKeyOld}"]`);
@@ -335,10 +353,11 @@
     }
 
     function actualizarPrecio(key, newVal) {
-        let val = parseFloat(newVal);
+        let raw = newVal.toString().replace(/\D/g, '');
+        let val = parseFloat(raw);
         if (isNaN(val) || val < 0) val = 0.00;
         
-        document.getElementById('input_precio_' + key).value = val.toFixed(2);
+        // document.getElementById('input_precio_' + key).value = formatCOP(val); // handled by formatInputCOP
         carrito[key].precio = val;
         
         actualizarFilaUI(key);
@@ -346,7 +365,7 @@
 
     function actualizarFilaUI(key) {
         const sub = carrito[key].cantidad * carrito[key].precio;
-        document.getElementById('subtotal_' + key).innerText = "$" + sub.toFixed(2);
+        document.getElementById('subtotal_' + key).innerText = "$" + formatCOP(sub);
         recalcularTotal();
     }
 
@@ -367,7 +386,7 @@
             suma += (carrito[key].cantidad * carrito[key].precio);
         }
         // Actualizamos el input de Monto Total Principal para que se envíe formateado
-        document.getElementById('inputMontoTotal').value = suma.toFixed(2);
+        document.getElementById('inputMontoTotal').value = formatCOP(suma);
     }
 
     function copiarTotal() {

@@ -344,12 +344,28 @@ def balance_financiero():
     total_ingresos = ventas_efectivo + ventas_transferencia
 
     # 2. Costo de Mercancía Vendida (COGS)
-    detalles_vendidos = db.session.query(SaleDetail, Product).join(Product, SaleDetail.product_id == Product.id).join(Sale, SaleDetail.sale_id == Sale.id).filter(
+    detalles_query = SaleDetail.query.join(Sale).filter(
         Sale.fecha_venta >= inicio_dt,
         Sale.fecha_venta < fin_dt_query
     ).all()
     
-    costos_directos = sum((detalle.SaleDetail.cantidad_vendida * (detalle.Product.precio_costo or 0)) for detalle in detalles_vendidos)
+    costos_directos = Decimal('0.00')
+    for d in detalles_query:
+        if d.nombre_manual:
+            # Producto manual prestado
+            costos_directos += (d.precio_costo_manual or 0) * d.cantidad_vendida
+        elif d.variant_id:
+            # Producto con variante: Priorizar costo de variante, luego producto
+            v = d.variante
+            p = d.producto
+            if v and p:
+                costo_u = v.precio_costo if v.precio_costo is not None else (p.precio_costo or 0)
+                costos_directos += Decimal(str(costo_u)) * d.cantidad_vendida
+        elif d.product_id:
+            # Producto base sin variante
+            p = d.producto
+            if p:
+                costos_directos += (p.precio_costo or 0) * d.cantidad_vendida
 
     # 3. Costos Indirectos y Gastos Operativos
     gastos_query = Expense.query.filter(Expense.fecha_gasto >= inicio_dt, Expense.fecha_gasto < fin_dt_query).all()

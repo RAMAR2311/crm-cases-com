@@ -52,7 +52,33 @@ class Product(db.Model):
     def rango_precios(self):
         if not self.variantes:
             return None
-        precios = [v.precio_sugerido for v in self.variantes]
+        precios = [v.precio_sugerido for v in self.variantes if v.precio_sugerido is not None]
+        if not precios:
+            return None
+        min_p = min(precios)
+        max_p = max(precios)
+        if min_p == max_p:
+            return min_p
+        return (min_p, max_p)
+
+    @property
+    def rango_costos(self):
+        if not self.variantes:
+            return None
+        precios = [v.precio_costo for v in self.variantes if v.precio_costo is not None]
+        if not precios:
+            return None
+        min_p = min(precios)
+        max_p = max(precios)
+        if min_p == max_p:
+            return min_p
+        return (min_p, max_p)
+
+    @property
+    def rango_minimos(self):
+        if not self.variantes:
+            return None
+        precios = [v.precio_minimo for v in self.variantes if v.precio_minimo is not None]
         if not precios:
             return None
         min_p = min(precios)
@@ -146,6 +172,7 @@ class ArqueoCaja(db.Model):
     observaciones_gastos = db.Column(db.String(255), nullable=True)
     total_efectivo_sistema = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
     total_transferencia_sistema = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    total_unidades_ch = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
     fecha_creacion = db.Column(db.DateTime, default=obtener_hora_bogota)
 
 class Maneo(db.Model):

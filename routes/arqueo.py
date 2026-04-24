@@ -4,6 +4,7 @@ from models import db, Sale, SalePayment, ArqueoCaja, Expense
 from decorators import admin_required
 from datetime import datetime, date
 from decimal import Decimal
+import re
 import pytz
 
 arqueo_bp = Blueprint('arqueo_bp', __name__)
@@ -31,6 +32,69 @@ def calcular_totales_dia(ventas_del_dia):
                 total_transferencia += v.monto_total
     
     return total_efectivo, total_transferencia
+
+def procesar_unidades_ch(ventas):
+    desglose = []
+    total_general_ch = Decimal('0')
+    
+    for v in ventas:
+        for detalle in v.detalles:
+            nombre = ""
+            if detalle.producto:
+                nombre = detalle.producto.nombre
+            elif detalle.nombre_manual:
+                nombre = detalle.nombre_manual
+                
+            subcategoria = ""
+            if detalle.variante:
+                subcategoria = detalle.variante.nombre_variante
+            
+            # Buscar el patrón 'CHx' seguido de un número
+            match_nombre = re.search(r'CHx(\d+)', nombre, re.IGNORECASE)
+            match_sub = re.search(r'CHx(\d+)', subcategoria, re.IGNORECASE)
+            
+            valor_extraido = None
+            error_formato = False
+            
+            # Prioridad: nombre del producto
+            if match_nombre:
+                try:
+                    valor_extraido = int(match_nombre.group(1))
+                except ValueError:
+                    error_formato = True
+            elif match_sub:
+                try:
+                    valor_extraido = int(match_sub.group(1))
+                except ValueError:
+                    error_formato = True
+            else:
+                # Si se detecta 'CHx' pero no hay un número válido después
+                if 'CHx' in nombre.upper() or 'CHx' in subcategoria.upper():
+                    error_formato = True
+            
+            if valor_extraido is not None:
+                valor_unitario = valor_extraido * 1000
+                cantidad = detalle.cantidad_vendida
+                subtotal = Decimal(str(valor_unitario * cantidad))
+                
+                desglose.append({
+                    'nombre': f"{nombre} ({subcategoria})" if subcategoria else nombre,
+                    'cantidad': cantidad,
+                    'valor_unitario': valor_unitario,
+                    'subtotal': subtotal,
+                    'error': False
+                })
+                total_general_ch += subtotal
+            elif error_formato:
+                desglose.append({
+                    'nombre': f"{nombre} ({subcategoria})" if subcategoria else nombre,
+                    'cantidad': detalle.cantidad_vendida,
+                    'valor_unitario': 0,
+                    'subtotal': Decimal('0'),
+                    'error': 'Error de formato en descripción'
+                })
+                
+    return desglose, total_general_ch
 
 @arqueo_bp.route('/nuevo', methods=['GET', 'POST'])
 @login_required
@@ -81,7 +145,8 @@ def nuevo():
             gastos_del_dia=gastos_del_dia,
             observaciones_gastos=observaciones_gastos,
             total_efectivo_sistema=total_efectivo,
-            total_transferencia_sistema=total_transferencia
+            total_transferencia_sistema=total_transferencia,
+            total_unidades_ch=procesar_unidades_ch(ventas_del_dia)[1]
         )
 
         try:
@@ -99,7 +164,8 @@ def nuevo():
         total_efectivo=total_efectivo,
         total_transferencia=total_transferencia,
         arqueo_existente=arqueo_existente,
-        gastos_automaticos=gastos_automaticos
+        gastos_automaticos=gastos_automaticos,
+        total_general_ch=procesar_unidades_ch(ventas_del_dia)[1]
     )
 
 @arqueo_bp.route('/reporte', methods=['GET'])
@@ -128,7 +194,10 @@ def reporte():
         'total_gastos': sum(a.gastos_del_dia for a in arqueos)
     }
     
-    resumen['total_recaudado'] = resumen['total_efectivo'] + resumen['total_transferencia']
+    resumen['total_unidades_ch'] = sum(a.total_unidades_ch for a in arqueos)
+    resumen['total_recaudado_bruto'] = resumen['total_efectivo'] + resumen['total_transferencia']
+    # Restar Unidades CH de la venta del día
+    resumen['total_recaudado_neto'] = resumen['total_recaudado_bruto'] - resumen['total_unidades_ch']
     resumen['efectivo_esperado'] = (resumen['total_base'] + resumen['total_efectivo']) - resumen['total_gastos']
 
     # Obtener todas las ventas del periodo para el detalle en la "tirilla" (unificado)
@@ -141,6 +210,9 @@ def reporte():
 
     fecha_generacion = obtener_hora_bogota().strftime('%Y-%m-%d %H:%M')
 
+    # Procesar lógica de unidades CH
+    desglose_ch, total_general_ch = procesar_unidades_ch(ventas_periodo)
+
     return render_template(
         'arqueo/reporte.html',
         arqueos=arqueos,
@@ -148,5 +220,7 @@ def reporte():
         fecha_inicio=fecha_inicio_str,
         fecha_fin=fecha_fin_str,
         fecha_generacion=fecha_generacion,
-        ventas_periodo=ventas_periodo
+        ventas_periodo=ventas_periodo,
+        desglose_ch=desglose_ch,
+        total_general_ch=total_general_ch
     )

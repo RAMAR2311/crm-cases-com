@@ -221,10 +221,10 @@
     // También al presionar Enter (por si usa escáner)
     skuInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            // No prevenir submit, pero sí buscar variantes antes
+            e.preventDefault(); // Detener el submit automático del escáner
             const sku = skuInput.value.trim();
             if (sku.length > 0) {
-                buscarVariantes(sku);
+                buscarVariantesYEnviar(sku);
             }
         }
     });
@@ -239,21 +239,47 @@
             const producto = await response.json();
 
             if (producto.variantes && producto.variantes.length > 0) {
-                // Mostrar el selector de variantes
-                variantSelect.innerHTML = '<option value="">— Producto general —</option>';
-                producto.variantes.forEach(v => {
-                    const stockLabel = v.stock > 0 ? `(Stock: ${v.stock})` : '(Sin stock)';
-                    variantSelect.innerHTML += `<option value="${v.id}" data-stock="${v.stock}">${v.nombre} ${stockLabel}</option>`;
-                });
-                variantCol.style.display = 'block';
-                variantHidden.value = '';
-                variantStockInfo.textContent = '';
+                mostrarSelectorVariantes(producto.variantes);
             } else {
                 ocultarVariantes();
             }
         } catch (err) {
             ocultarVariantes();
         }
+    }
+
+    async function buscarVariantesYEnviar(sku) {
+        try {
+            const response = await fetch(`/sales/api/producto/${encodeURIComponent(sku)}`);
+            if (!response.ok) {
+                document.getElementById('formNuevoManeo').submit();
+                return;
+            }
+            const producto = await response.json();
+
+            if (producto.variantes && producto.variantes.length > 0) {
+                // Hay variantes, NO enviamos el formulario automáticamente.
+                mostrarSelectorVariantes(producto.variantes);
+                // Enfocar el selector para que el usuario elija
+                variantSelect.focus();
+            } else {
+                // Si no tiene variantes, enviamos el formulario automáticamente
+                document.getElementById('formNuevoManeo').submit();
+            }
+        } catch(e) {
+            document.getElementById('formNuevoManeo').submit();
+        }
+    }
+
+    function mostrarSelectorVariantes(variantes) {
+        variantSelect.innerHTML = '<option value="">— Selecciona una subcategoría —</option>';
+        variantes.forEach(v => {
+            const stockLabel = v.stock > 0 ? `(Stock: ${v.stock})` : '(Sin stock)';
+            variantSelect.innerHTML += `<option value="${v.id}" data-stock="${v.stock}">${v.nombre} ${stockLabel}</option>`;
+        });
+        variantCol.style.display = 'block';
+        variantHidden.value = '';
+        variantStockInfo.textContent = '';
     }
 
     function ocultarVariantes() {

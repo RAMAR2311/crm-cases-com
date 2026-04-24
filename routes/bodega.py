@@ -113,14 +113,16 @@ def nueva_factura():
     if request.method == 'POST':
         cliente_id = request.form.get('cliente_id')
         num_factura = request.form.get('numero_factura')
-        monto_total = request.form.get('monto_total', 0.0)
+        monto_total_raw = request.form.get('monto_total', '0')
+        monto_total = monto_total_raw.replace('.', '') if isinstance(monto_total_raw, str) else monto_total_raw
         fecha_factura_str = request.form.get('fecha_factura')
         
         # Arrays of products and quantities
         productos_ids = request.form.getlist('producto_id[]')
         variantes_ids = request.form.getlist('variant_id[]')
         cantidades = request.form.getlist('cantidad[]')
-        precios_unitarios = request.form.getlist('precio_unitario[]')
+        precios_unitarios_raw = request.form.getlist('precio_unitario[]')
+        precios_unitarios = [p.replace('.', '') for p in precios_unitarios_raw]
         
         if not productos_ids or not cantidades or not precios_unitarios:
             flash('Debes agregar al menos un producto a la factura.', 'danger')
@@ -156,7 +158,7 @@ def nueva_factura():
                 pass
 
         modalidad_pago = request.form.get('modalidad_pago', 'credito')
-        monto_abono_inicial_str = request.form.get('monto_abono_inicial', '0')
+        monto_abono_inicial_str = request.form.get('monto_abono_inicial', '0').replace('.', '')
         metodo_pago_abono = request.form.get('metodo_pago_abono', 'efectivo')
         
         try:
@@ -335,7 +337,7 @@ def cliente_detalle(id):
 @any_bodega_required
 def nuevo_abono(factura_id):
     factura = FacturaBodega.query.get_or_404(factura_id)
-    monto_abono_str = request.form.get('monto_abono', '0')
+    monto_abono_str = request.form.get('monto_abono', '0').replace('.', '')
     try:
         monto_abono = Decimal(monto_abono_str)
     except:
@@ -383,7 +385,7 @@ def nuevo_abono(factura_id):
 @any_bodega_required
 def abono_global(cliente_id):
     cliente = Cliente.query.get_or_404(cliente_id)
-    monto_abono_str = request.form.get('monto_abono', '0')
+    monto_abono_str = request.form.get('monto_abono', '0').replace('.', '')
     try:
         monto_abono = Decimal(monto_abono_str)
     except:
@@ -412,6 +414,62 @@ def abono_global(cliente_id):
         flash('Hubo un error al registrar el abono.', 'danger')
 
     return redirect(url_for('bodega_bp.cliente_detalle', id=cliente_id))
+
+@bodega_bp.route('/facturas/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+@any_bodega_required
+def editar_factura(id):
+    factura = FacturaBodega.query.get_or_404(id)
+    if request.method == 'POST':
+        factura.numero_factura = request.form.get('numero_factura')
+        
+        monto_total_str = request.form.get('monto_total', '0').replace('.', '')
+        try:
+            factura.monto_total = Decimal(monto_total_str)
+        except:
+            pass
+
+        fecha_factura_str = request.form.get('fecha_factura')
+        if fecha_factura_str:
+            from datetime import datetime
+            try:
+                # Conservar la hora original
+                nueva_fecha = datetime.strptime(fecha_factura_str, '%Y-%m-%d')
+                factura.fecha_subida = factura.fecha_subida.replace(year=nueva_fecha.year, month=nueva_fecha.month, day=nueva_fecha.day)
+            except ValueError:
+                pass
+
+        factura.modalidad = request.form.get('modalidad_pago', factura.modalidad)
+        
+        archivo = request.files.get('archivo_factura')
+        if archivo and archivo.filename != '':
+            if allowed_file(archivo.filename):
+                filename = secure_filename(archivo.filename)
+                unique_filename = f"fact_{factura.cliente_id}_{factura.numero_factura}_{filename}"
+                upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'facturas')
+                os.makedirs(upload_path, exist_ok=True)
+                file_path = os.path.join(upload_path, unique_filename)
+                archivo.save(file_path)
+                factura.archivo_ruta = f"uploads/facturas/{unique_filename}"
+            else:
+                flash('Tipo de archivo no permitido.', 'danger')
+
+        try:
+            # Reevaluar estado
+            if factura.saldo_pendiente <= 0:
+                factura.estado = 'Pagado'
+            elif factura.saldo_pendiente < factura.monto_total:
+                factura.estado = 'Parcial'
+            else:
+                factura.estado = 'Pendiente'
+            db.session.commit()
+            flash('Factura actualizada correctamente.', 'success')
+            return redirect(url_for('bodega_bp.cliente_detalle', id=factura.cliente_id))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error al actualizar la factura.', 'danger')
+
+    return render_template('bodega/factura_editar.html', factura=factura)
 
 @bodega_bp.route('/facturas/<int:id>/eliminar', methods=['POST'])
 @login_required

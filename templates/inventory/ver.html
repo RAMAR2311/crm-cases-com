@@ -40,6 +40,25 @@
                     <span class="fw-bold fs-5 text-brand-black">${{ (producto.precio_sugerido)|cop }}</span>
                 </div>
                 
+                {% if producto.variantes %}
+                <div class="text-start mt-4 pt-4 border-top">
+                    <h6 class="fw-bold text-primary mb-3"><i class="fa-solid fa-sitemap me-2"></i>Subcategorías Registradas</h6>
+                    <div class="d-flex flex-wrap gap-2 mb-4">
+                        {% for v in producto.variantes %}
+                            <span class="badge bg-white text-dark border shadow-sm px-3 py-2 rounded-pill">
+                                <strong>{{ v.nombre_variante }}</strong>: {{ v.cantidad_stock }} uds
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mt-2 pt-3 border-top">
+                    <button type="button" class="btn btn-outline-primary w-100 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#variantesModal{{ producto.id }}">
+                        <i class="fa-solid fa-layer-group me-2"></i>Gestionar Subcategorías
+                    </button>
+                </div>
+                
                 {% if producto.observacion %}
                 <div class="text-start mt-4 pt-4 border-top">
                     <h6 class="fw-bold text-brand-pink mb-3"><i class="fa-solid fa-note-sticky me-2"></i>Observaciones</h6>
@@ -50,6 +69,11 @@
                 {% endif %}
             </div>
         </div>
+        
+        <!-- Modal de Variantes (Inyectado para que funcione el botón de arriba) -->
+        {% with p = producto %}
+            {% include 'inventory/modal_variantes.html' %}
+        {% endwith %}
 
         <!-- Trazabilidad de Inventario (Derecha) -->
         <div class="col-lg-8">
