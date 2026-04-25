@@ -49,9 +49,9 @@ def procesar_unidades_ch(ventas):
             if detalle.variante:
                 subcategoria = detalle.variante.nombre_variante
             
-            # Buscar el patrón 'CHx' seguido de un número
-            match_nombre = re.search(r'CHx(\d+)', nombre, re.IGNORECASE)
-            match_sub = re.search(r'CHx(\d+)', subcategoria, re.IGNORECASE)
+            # Buscar el patrón 'CH', opcionalmente con espacio y/o 'x', seguido de un número
+            match_nombre = re.search(r'CH\s*x?(\d+)', nombre, re.IGNORECASE)
+            match_sub = re.search(r'CH\s*x?(\d+)', subcategoria, re.IGNORECASE)
             
             valor_extraido = None
             error_formato = False
@@ -68,8 +68,8 @@ def procesar_unidades_ch(ventas):
                 except ValueError:
                     error_formato = True
             else:
-                # Si se detecta 'CHx' pero no hay un número válido después
-                if 'CHx' in nombre.upper() or 'CHx' in subcategoria.upper():
+                # Si se detecta 'CH' pero no hay un número válido después
+                if re.search(r'CH', nombre, re.IGNORECASE) or re.search(r'CH', subcategoria, re.IGNORECASE):
                     error_formato = True
             
             if valor_extraido is not None:
