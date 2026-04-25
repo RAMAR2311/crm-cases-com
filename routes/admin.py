@@ -4,6 +4,7 @@ from models import db, Product, ProductVariant, Sale, User, Maneo, SaleDetail, S
 from sqlalchemy.sql import func
 from werkzeug.security import generate_password_hash
 from decorators import admin_required
+from decimal import Decimal
 
 admin_bp = Blueprint('admin_bp', __name__)
 
