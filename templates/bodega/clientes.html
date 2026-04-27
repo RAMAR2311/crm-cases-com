@@ -8,9 +8,30 @@
     </a>
 </div>
 
+<!-- Buscador Rápido de Clientes -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm bg-white">
+    <div class="row align-items-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="input-group input-group-lg shadow-sm rounded-pill overflow-hidden border">
+                <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" id="clientesSearch" class="form-control border-0 bg-white shadow-none ps-2" placeholder="Busca por Nombre o Documento..." autocomplete="off">
+                <button class="btn btn-light border-0 px-3 text-muted" type="button" id="clearSearch" title="Limpiar búsqueda">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-6 text-md-end mt-3 mt-md-0">
+            <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">
+                Mostrando <span id="visibleCount" class="text-brand-pink">{{ clientes|length }}</span>
+                de <strong>{{ clientes|length }}</strong> clientes
+            </small>
+        </div>
+    </div>
+</div>
+
 <div class="card card-custom p-0 border-0 shadow-sm overflow-hidden">
     <div class="table-responsive">
-        <table class="table table-hover table-custom mb-0 align-middle">
+        <table class="table table-hover table-custom mb-0 align-middle" id="clientesTable">
             <thead class="bg-light">
                 <tr>
                     <th class="ps-4">RAZÓN SOCIAL / NOMBRE</th>
@@ -22,7 +43,7 @@
             </thead>
             <tbody>
                 {% for c in clientes %}
-                <tr>
+                <tr class="cliente-row">
                     <td class="ps-4 fw-bold text-brand-black">{{ c.nombre_o_razon_social }}</td>
                     <td class="text-muted">{{ c.documento_o_nit }}</td>
                     <td class="text-center fw-bolder {% if c.deuda_total > 0 %}text-danger{% else %}text-success{% endif %}">
@@ -100,4 +121,58 @@
         </table>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('clientesSearch');
+    const clearBtn = document.getElementById('clearSearch');
+    const tableRows = document.querySelectorAll('.cliente-row');
+    const visibleCount = document.getElementById('visibleCount');
+    const tbody = document.querySelector('tbody');
+
+    // Crear fila de "No hay resultados"
+    const noResultsRow = document.createElement('tr');
+    noResultsRow.className = 'no-results d-none';
+    noResultsRow.innerHTML = `<td colspan="5" class="text-center py-5 text-muted">
+        <i class="fa-solid fa-magnifying-glass-minus fs-1 mb-3 opacity-25"></i>
+        <p class="mb-0">No se encontraron clientes que coincidan con tu búsqueda.</p>
+    </td>`;
+    tbody.appendChild(noResultsRow);
+
+    function filterTable() {
+        const query = searchInput.value.toLowerCase().trim();
+        let matches = 0;
+
+        tableRows.forEach(row => {
+            const nombre = row.cells[0].textContent.toLowerCase();
+            const documento = row.cells[1].textContent.toLowerCase();
+
+            if (nombre.includes(query) || documento.includes(query)) {
+                row.classList.remove('d-none');
+                matches++;
+            } else {
+                row.classList.add('d-none');
+            }
+        });
+
+        // Actualizar contador
+        visibleCount.textContent = matches;
+
+        // Mostrar/Ocultar mensaje de no resultados
+        if (matches === 0 && query !== '') {
+            noResultsRow.classList.remove('d-none');
+        } else {
+            noResultsRow.classList.add('d-none');
+        }
+    }
+
+    searchInput.addEventListener('input', filterTable);
+
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        filterTable();
+        searchInput.focus();
+    });
+});
+</script>
 {% endblock %}
