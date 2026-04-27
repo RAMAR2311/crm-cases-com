@@ -64,7 +64,7 @@
                 {% for f in cliente.facturas %}
                 <tr>
                     <td class="ps-4 fw-bold text-brand-black">#{{ f.numero_factura }}</td>
-                    <td class="text-muted"><small>{{ f.fecha_subida.strftime('%d/%m/%Y') }}</small></td>
+                    <td class="text-muted"><small>{{ f.fecha_subida.strftime('%d/%m/%Y') if f.fecha_subida else 'Sin fecha' }}</small></td>
                     <td class="text-end fw-semibold text-brand-black">${{ (f.monto_total)|cop }}</td>
                     <td class="text-center">
                         {% if f.modalidad == 'contado' %}
@@ -147,7 +147,7 @@
             <tbody>
                 {% for abono in cliente.abonos|sort(attribute='fecha_abono', reverse=True) %}
                 <tr>
-                    <td class="ps-4 text-muted"><small>{{ abono.fecha_abono.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                    <td class="ps-4 text-muted"><small>{{ abono.fecha_abono.strftime('%d/%m/%Y %H:%M') if abono.fecha_abono else 'Sin fecha' }}</small></td>
                     <td>
                         {% if abono.factura %}
                             <span class="badge bg-light text-dark border rounded-pill">Factura #{{ abono.factura.numero_factura }}</span>
@@ -240,10 +240,10 @@
                         <tbody>
                             {% for abono in f.abonos %}
                             <tr>
-                                <td>{{ abono.fecha_abono.strftime('%d/%m/%Y %H:%M') }}</td>
+                                <td>{{ abono.fecha_abono.strftime('%d/%m/%Y %H:%M') if abono.fecha_abono else 'Sin fecha' }}</td>
                                 <td class="text-capitalize">{{ abono.metodo_pago }}</td>
                                 <td class="fw-bold text-success">${{ (abono.monto)|cop }}</td>
-                                <td>{{ abono.usuario.nombre }}</td>
+                                <td>{{ abono.usuario.nombre if abono.usuario else 'Sistema' }}</td>
                                 <td class="small text-muted">{{ abono.observacion or '-' }}</td>
                             </tr>
                             {% else %}
@@ -282,7 +282,7 @@
                                 <td>{{ det.variante.nombre_variante if det.variante else 'N/A' }}</td>
                                 <td class="fw-bold">{{ det.cantidad }}</td>
                                 <td>${{ (det.precio_venta)|cop }}</td>
-                                <td class="fw-bold text-success">${{ (det.cantidad * det.precio_venta)|cop }}</td>
+                                <td class="fw-bold text-success">${{ (det.cantidad * (det.precio_venta or 0))|cop }}</td>
                             </tr>
                             {% else %}
                             <tr><td colspan="6" class="text-muted text-center pt-3">No hay productos registrados en esta factura.</td></tr>
