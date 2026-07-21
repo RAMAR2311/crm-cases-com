@@ -141,6 +141,15 @@
                 Método de Pago: {{ venta.metodo_pago|upper }}
             {% endif %}
         </p>
+
+        {% if venta.cliente %}
+        <div style="border-top: 1px dashed #1A1A1A; margin-top: 10px; padding-top: 10px; text-align: left;">
+            <p class="info" style="font-weight: bold; margin-bottom: 5px;">DATOS DEL CLIENTE:</p>
+            <p class="info">Nombre: {{ venta.cliente.nombre }}</p>
+            <p class="info">CC/NIT: {{ venta.cliente.documento }}</p>
+            <p class="info">Tel: {{ venta.cliente.telefono }}</p>
+        </div>
+        {% endif %}
     </div>
 
     <table class="table-items">
