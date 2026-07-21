@@ -71,6 +71,43 @@ def nuevo_cliente():
 
     return render_template('bodega/cliente_nuevo.html')
 
+@bodega_bp.route('/clientes/api/nuevo', methods=['POST'])
+@login_required
+@any_bodega_required
+def api_nuevo_cliente():
+    try:
+        data = request.get_json()
+        nombre = data.get('nombre')
+        documento = data.get('documento')
+        telefono = data.get('telefono')
+        
+        if not nombre or not documento or not telefono:
+            return jsonify({'success': False, 'message': 'Faltan campos obligatorios (Nombre, Documento, Teléfono)'}), 400
+            
+        if Cliente.query.filter_by(documento_o_nit=documento.strip()).first():
+            return jsonify({'success': False, 'message': 'Ya existe un cliente con ese documento'}), 400
+            
+        nuevo = Cliente(
+            nombre_o_razon_social=nombre.strip(),
+            documento_o_nit=documento.strip(),
+            telefono=telefono.strip(),
+            creado_por_id=current_user.id
+        )
+        db.session.add(nuevo)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'cliente': {
+                'id': nuevo.id,
+                'nombre_o_razon_social': nuevo.nombre_o_razon_social,
+                'documento_o_nit': nuevo.documento_o_nit
+            }
+        })
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
+
 @bodega_bp.route('/clientes/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 @any_bodega_required

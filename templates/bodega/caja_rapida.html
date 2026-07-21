@@ -94,12 +94,17 @@
 
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">CLIENTE (OBLIGATORIO)</label>
-                        <select name="cliente_id" class="form-select border-0 shadow-sm" required>
-                            <option value="" disabled selected>-- Selecciona un Cliente --</option>
-                            {% for c in clientes %}
-                            <option value="{{ c.id }}">{{ c.nombre_o_razon_social }} - {{ c.documento_o_nit }}</option>
-                            {% endfor %}
-                        </select>
+                        <div class="input-group shadow-sm border rounded-3 overflow-hidden">
+                            <select name="cliente_id" id="clienteIdSelect" class="form-select border-0 shadow-none" required>
+                                <option value="" disabled selected>-- Selecciona un Cliente --</option>
+                                {% for c in clientes %}
+                                <option value="{{ c.id }}">{{ c.nombre_o_razon_social }} - {{ c.documento_o_nit }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn btn-primary border-0 px-3" type="button" data-bs-toggle="modal" data-bs-target="#modalNuevoCliente" title="Registrar Cliente Nuevo">
+                                <i class="fa-solid fa-user-plus"></i>
+                            </button>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-bold small text-muted">NÚMERO DE FACTURA (OPCIONAL)</label>
@@ -157,6 +162,38 @@
     </div>
 </div>
 
+
+<!-- Modal Nuevo Cliente Rapido -->
+<div class="modal fade" id="modalNuevoCliente" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-user-plus me-2"></i>Registrar Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <form id="formNuevoClienteRapido">
+                    <div class="mb-3">
+                        <label class="form-label">Nombre del Cliente <span class="text-danger">*</span></label>
+                        <input type="text" id="rc_nombre" class="form-control bg-light" required placeholder="Ej: Juan Pérez">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Documento (CC/NIT) <span class="text-danger">*</span></label>
+                        <input type="text" id="rc_documento" class="form-control bg-light" required placeholder="Número de identificación">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Teléfono / Celular <span class="text-danger">*</span></label>
+                        <input type="text" id="rc_telefono" class="form-control bg-light" required placeholder="Ej: 3001234567">
+                    </div>
+                    <button type="button" class="btn btn-primary w-100 fw-bold" onclick="guardarClienteRapido()">
+                        Guardar y Seleccionar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
     .product-card { transition: transform 0.2s, box-shadow 0.2s; border: 2px solid transparent !important; }
     .product-card:hover { transform: translateY(-5px); box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important; border-color: var(--brand-pink) !important; }
@@ -175,6 +212,51 @@
     document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('fechaVenta').value = new Date().toISOString().split('T')[0];
     });
+
+    async function guardarClienteRapido() {
+        const nombre = document.getElementById('rc_nombre').value.trim();
+        const documento = document.getElementById('rc_documento').value.trim();
+        const telefono = document.getElementById('rc_telefono').value.trim();
+        
+        if (!nombre || !documento || !telefono) {
+            alert("Por favor completa todos los campos (Nombre, Documento, Teléfono).");
+            return;
+        }
+        
+        try {
+            const resp = await fetch('{{ url_for("bodega_bp.api_nuevo_cliente") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrf_token
+                },
+                body: JSON.stringify({ nombre, documento, telefono })
+            });
+            const data = await resp.json();
+            
+            if (data.success) {
+                const selectObj = document.getElementById('clienteIdSelect');
+                
+                const option = document.createElement('option');
+                option.value = data.cliente.id;
+                option.text = `${data.cliente.nombre_o_razon_social} - ${data.cliente.documento_o_nit}`;
+                selectObj.appendChild(option);
+                selectObj.value = data.cliente.id;
+                
+                // Cerrar modal
+                const modalEl = document.getElementById('modalNuevoCliente');
+                const modal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modal.hide();
+                
+                document.getElementById('formNuevoClienteRapido').reset();
+            } else {
+                alert(data.message || "Error al crear cliente");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error de conexión al crear cliente.");
+        }
+    }
 
     // Toggle Abono input if 'credito' is explicitly selected
     function toggleAbonoInput() {
