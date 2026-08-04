@@ -210,7 +210,11 @@
 
     // Inicializar fecha
     document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('fechaVenta').value = new Date().toISOString().split('T')[0];
+        const hoy = new Date();
+        const yyyy = hoy.getFullYear();
+        const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+        const dd = String(hoy.getDate()).padStart(2, '0');
+        document.getElementById('fechaVenta').value = `${yyyy}-${mm}-${dd}`;
     });
 
     async function guardarClienteRapido() {

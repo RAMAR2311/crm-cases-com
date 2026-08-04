@@ -142,7 +142,11 @@
     document.addEventListener('DOMContentLoaded', () => {
         const fechaInput = document.getElementById('fechaFactura');
         if (fechaInput && !fechaInput.value) {
-            fechaInput.value = new Date().toISOString().split('T')[0];
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            fechaInput.value = `${yyyy}-${mm}-${dd}`;
         }
     });
     // Escucha el evento Enter en la pistola o teclado
@@ -249,7 +253,7 @@
                 <td>
                     <div class="input-group input-group-sm">
                         <span class="input-group-text">$</span>
-                        <input type="text" name="precio_unitario[]" value="${formatCOP(row_precio)}" class="form-control text-end fw-bold" id="input_precio_${uniqueKey}" oninput="formatInputCOP(this); actualizarPrecio('${uniqueKey}', this.value)">
+                        <input type="text" name="precio_unitario[]" value="${formatCOP(row_precio)}" class="form-control text-end fw-bold" id="input_precio_${uniqueKey}" oninput="formatInputCOP(this); updatePrecioLive('${uniqueKey}', this.value)" onchange="actualizarPrecio('${uniqueKey}', this.value)">
                     </div>
                 </td>
                 <td class="fw-bolder text-success" id="subtotal_${uniqueKey}">$${formatCOP(row_precio)}</td>
@@ -314,7 +318,8 @@
             if(precioInput) {
                 precioInput.id = 'input_precio_' + uniqueKeyNew;
                 precioInput.value = formatCOP(new_precio);
-                precioInput.setAttribute('oninput', `formatInputCOP(this); actualizarPrecio('${uniqueKeyNew}', this.value)`);
+                precioInput.setAttribute('oninput', `formatInputCOP(this); updatePrecioLive('${uniqueKeyNew}', this.value)`);
+                precioInput.setAttribute('onchange', `actualizarPrecio('${uniqueKeyNew}', this.value)`);
             }
             
             const subTot = tr.querySelector(`td[id="subtotal_${uniqueKeyOld}"]`);
@@ -346,6 +351,18 @@
         actualizarFilaUI(key);
     }
 
+    function updatePrecioLive(key, newVal) {
+        let raw = newVal.toString().replace(/\D/g, '');
+        let val = parseFloat(raw);
+        if (isNaN(val) || val < 0) val = 0.00;
+        
+        carrito[key].precio = val;
+        
+        const sub = carrito[key].cantidad * carrito[key].precio;
+        document.getElementById('subtotal_' + key).innerText = "$" + formatCOP(sub);
+        recalcularTotal();
+    }
+
     function actualizarPrecio(key, newVal) {
         let raw = newVal.toString().replace(/\D/g, '');
         let val = parseFloat(raw);
@@ -357,7 +374,7 @@
             alert('El precio no puede ser menor al precio mínimo establecido ($' + formatCOP(p_min) + ')');
             val = p_min;
             document.getElementById('input_precio_' + key).value = formatCOP(val);
-        } else if (val > p_max) {
+        } else if (p_max > 0 && val > p_max) {
             alert('El precio no puede ser mayor al precio sugerido ($' + formatCOP(p_max) + ')');
             val = p_max;
             document.getElementById('input_precio_' + key).value = formatCOP(val);
@@ -412,7 +429,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         const dateInput = document.querySelector('input[name="fecha_factura"]');
         if (dateInput && !dateInput.value) {
-            dateInput.value = new Date().toISOString().split('T')[0];
+            const hoy = new Date();
+            const yyyy = hoy.getFullYear();
+            const mm = String(hoy.getMonth() + 1).padStart(2, '0');
+            const dd = String(hoy.getDate()).padStart(2, '0');
+            dateInput.value = `${yyyy}-${mm}-${dd}`;
         }
     });
 </script>
