@@ -29,6 +29,8 @@ def dashboard():
     
     return render_template('bodega/dashboard.html', clientes_count=total_clientes, facturas=facturas_recientes, abonos=abonos_recientes)
 
+ZONAS_BODEGA = ['Fontibón', 'Séptima', 'Norte', '20 de Julio', 'San Andresito 38', 'Alrededores', 'Bosa', 'Álamos']
+
 @bodega_bp.route('/clientes/nuevo', methods=['GET', 'POST'])
 @login_required
 @any_bodega_required
@@ -39,6 +41,7 @@ def nuevo_cliente():
         telefono = request.form.get('telefono')
         email = request.form.get('email')
         direccion = request.form.get('direccion')
+        zona = request.form.get('zona')
 
         if not nombre or not documento or not telefono:
             flash('Por favor completa los campos obligatorios: Nombre, Documento y Teléfono.', 'danger')
@@ -54,6 +57,7 @@ def nuevo_cliente():
             telefono=telefono.strip(),
             email=email.strip() if email else None,
             direccion=direccion.strip() if direccion else None,
+            zona=zona.strip() if zona else None,
             creado_por_id=current_user.id
         )
         try:
@@ -69,7 +73,7 @@ def nuevo_cliente():
             db.session.rollback()
             flash('Error al intentar registrar el cliente.', 'danger')
 
-    return render_template('bodega/cliente_nuevo.html')
+    return render_template('bodega/cliente_nuevo.html', zonas=ZONAS_BODEGA)
 
 @bodega_bp.route('/clientes/api/nuevo', methods=['POST'])
 @login_required
@@ -80,6 +84,7 @@ def api_nuevo_cliente():
         nombre = data.get('nombre')
         documento = data.get('documento')
         telefono = data.get('telefono')
+        zona = data.get('zona')
         
         if not nombre or not documento or not telefono:
             return jsonify({'success': False, 'message': 'Faltan campos obligatorios (Nombre, Documento, Teléfono)'}), 400
@@ -91,6 +96,7 @@ def api_nuevo_cliente():
             nombre_o_razon_social=nombre.strip(),
             documento_o_nit=documento.strip(),
             telefono=telefono.strip(),
+            zona=zona.strip() if zona else None,
             creado_por_id=current_user.id
         )
         db.session.add(nuevo)
@@ -101,7 +107,8 @@ def api_nuevo_cliente():
             'cliente': {
                 'id': nuevo.id,
                 'nombre_o_razon_social': nuevo.nombre_o_razon_social,
-                'documento_o_nit': nuevo.documento_o_nit
+                'documento_o_nit': nuevo.documento_o_nit,
+                'zona': nuevo.zona
             }
         })
     except Exception as e:
@@ -119,6 +126,7 @@ def editar_cliente(id):
         telefono = request.form.get('telefono')
         email = request.form.get('email')
         direccion = request.form.get('direccion')
+        zona = request.form.get('zona')
 
         if not nombre or not documento or not telefono:
             flash('Por favor completa los campos obligatorios: Nombre, Documento y Teléfono.', 'danger')
@@ -134,6 +142,7 @@ def editar_cliente(id):
         cliente.telefono = telefono.strip()
         cliente.email = email.strip() if email else None
         cliente.direccion = direccion.strip() if direccion else None
+        cliente.zona = zona.strip() if zona else None
 
         try:
             db.session.commit()
@@ -143,7 +152,7 @@ def editar_cliente(id):
             db.session.rollback()
             flash('Error al intentar actualizar el cliente.', 'danger')
 
-    return render_template('bodega/cliente_editar.html', cliente=cliente)
+    return render_template('bodega/cliente_editar.html', cliente=cliente, zonas=ZONAS_BODEGA)
 
 @bodega_bp.route('/caja_rapida', methods=['GET', 'POST'])
 @login_required
@@ -535,7 +544,7 @@ def clientes():
     else:
         # Bodega ve todo
         lista_clientes = Cliente.query.order_by(Cliente.nombre_o_razon_social).all()
-    return render_template('bodega/clientes.html', clientes=lista_clientes)
+    return render_template('bodega/clientes.html', clientes=lista_clientes, zonas=ZONAS_BODEGA)
 
 @bodega_bp.route('/clientes/<int:id>')
 @login_required
@@ -988,6 +997,7 @@ def api_search_clientes():
             'id': c.id,
             'nombre': c.nombre_o_razon_social,
             'documento': c.documento_o_nit,
+            'zona': c.zona or '',
             'deuda': float(c.deuda_total),
             'url': url_for('bodega_bp.cliente_detalle', id=c.id)
         })

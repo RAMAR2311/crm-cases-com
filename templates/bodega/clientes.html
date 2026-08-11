@@ -8,10 +8,10 @@
     </a>
 </div>
 
-<!-- Buscador Rápido de Clientes -->
+<!-- Buscador Rápido y Filtro por Zona -->
 <div class="card card-custom p-3 mb-4 border-0 shadow-sm bg-white">
-    <div class="row align-items-center">
-        <div class="col-md-8 col-lg-6 position-relative">
+    <div class="row align-items-center g-3">
+        <div class="col-md-6 col-lg-5 position-relative">
             <div class="input-group input-group-lg shadow-sm rounded-pill border">
                 <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
                 <input type="text" id="clientesSearch" class="form-control border-0 bg-white shadow-none ps-2" placeholder="Busca por Nombre o Documento..." autocomplete="off" style="border-radius: 0 50px 50px 0;">
@@ -23,7 +23,18 @@
             <div id="searchDropdown" class="dropdown-menu shadow-lg border-0 w-100 p-0 mt-2 d-none" style="max-height: 400px; overflow-y: auto;">
             </div>
         </div>
-        <div class="col-md-4 col-lg-6 text-md-end mt-3 mt-md-0">
+        <div class="col-md-6 col-lg-4">
+            <div class="input-group input-group-lg shadow-sm rounded-pill border overflow-hidden">
+                <span class="input-group-text bg-white border-0 ps-3 text-brand-blue"><i class="fa-solid fa-location-dot"></i></span>
+                <select id="zonaFilter" class="form-select border-0 bg-white shadow-none fw-semibold" style="font-size: 0.95rem; cursor: pointer;">
+                    <option value="">-- Todas las Zonas --</option>
+                    {% for z in zonas %}
+                    <option value="{{ z }}">{{ z }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="col-md-12 col-lg-3 text-lg-end mt-3 mt-lg-0">
             <small class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem;">
                 Mostrando <span id="visibleCount" class="text-brand-pink">{{ clientes|length }}</span>
                 de <strong>{{ clientes|length }}</strong> clientes
@@ -39,6 +50,7 @@
                 <tr>
                     <th class="ps-4">RAZÓN SOCIAL / NOMBRE</th>
                     <th>DOCUMENTO</th>
+                    <th>ZONA</th>
                     <th class="text-center">DEUDA TOTAL</th>
                     <th class="text-center">ESTADO</th>
                     <th class="text-center">ACCIONES</th>
@@ -46,9 +58,18 @@
             </thead>
             <tbody>
                 {% for c in clientes %}
-                <tr class="cliente-row">
+                <tr class="cliente-row" data-zona="{{ c.zona or '' }}">
                     <td class="ps-4 fw-bold text-brand-black">{{ c.nombre_o_razon_social }}</td>
                     <td class="text-muted">{{ c.documento_o_nit }}</td>
+                    <td>
+                        {% if c.zona %}
+                            <span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1 fw-bold">
+                                <i class="fa-solid fa-location-dot me-1"></i>{{ c.zona }}
+                            </span>
+                        {% else %}
+                            <span class="text-muted small fst-italic">Sin zona</span>
+                        {% endif %}
+                    </td>
                     <td class="text-center fw-bolder {% if c.deuda_total > 0 %}text-danger{% else %}text-success{% endif %}">
                         ${{ (c.deuda_total)|cop }}
                     </td>
@@ -116,7 +137,7 @@
 
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center py-5 text-muted">
+                    <td colspan="6" class="text-center py-5 text-muted">
                         <i class="fa-solid fa-users-slash fs-2 mb-3 text-brand-pink opacity-50"></i>
                         <p class="mb-0">No hay clientes en el directorio. Registra uno para comenzar.</p>
                     </td>
@@ -130,6 +151,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('clientesSearch');
+    const zonaFilter = document.getElementById('zonaFilter');
     const clearBtn = document.getElementById('clearSearch');
     const dropdown = document.getElementById('searchDropdown');
     const tableRows = document.querySelectorAll('.cliente-row');
@@ -139,9 +161,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Crear fila de "No hay resultados"
     const noResultsRow = document.createElement('tr');
     noResultsRow.className = 'no-results d-none';
-    noResultsRow.innerHTML = `<td colspan="5" class="text-center py-5 text-muted">
+    noResultsRow.innerHTML = `<td colspan="6" class="text-center py-5 text-muted">
         <i class="fa-solid fa-magnifying-glass-minus fs-1 mb-3 opacity-25"></i>
-        <p class="mb-0">No se encontraron clientes que coincidan con tu búsqueda.</p>
+        <p class="mb-0">No se encontraron clientes que coincidan con tu búsqueda o zona seleccionada.</p>
     </td>`;
     tbody.appendChild(noResultsRow);
 
@@ -149,13 +171,19 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function performSearch() {
         const query = searchInput.value.toLowerCase().trim();
+        const selectedZona = zonaFilter.value.toLowerCase().trim();
         
-        // 1. Filtrado local de la tabla
+        // 1. Filtrado local de la tabla por nombre/documento Y por zona
         let matches = 0;
         tableRows.forEach(row => {
             const nombre = row.cells[0].textContent.toLowerCase();
             const documento = row.cells[1].textContent.toLowerCase();
-            if (nombre.includes(query) || documento.includes(query)) {
+            const zona = (row.getAttribute('data-zona') || '').toLowerCase();
+
+            const matchesQuery = !query || nombre.includes(query) || documento.includes(query);
+            const matchesZona = !selectedZona || zona === selectedZona;
+
+            if (matchesQuery && matchesZona) {
                 row.classList.remove('d-none');
                 matches++;
             } else {
@@ -163,8 +191,11 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
         visibleCount.textContent = matches;
-        if (matches === 0 && query !== '') noResultsRow.classList.remove('d-none');
-        else noResultsRow.classList.add('d-none');
+        if (matches === 0 && (query !== '' || selectedZona !== '')) {
+            noResultsRow.classList.remove('d-none');
+        } else {
+            noResultsRow.classList.add('d-none');
+        }
 
         // 2. Búsqueda AJAX global para el "despliegue"
         clearTimeout(debounceTimer);
@@ -187,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             btn.innerHTML = `
                                 <div>
                                     <div class="fw-bold text-dark text-truncate" style="max-width: 250px;">${item.nombre}</div>
-                                    <small class="text-muted">NIT/Doc: ${item.documento}</small>
+                                    <small class="text-muted">NIT/Doc: ${item.documento} ${item.zona ? '| Zona: ' + item.zona : ''}</small>
                                 </div>
                                 <span class="badge bg-light ${item.deuda > 0 ? 'text-danger' : 'text-success'} border rounded-pill">
                                     Deuda: $${Math.round(item.deuda).toLocaleString('es-CO')}
@@ -206,6 +237,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     searchInput.addEventListener('input', performSearch);
+    zonaFilter.addEventListener('change', performSearch);
 
     // Ocultar dropdown al hacer click fuera
     document.addEventListener('click', (e) => {
@@ -217,6 +249,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     clearBtn.addEventListener('click', () => {
         searchInput.value = '';
+        zonaFilter.value = '';
         performSearch();
         dropdown.classList.add('d-none');
         dropdown.classList.remove('show');

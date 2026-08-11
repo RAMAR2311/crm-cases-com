@@ -33,6 +33,16 @@
                     <input type="email" name="email" class="form-control bg-light border-0" placeholder="contacto@empresa.com">
                 </div>
 
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Zona / Ubicación <span class="text-muted">(Opcional)</span></label>
+                    <select name="zona" class="form-select bg-light border-0">
+                        <option value="">-- Seleccionar Zona --</option>
+                        {% for z in zonas %}
+                            <option value="{{ z }}">{{ z }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <div class="mb-4">
                     <label class="form-label fw-bold">Dirección de Envío / Domicilio <span class="text-muted">(Opcional)</span></label>
                     <textarea name="direccion" class="form-control bg-light border-0" rows="2" placeholder="Carrera X # Y - Z"></textarea>

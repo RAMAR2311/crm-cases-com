@@ -273,6 +273,7 @@ class Cliente(db.Model):
     telefono = db.Column(db.String(50), nullable=False)
     email = db.Column(db.String(120), nullable=True)
     direccion = db.Column(db.String(255), nullable=True)
+    zona = db.Column(db.String(100), nullable=True)
     creado_por_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True) # ID del vendedor/admin que lo creó
     fecha_registro = db.Column(db.DateTime, default=obtener_hora_bogota)
 
