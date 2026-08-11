@@ -1,7 +1,7 @@
 """Add zona to Cliente
 
 Revision ID: 7a8f9e0d1c2b
-Revises: 6688b6dd36c2
+Revises: 03acf7581d1b
 Create Date: 2026-08-11 18:50:00.000000
 
 """
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision = '7a8f9e0d1c2b'
-down_revision = '6688b6dd36c2'
+down_revision = '03acf7581d1b'
 branch_labels = None
 depends_on = None
 
