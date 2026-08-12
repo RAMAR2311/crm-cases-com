@@ -29,7 +29,7 @@ def dashboard():
     
     return render_template('bodega/dashboard.html', clientes_count=total_clientes, facturas=facturas_recientes, abonos=abonos_recientes)
 
-ZONAS_BODEGA = ['Fontibón', 'Séptima', 'Norte', '20 de Julio', 'San Andresito 38', 'Alrededores', 'Bosa', 'Álamos']
+ZONAS_BODEGA = ['Centro', 'Fontibón', 'Séptima', 'Norte', '20 de Julio', 'San Andresito 38', 'Alrededores', 'Bosa', 'Álamos']
 
 @bodega_bp.route('/clientes/nuevo', methods=['GET', 'POST'])
 @login_required
