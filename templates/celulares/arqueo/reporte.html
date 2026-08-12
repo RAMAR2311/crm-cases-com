@@ -92,6 +92,9 @@
                             <th width="20%" class="text-success">Efectivo</th>
                             <th width="20%" class="text-info">Transferencia</th>
                             <th width="20%" class="text-dark bg-light border-start border-end">Venta Total</th>
+                            {% if current_user.rol == 'admin' %}
+                            <th width="10%" class="text-center d-print-none">Acción</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody style="font-size: 0.9rem;">
@@ -102,10 +105,20 @@
                             <td class="text-end text-success fw-bold">${{ (arqueo.total_efectivo_sistema)|cop }}</td>
                             <td class="text-end text-info fw-bold">${{ (arqueo.total_transferencia_sistema)|cop }}</td>
                             <td class="text-end text-dark fw-bolder bg-light border-start border-end">${{ (arqueo.total_efectivo_sistema + arqueo.total_transferencia_sistema)|cop }}</td>
+                            {% if current_user.rol == 'admin' %}
+                            <td class="text-center d-print-none">
+                                <form action="{{ url_for('celulares_bp.anular_arqueo', id=arqueo.id, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de anular el cierre de arqueo de celulares del {{ arqueo.fecha_arqueo }}?');">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0 py-0 px-2 fw-bold" title="Anular Cierre de Arqueo">
+                                        <i class="fa-solid fa-trash me-1"></i>Anular
+                                    </button>
+                                </form>
+                            </td>
+                            {% endif %}
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="5" class="text-center text-muted p-4">No hay datos encontrados en estas fechas.</td>
+                            <td colspan="{% if current_user.rol == 'admin' %}6{% else %}5{% endif %}" class="text-center text-muted p-4">No hay datos encontrados en estas fechas.</td>
                         </tr>
                         {% endfor %}
                     </tbody>

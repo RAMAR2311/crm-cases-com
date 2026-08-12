@@ -493,3 +493,21 @@ def arqueo_reporte():
         ventas_periodo=ventas_periodo
     )
 
+@celulares_bp.route('/arqueo/anular/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def anular_arqueo(id):
+    arqueo = ArqueoCaja.query.get_or_404(id)
+    fecha_str = arqueo.fecha_arqueo.strftime('%Y-%m-%d')
+    try:
+        db.session.delete(arqueo)
+        db.session.commit()
+        flash(f'El cierre de arqueo de celulares del día {fecha_str} fue anulado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Ocurrió un error al anular el cierre de arqueo de celulares.', 'danger')
+    
+    fecha_inicio = request.args.get('fecha_inicio', fecha_str)
+    fecha_fin = request.args.get('fecha_fin', fecha_str)
+    return redirect(url_for('celulares_bp.arqueo_reporte', fecha_inicio=fecha_inicio, fecha_fin=fecha_fin))
+

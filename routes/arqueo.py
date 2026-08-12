@@ -291,3 +291,21 @@ def reporte():
         total_general_ch=total_general_ch,
         gastos_periodo=gastos_periodo
     )
+
+@arqueo_bp.route('/anular/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def anular(id):
+    arqueo = ArqueoCaja.query.get_or_404(id)
+    fecha_str = arqueo.fecha_arqueo.strftime('%Y-%m-%d')
+    try:
+        db.session.delete(arqueo)
+        db.session.commit()
+        flash(f'El cierre de arqueo del día {fecha_str} fue anulado exitosamente.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Ocurrió un error al anular el cierre de arqueo.', 'danger')
+    
+    fecha_inicio = request.args.get('fecha_inicio', fecha_str)
+    fecha_fin = request.args.get('fecha_fin', fecha_str)
+    return redirect(url_for('arqueo_bp.reporte', fecha_inicio=fecha_inicio, fecha_fin=fecha_fin))
