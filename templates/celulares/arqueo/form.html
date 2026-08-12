@@ -63,7 +63,7 @@
                         <div class="alert mt-3 rounded-3 p-3 text-center" style="background-color: #f3e8ff; color: #553098; border: 1px solid #d8b4fe;">
                             <span class="d-block mb-1 fw-semibold" style="font-size: 0.85rem;"><i class="fa-solid fa-chart-line me-1"></i> Total Venta Celulares</span>
                             <span class="fs-3 fw-bold">
-                                ${{ (total_efectivo|int + total_transferencia|int)|cop }}
+                                ${{ (total_efectivo|float + total_transferencia|float)|cop }}
                             </span>
                             <span class="d-block mt-1 opacity-75" style="font-size: 0.7rem;">(Efectivo + Bancos) de Solo Celulares</span>
                         </div>

@@ -131,14 +131,14 @@ def nuevo():
         db.func.date(Expense.fecha_gasto) == fecha_seleccionada,
         Expense.tipo_gasto == 'Gasto Diario'
     ).all()
-    gastos_automaticos = float(sum(g.monto for g in gastos_diarios_registros))
+    gastos_automaticos = Decimal(str(sum(g.monto for g in gastos_diarios_registros))) if gastos_diarios_registros else Decimal('0.00')
 
     # Calcular gastos por productos externos del día
     gastos_externos_registros = Expense.query.filter(
         db.func.date(Expense.fecha_gasto) == fecha_seleccionada,
         Expense.categoria == 'Pago Prod. Externo'
     ).all()
-    gastos_externos = float(sum(g.monto for g in gastos_externos_registros))
+    gastos_externos = Decimal(str(sum(g.monto for g in gastos_externos_registros))) if gastos_externos_registros else Decimal('0.00')
 
     # Verificar si ya existe un arqueo GLOBAL para esa fecha (unificado para todos los usuarios)
     arqueo_existente = ArqueoCaja.query.filter_by(fecha_arqueo=fecha_seleccionada, tipo_arqueo='general').first()
@@ -156,7 +156,7 @@ def nuevo():
             db.func.date(Expense.fecha_gasto) == fecha_seleccionada,
             Expense.tipo_gasto == 'Gasto Diario'
         ).all()
-        gastos_del_dia = float(sum(g.monto for g in gastos_recalculados))
+        gastos_del_dia = Decimal(str(sum(g.monto for g in gastos_recalculados))) if gastos_recalculados else Decimal('0.00')
         
         observaciones_gastos = request.form.get('observaciones_gastos', '').strip()
 

@@ -64,7 +64,7 @@
                         <div class="alert mt-3 rounded-3 p-3 text-center" style="background-color: #d4edda; color: #155724; border: 1px solid #b1dfbb;">
                             <span class="d-block mb-1 fw-semibold" style="font-size: 0.85rem;"><i class="fa-solid fa-chart-line me-1"></i> Venta + Banco</span>
                             <span class="fs-3 fw-bold">
-                                ${{ ((total_efectivo|int + total_transferencia|int) - total_general_ch - total_celulares - (gastos_automaticos or 0))|cop }}
+                                ${{ (total_efectivo|float + total_transferencia|float - total_general_ch|float - total_celulares|float - (gastos_automaticos|float if gastos_automaticos else 0.0))|cop }}
                             </span>
                             <span class="d-block mt-1 opacity-75" style="font-size: 0.7rem;">(Efectivo + Bancos) - CH - Celulares - Gastos</span>
                         </div>
