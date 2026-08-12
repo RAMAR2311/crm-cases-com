@@ -18,7 +18,7 @@
 
         {% if arqueo_existente %}
         <div class="alert alert-warning text-center rounded-4 p-4 shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation me-1"></i> La caja del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{ arqueo_existente.cajero.nombre }}</strong>. No se puede volver a cerrar.
+            <i class="fa-solid fa-triangle-exclamation me-1"></i> La caja del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{ arqueo_existente.cajero.nombre if arqueo_existente.cajero else 'Usuario' }}</strong>. No se puede volver a cerrar.
             <div class="mt-3 d-flex justify-content-center align-items-center gap-3">
                 <a href="{{ url_for('arqueo_bp.reporte', fecha_inicio=fecha, fecha_fin=fecha) }}" class="btn btn-sm btn-outline-dark rounded-pill px-4 fw-bold">
                     <i class="fa-solid fa-eye me-1"></i> Ver Reporte

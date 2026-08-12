@@ -125,7 +125,7 @@
                         {% for arqueo in arqueos %}
                         <tr>
                             <td class="text-center text-secondary">{{ arqueo.fecha_arqueo }}</td>
-                            <td class="text-truncate" style="max-width:120px;" title="{{ arqueo.cajero.nombre }}">{{ arqueo.cajero.nombre }}</td>
+                            <td class="text-truncate" style="max-width:120px;" title="{{ arqueo.cajero.nombre if arqueo.cajero else 'Usuario' }}">{{ arqueo.cajero.nombre if arqueo.cajero else 'Usuario' }}</td>
                             <td class="text-end text-primary fw-bold">${{ (arqueo.base_inicial)|cop }}</td>
                             <td class="text-end text-dark fw-bolder bg-light border-start border-end">${{ (arqueo.total_efectivo_sistema + arqueo.total_transferencia_sistema)|cop }}</td>
                              <td class="text-end text-success fw-bold">${{ (arqueo.total_efectivo_sistema)|cop }}</td>
