@@ -1,12 +1,48 @@
 from flask import Blueprint, render_template, abort, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from models import db, Product, ProductVariant, Sale, User, Maneo, SaleDetail, SalePayment, StockAdjustment, Expense, obtener_hora_bogota
+from models import db, Product, ProductVariant, Sale, User, Maneo, SaleDetail, SalePayment, StockAdjustment, Expense, ServerPayment, obtener_hora_bogota
 from sqlalchemy.sql import func
 from werkzeug.security import generate_password_hash
 from decorators import admin_required
 from decimal import Decimal
 
 admin_bp = Blueprint('admin_bp', __name__)
+
+from app import csrf
+
+@admin_bp.route('/confirmar-pago-servidor', methods=['GET', 'POST'])
+@csrf.exempt
+def confirmar_pago_servidor():
+    from app import confirmar_pago_servidor_app
+    return confirmar_pago_servidor_app()
+
+
+@admin_bp.route('/marcar-pago-servidor-manual', methods=['POST'])
+@login_required
+@admin_required
+def marcar_pago_servidor_manual():
+    ahora = obtener_hora_bogota()
+    anio = ahora.year
+    mes = ahora.month
+    
+    pago = ServerPayment.query.filter_by(anio=anio, mes=mes).first()
+    if not pago:
+        pago = ServerPayment(
+            anio=anio,
+            mes=mes,
+            estado='pagado',
+            fecha_pago=ahora,
+            observacion='Marcado manualmente desde el panel de administración'
+        )
+        db.session.add(pago)
+    else:
+        pago.estado = 'pagado'
+        pago.fecha_pago = ahora
+        pago.observacion = 'Actualizado manualmente desde el panel de administración'
+        
+    db.session.commit()
+    flash(f'El pago del servidor para el mes actual ({mes}/{anio}) se ha marcado como PAGADO correctamente.', 'success')
+    return redirect(request.referrer or url_for('index'))
 
 @admin_bp.route('/vendedores', methods=['GET', 'POST'])
 @login_required
@@ -423,4 +459,63 @@ def balance_financiero():
         fecha_fin=fecha_fin_str,
         fecha_generacion=hoy.strftime('%Y-%m-%d %H:%M'),
         datos=datos_financieros
+    )
+
+@admin_bp.route('/configuracion-servidor-zenic', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def configuracion_servidor_zenic():
+    import os
+    from flask import current_app
+    
+    env_path = os.path.join(current_app.root_path, '.env')
+    
+    if request.method == 'POST':
+        valor_mensual = request.form.get('valor_mensual', '100.000').strip()
+        dia_vencimiento = request.form.get('dia_vencimiento', '15').strip()
+        dias_gabela = request.form.get('dias_gabela', '5').strip()
+        whatsapp_num = request.form.get('whatsapp_num', '573115643557').strip()
+        llave_breb = request.form.get('llave_breb', '@QEI910').strip()
+        numero_nequi = request.form.get('numero_nequi', '3001234567').strip()
+        anio_inicio = request.form.get('anio_inicio', '2027').strip()
+        
+        env_content = f"""VALOR_MENSUALIDAD_SERVIDOR={valor_mensual}
+DIA_VENCIMIENTO_SERVIDOR={dia_vencimiento}
+DIAS_GABELA={dias_gabela}
+NUMERO_WHATSAPP_PROVEEDOR={whatsapp_num}
+LLAVE_BREB={llave_breb}
+NUMERO_NEQUI={numero_nequi}
+ANIO_INICIO_COBRO_SERVIDOR={anio_inicio}
+"""
+        try:
+            with open(env_path, 'w', encoding='utf-8') as f:
+                f.write(env_content)
+                
+            current_app.config['VALOR_MENSUALIDAD_SERVIDOR'] = valor_mensual
+            current_app.config['DIA_VENCIMIENTO_SERVIDOR'] = int(dia_vencimiento)
+            current_app.config['DIAS_GABELA'] = int(dias_gabela)
+            current_app.config['NUMERO_WHATSAPP_PROVEEDOR'] = whatsapp_num
+            current_app.config['LLAVE_BREB'] = llave_breb
+            current_app.config['NUMERO_NEQUI'] = numero_nequi
+            current_app.config['ANIO_INICIO_COBRO_SERVIDOR'] = int(anio_inicio)
+            
+            flash('¡Configuración del servidor guardada exitosamente!', 'success')
+        except Exception as e:
+            flash(f'Error al guardar la configuración: {str(e)}', 'danger')
+            
+        return redirect(url_for('admin_bp.configuracion_servidor_zenic'))
+        
+    ahora = obtener_hora_bogota()
+    historial_pagos = ServerPayment.query.order_by(ServerPayment.anio.desc(), ServerPayment.mes.desc()).all()
+    
+    return render_template(
+        'admin/config_servidor_zenic.html',
+        valor_mensual=current_app.config.get('VALOR_MENSUALIDAD_SERVIDOR', '100.000'),
+        dia_vencimiento=current_app.config.get('DIA_VENCIMIENTO_SERVIDOR', 15),
+        dias_gabela=current_app.config.get('DIAS_GABELA', 5),
+        whatsapp_num=current_app.config.get('NUMERO_WHATSAPP_PROVEEDOR', '573115643557'),
+        llave_breb=current_app.config.get('LLAVE_BREB', '@QEI910'),
+        numero_nequi=current_app.config.get('NUMERO_NEQUI', '3505422186'),
+        anio_inicio=current_app.config.get('ANIO_INICIO_COBRO_SERVIDOR', 2027),
+        historial_pagos=historial_pagos
     )

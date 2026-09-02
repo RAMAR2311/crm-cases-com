@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold text-brand-black mb-0"><i class="fa-solid fa-gears text-brand-pink me-2"></i> Configuración de Servidor (Sistemas Zenic)</h2>
+        <p class="text-muted">Panel de control exclusivo de proveedor para ajustar parámetros de cobro y registrar pagos del servidor.</p>
+    </div>
+    <a href="{{ url_for('admin_bp.dashboard') }}" class="btn btn-outline-secondary rounded-pill fw-bold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Volver al Dashboard
+    </a>
+</div>
+
+<div class="row g-4">
+    <!-- Columna 1: Formulario de Parámetros de Cobro -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-sliders text-primary me-2"></i> Parámetros Configurables</h5>
+            
+            <form action="{{ url_for('admin_bp.configuracion_servidor_zenic') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">Valor Mensualidad (COP)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">$</span>
+                        <input type="text" name="valor_mensual" class="form-control" value="{{ valor_mensual }}" required placeholder="100.000">
+                    </div>
+                    <small class="text-muted">Monto mensual a cobrar (ejemplo: 100.000 o 120.000 si sube en el futuro).</small>
+                </div>
+
+                <div class="row">
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold text-dark small">Día de Vencimiento</label>
+                        <input type="number" name="dia_vencimiento" class="form-control" value="{{ dia_vencimiento }}" min="1" max="31" required>
+                        <small class="text-muted">Día de corte mensual (ej: 15).</small>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <label class="form-label fw-bold text-dark small">Días de Gabela/Gracia</label>
+                        <input type="number" name="dias_gabela" class="form-control" value="{{ dias_gabela }}" min="0" max="30" required>
+                        <small class="text-muted">Días de margen (ej: 5).</small>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">Año Inicio de Cobro</label>
+                    <input type="number" name="anio_inicio" class="form-control" value="{{ anio_inicio }}" required>
+                    <small class="text-muted">Año desde el cual aplican los cobros automáticos (ej: 2027).</small>
+                </div>
+
+                <hr class="my-4">
+                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-wallet text-success me-2"></i> Datos de Transferencia Bancaria</h6>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">Número Nequi</label>
+                    <input type="text" name="numero_nequi" class="form-control" value="{{ numero_nequi }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-dark small">Llave Bre-B</label>
+                    <input type="text" name="llave_breb" class="form-control" value="{{ llave_breb }}" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-bold text-dark small">Número WhatsApp Recepción de Comprobantes</label>
+                    <input type="text" name="whatsapp_num" class="form-control" value="{{ whatsapp_num }}" required placeholder="573115643557">
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100 rounded-pill fw-bold py-2 shadow-sm">
+                    <i class="fa-solid fa-floppy-disk me-2"></i> Guardar Cambios en Configuración
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Columna 2: Gestión Manual de Pagos e Historial (Solo Desarrollador) -->
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-check-double text-success me-2"></i> Registrar Pago Manualmente (Sistemas Zenic)</h5>
+            <p class="text-muted small">Usa este botón de control cuando el cliente te pague para marcar el mes actual como <strong>PAGADO</strong> directamente en el sistema.</p>
+
+            <form action="{{ url_for('admin_bp.marcar_pago_servidor_manual') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-success w-100 rounded-pill fw-bold py-3 shadow-sm">
+                    <i class="fa-solid fa-circle-check me-2 fs-5"></i> Marcar Mes Actual como PAGADO
+                </button>
+            </form>
+        </div>
+
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+            <h5 class="fw-bold text-dark mb-3"><i class="fa-solid fa-clock-rotate-left text-muted me-2"></i> Historial de Pagos Registrados</h5>
+
+            {% if historial_pagos %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle small">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Año / Mes</th>
+                                <th>Estado</th>
+                                <th>Fecha Registro</th>
+                                <th>Detalle</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for p in historial_pagos %}
+                                <tr>
+                                    <td class="fw-bold">{{ p.anio }} - Mes {{ p.mes }}</td>
+                                    <td><span class="badge bg-success rounded-pill">Pagado</span></td>
+                                    <td class="text-muted">{{ p.fecha_pago.strftime('%Y-%m-%d %H:%M') if p.fecha_pago else 'N/A' }}</td>
+                                    <td class="small text-secondary">{{ p.observacion or '-' }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-light text-center border-0 py-4 text-muted small">
+                    <i class="fa-solid fa-receipt fs-3 d-block mb-2"></i>
+                    No hay pagos registrados aún en el historial.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
