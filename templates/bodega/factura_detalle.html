@@ -81,7 +81,7 @@
     }
 
     .invoice-table thead tr th {
-        background: #FFFFFF !important;
+        background-color: #FEECEF !important;
         color: #BE185D !important;
         font-size: 0.76rem;
         font-weight: 800;
@@ -179,7 +179,7 @@
             border-collapse: collapse !important;
         }
         .invoice-table thead tr th {
-            background-color: #FFFFFF !important;
+            background-color: #FEECEF !important;
             color: #BE185D !important;
             border: 1.5px solid #F9C8D3 !important;
             -webkit-print-color-adjust: exact !important;
@@ -421,7 +421,7 @@
                 <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                     <div class="flex-grow-1">
                         <div class="fw-bold text-brand-black" style="font-size: 0.95rem; line-height: 1.35;">
-                            <span class="fw-extrabold me-1" style="color: #BE185D;">#{{ loop.index }}</span>
+                            <span class="badge rounded-pill me-1 px-2 py-0.5 fw-bolder font-monospace" style="background-color: #FEECEF; color: #BE185D; border: 1px solid #F8B4C0;">#{{ loop.index }}</span>
                             {{ (d.producto.nombre if d.producto else 'Item sin asignar') }}
                         </div>
                         
