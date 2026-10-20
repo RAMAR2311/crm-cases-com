@@ -376,7 +376,11 @@ def ventas_hoy():
     fin_dt = datetime.combine(hoy_bogota, datetime.max.time())
     
     # Consultar todas las ventas de este día (sin importar si es admin o vendedor)
-    ventas = Sale.query.options(joinedload(Sale.vendedor)).filter(
+    ventas = Sale.query.options(
+        joinedload(Sale.vendedor),
+        joinedload(Sale.pagos),
+        joinedload(Sale.detalles).joinedload(SaleDetail.producto)
+    ).filter(
         Sale.fecha_venta >= inicio_dt,
         Sale.fecha_venta <= fin_dt
     ).order_by(Sale.fecha_venta.desc()).all()
@@ -384,27 +388,52 @@ def ventas_hoy():
     # Acumuladores de las ventas de hoy
     total_efectivo = Decimal('0')
     total_transferencias = Decimal('0')
+    total_nequi = Decimal('0')
+    total_bancolombia = Decimal('0')
+    total_daviplata = Decimal('0')
     total_mixto = 0
     
     for v in ventas:
         if v.pagos:
             for pago in v.pagos:
-                if pago.metodo_pago == 'efectivo':
-                    total_efectivo += pago.monto
+                metodo = (pago.metodo_pago or '').lower()
+                monto = pago.monto or Decimal('0')
+                if metodo == 'efectivo':
+                    total_efectivo += monto
                 else: 
-                    total_transferencias += pago.monto
+                    total_transferencias += monto
+                    if metodo == 'nequi':
+                        total_nequi += monto
+                    elif metodo == 'bancolombia':
+                        total_bancolombia += monto
+                    elif metodo == 'daviplata':
+                        total_daviplata += monto
             if len(v.pagos) > 1:
                 total_mixto += 1
         else:
-            if v.metodo_pago == 'efectivo':
-                total_efectivo += v.monto_total
+            metodo = (v.metodo_pago or '').lower()
+            monto = v.monto_total or Decimal('0')
+            if metodo == 'efectivo':
+                total_efectivo += monto
             else:
-                total_transferencias += v.monto_total
+                total_transferencias += monto
+                if metodo == 'nequi':
+                    total_nequi += monto
+                elif metodo == 'bancolombia':
+                    total_bancolombia += monto
+                elif metodo == 'daviplata':
+                    total_daviplata += monto
                 
+    total_general = total_efectivo + total_transferencias
+
     return render_template('sales/ventas_hoy.html',
                            ventas=ventas,
                            total_efectivo=total_efectivo,
                            total_transferencias=total_transferencias,
+                           total_nequi=total_nequi,
+                           total_bancolombia=total_bancolombia,
+                           total_daviplata=total_daviplata,
+                           total_general=total_general,
                            total_mixto=total_mixto,
                            hoy=hoy_bogota.strftime('%Y-%m-%d'))
 

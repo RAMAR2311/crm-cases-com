@@ -1,98 +1,463 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12 d-flex justify-content-between align-items-center mb-4">
-        <!-- Título con acento Azul Turquesa -->
-        <h2 class="fw-bolder m-0" style="color: var(--brand-blue);">
-            <i class="fa-solid fa-list-check me-2"></i>Ventas del Día
-        </h2>
-        <div class="d-flex align-items-center gap-2">
-            <a href="/sales/nueva" class="btn btn-light rounded-pill px-4 fw-bold text-muted border shadow-sm">
-                <i class="fa-solid fa-arrow-left me-1"></i> Módulo de Caja
-            </a>
+<style>
+    /* Tarjetas KPI de Ventas del Día */
+    .kpi-card {
+        border-radius: 20px;
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+    }
+    .kpi-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.08) !important;
+    }
+
+    /* Tabla de Ventas Estilizada */
+    .ventas-table {
+        border-collapse: separate;
+        border-spacing: 0;
+        width: 100%;
+    }
+    .ventas-table thead th {
+        background-color: #F8FAFC;
+        color: #64748B;
+        font-size: 0.74rem;
+        font-weight: 800;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        padding: 1rem 1.15rem;
+        border-bottom: 2px solid #E2E8F0;
+        white-space: nowrap;
+    }
+    .ventas-table tbody td {
+        padding: 1.05rem 1.15rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #F1F5F9;
+        font-size: 0.92rem;
+    }
+    .ventas-table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+    .ventas-table tbody tr:hover {
+        background-color: #FFF9FA !important;
+    }
+    .ventas-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Badges de Pago */
+    .badge-payment {
+        padding: 0.42rem 0.85rem;
+        border-radius: 9999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        letter-spacing: 0.2px;
+    }
+    .badge-pay-efectivo {
+        background-color: #ECFDF5;
+        color: #047857;
+        border: 1px solid #A7F3D0;
+    }
+    .badge-pay-bancolombia {
+        background-color: #EFF6FF;
+        color: #1D4ED8;
+        border: 1px solid #BFDBFE;
+    }
+    .badge-pay-nequi {
+        background-color: #F5F3FF;
+        color: #6D28D9;
+        border: 1px solid #DDD6FE;
+    }
+    .badge-pay-daviplata {
+        background-color: #FEF2F2;
+        color: #B91C1C;
+        border: 1px solid #FECACA;
+    }
+    .badge-pay-mixto {
+        background-color: #FFFBEB;
+        color: #B45309;
+        border: 1px solid #FDE68A;
+        cursor: pointer;
+    }
+
+    /* Ticket Badge */
+    .ticket-badge {
+        font-family: monospace;
+        font-weight: 800;
+        padding: 0.35rem 0.7rem;
+        border-radius: 8px;
+        background: #F1F5F9;
+        color: #334155;
+        font-size: 0.82rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border: 1px solid #E2E8F0;
+    }
+
+    /* Print Clean */
+    @media print {
+        .d-print-none {
+            display: none !important;
+        }
+        body {
+            background: white !important;
+        }
+        .card {
+            border: 1px solid #CBD5E1 !important;
+            box-shadow: none !important;
+        }
+    }
+</style>
+
+<!-- Barra Superior de Navegación -->
+<div class="row align-items-center mb-4 g-3 d-print-none">
+    <div class="col-md-7">
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <h2 class="fw-bolder text-brand-black m-0 d-flex align-items-center gap-2" style="font-family: 'Outfit', sans-serif;">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 38px; height: 38px; background: #F9C8D3; color: #881337;">
+                    <i class="fa-solid fa-calendar-day fs-6"></i>
+                </span>
+                <span>Ventas del Día</span>
+            </h2>
+            <span class="badge rounded-pill px-3 py-1 fw-bold" style="background: #FCE7F3; color: #BE185D; font-size: 0.75rem; border: 1px solid #FBCFE8;">
+                <i class="fa-solid fa-circle text-success me-1" style="font-size: 0.45rem;"></i> Hoy en Vivo · {{ hoy }}
+            </span>
         </div>
+        <p class="text-muted small mb-0 mt-1">
+            Registro cronológico en tiempo real de los tickets emitidos en las cajas físicas y virtuales.
+        </p>
     </div>
 
-    <!-- UI: Resumen Financiero Rápido de Hoy -->
-    <div class="col-6 col-md-4 mb-3">
-        <div class="card card-custom h-100" style="border-left: 6px solid var(--brand-blue) !important;">
-            <div class="card-body py-3 ps-3">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-money-bills me-1"></i> Efectivo Hoy</p>
-                <h4 class="fw-bolder m-0" style="color: var(--brand-blue);">${{ (total_efectivo)|cop }}</h4>
+    <div class="col-md-5 d-flex justify-content-md-end align-items-center gap-2 flex-wrap">
+        <button onclick="window.print()" class="btn btn-light rounded-pill px-3 fw-bold border shadow-2xs text-secondary d-flex align-items-center gap-1.5" title="Imprimir listado del día">
+            <i class="fa-solid fa-print"></i>
+            <span>Imprimir</span>
+        </button>
+        <a href="/sales/caja_visual" class="btn btn-outline-dark rounded-pill px-3 fw-bold shadow-2xs d-flex align-items-center gap-1.5">
+            <i class="fa-solid fa-store text-brand-pink"></i>
+            <span>Caja Visual</span>
+        </a>
+        <a href="/sales/nueva" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2" style="background: #1E293B;">
+            <i class="fa-solid fa-cash-register"></i>
+            <span>Caja Terminal</span>
+        </a>
+    </div>
+</div>
+
+<!-- Encabezado exclusivo de Impresión -->
+<div class="d-none d-print-block text-center mb-4 pb-3 border-bottom">
+    <h2 class="fw-bolder mb-0">cases.com · REPORTE DIARIO DE CAJA</h2>
+    <p class="text-muted small mb-0">Fecha de corte: {{ hoy }} | Generado por: {{ current_user.nombre or 'Usuario' }}</p>
+</div>
+
+<!-- ════════════════════════════════════ TARJETAS KPI DE RESUMEN DIARIO ════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+    <!-- 1. TOTAL FACTURADO HOY (Tarjeta Destacada Cases Pink) -->
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card h-100 p-4 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.5) 0%, #FFFFFF 75%); border: 1.5px solid rgba(244, 114, 182, 0.7) !important; box-shadow: 0 8px 24px rgba(244, 114, 182, 0.15) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.6px; font-size: 0.72rem;">Total Facturado Hoy</span>
+                <span class="d-inline-flex align-items-center justify-content-center rounded-3" style="width: 38px; height: 38px; background: #FCE7F3; color: #BE185D;">
+                    <i class="fa-solid fa-sack-dollar fs-5"></i>
+                </span>
+            </div>
+            <h2 class="fw-bolder text-brand-black mb-1 font-monospace" style="color: #881337 !important; font-size: 1.85rem;">
+                ${{ (total_general or (total_efectivo + total_transferencias))|cop }}
+            </h2>
+            <div class="d-flex align-items-center gap-2 mt-2">
+                <span class="badge rounded-pill fw-bold" style="background: #FFE4E6; color: #BE185D; font-size: 0.7rem;">
+                    <i class="fa-solid fa-receipt me-1"></i> {{ ventas|length }} tickets emitidos
+                </span>
+                {% if total_mixto and total_mixto > 0 %}
+                <span class="badge rounded-pill bg-light text-muted border" style="font-size: 0.7rem;">
+                    <i class="fa-solid fa-arrows-split-up-and-left text-warning me-1"></i> {{ total_mixto }} mixtos
+                </span>
+                {% endif %}
             </div>
         </div>
     </div>
-    
-    <div class="col-6 col-md-4 mb-3">
-        <div class="card card-custom h-100" style="border-left: 6px solid var(--brand-pink) !important;">
-            <div class="card-body py-3 ps-3">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-mobile-button me-1"></i> Transf. Hoy</p>
-                <h4 class="fw-bolder m-0" style="color: var(--brand-pink);">${{ (total_transferencias)|cop }}</h4>
+
+    <!-- 2. EFECTIVO EN CAJA -->
+    <div class="col-6 col-md-4">
+        <div class="card kpi-card h-100 p-4 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(16, 185, 129, 0.15) 0%, #FFFFFF 75%); border: 1px solid rgba(16, 185, 129, 0.35) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.6px; font-size: 0.72rem;">Efectivo en Caja</span>
+                <span class="d-inline-flex align-items-center justify-content-center rounded-3" style="width: 38px; height: 38px; background: #D1FAE5; color: #047857;">
+                    <i class="fa-solid fa-money-bill-wave fs-5"></i>
+                </span>
+            </div>
+            <h3 class="fw-bolder mb-1 font-monospace" style="color: #047857 !important; font-size: 1.7rem;">
+                ${{ (total_efectivo or 0)|cop }}
+            </h3>
+            <div class="text-muted small mt-1" style="font-size: 0.74rem;">
+                <i class="fa-solid fa-vault text-success me-1"></i> Disponible en caja física
             </div>
         </div>
     </div>
 
-    <div class="col-12 col-md-4 mb-3">
-        <div class="card card-custom h-100 bg-light">
-            <div class="card-body py-3 ps-3 text-center d-flex flex-column justify-content-center">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;">Total Facturado Hoy</p>
-                <h3 class="fw-bolder text-brand-black m-0">${{ (total_efectivo + total_transferencias)|cop }}</h3>
+    <!-- 3. TRANSFERENCIAS DIGITALES -->
+    <div class="col-6 col-md-4">
+        <div class="card kpi-card h-100 p-4 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(14, 165, 233, 0.15) 0%, #FFFFFF 75%); border: 1px solid rgba(14, 165, 233, 0.35) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-uppercase fw-bold text-muted small" style="letter-spacing: 0.6px; font-size: 0.72rem;">Transferencias Digitales</span>
+                <span class="d-inline-flex align-items-center justify-content-center rounded-3" style="width: 38px; height: 38px; background: #E0F2FE; color: #0284C7;">
+                    <i class="fa-solid fa-mobile-screen-button fs-5"></i>
+                </span>
+            </div>
+            <h3 class="fw-bolder mb-1 font-monospace" style="color: #0369A1 !important; font-size: 1.7rem;">
+                ${{ (total_transferencias or 0)|cop }}
+            </h3>
+            <div class="d-flex flex-wrap gap-1 mt-1">
+                {% if total_nequi and total_nequi > 0 %}
+                    <span class="badge badge-pay-nequi py-0.5 px-2" style="font-size: 0.68rem;">Nequi: ${{ total_nequi|cop }}</span>
+                {% endif %}
+                {% if total_bancolombia and total_bancolombia > 0 %}
+                    <span class="badge badge-pay-bancolombia py-0.5 px-2" style="font-size: 0.68rem;">Bancolombia: ${{ total_bancolombia|cop }}</span>
+                {% endif %}
+                {% if total_daviplata and total_daviplata > 0 %}
+                    <span class="badge badge-pay-daviplata py-0.5 px-2" style="font-size: 0.68rem;">Daviplata: ${{ total_daviplata|cop }}</span>
+                {% endif %}
+                {% if (not total_nequi or total_nequi == 0) and (not total_bancolombia or total_bancolombia == 0) and (not total_daviplata or total_daviplata == 0) %}
+                    <span class="text-muted small" style="font-size: 0.74rem;"><i class="fa-solid fa-credit-card text-primary me-1"></i> Bancos & Apps</span>
+                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
-<div class="card card-custom p-0 overflow-hidden shadow-sm">
+<!-- ════════════════════════════════════ TABLA PRINCIPAL DE TICKETS ════════════════════════════════════ -->
+<div class="card card-custom p-0 overflow-hidden shadow-sm rounded-4 border">
+    
+    <!-- Barra de Filtro Rápido en Vivo -->
+    <div class="p-3 border-bottom bg-light bg-opacity-50 d-flex flex-wrap justify-content-between align-items-center gap-3 d-print-none">
+        <div class="d-flex align-items-center gap-2">
+            <span class="fw-bold text-brand-black small"><i class="fa-solid fa-list-check text-brand-pink me-1"></i> Listado Cronológico</span>
+            <span class="badge bg-white text-muted border rounded-pill small px-2 py-1">{{ ventas|length }} tickets</span>
+        </div>
+        <div class="d-flex align-items-center gap-2" style="min-width: 260px;">
+            <div class="input-group input-group-sm">
+                <span class="input-group-text bg-white border-end-0 text-muted"><i class="fa-solid fa-magnifying-glass"></i></span>
+                <input type="text" id="filtroVentasHoy" class="form-control border-start-0" placeholder="Buscar ticket, cajero o medio...">
+            </div>
+        </div>
+    </div>
+
     <div class="table-responsive">
-        <table class="table table-hover table-striped table-custom mb-0">
-            <thead class="bg-light">
+        <table class="ventas-table mb-0" id="tablaVentasHoy">
+            <thead>
                 <tr>
-                    <th width="120">N° TIPO</th>
-                    <th>HORA DE COBRO</th>
+                    <th style="width: 130px;">N° TICKET</th>
+                    <th style="width: 110px;">HORA</th>
                     <th>VENDEDOR RESPONSABLE</th>
-                    <th class="text-center">VÍA DE PAGO</th>
-                    <th class="text-end" width="160">IMPORTE CERRADO</th>
+                    <th>PRODUCTOS / ITEMS</th>
+                    <th class="text-center" style="width: 170px;">VÍA DE PAGO</th>
+                    <th class="text-end" style="width: 160px;">TOTAL COBRADO</th>
+                    <th class="text-center d-print-none" style="width: 90px;">DETALLE</th>
                 </tr>
             </thead>
             <tbody>
                 {% for venta in ventas %}
-                <tr>
-                    <td class="fw-bold text-brand-black align-middle">Ticket #{{ "%05d"|format(venta.id) }}</td>
-                    <td class="align-middle text-muted"><i class="fa-regular fa-clock text-brand-pink me-1"></i> {{ venta.fecha_venta.strftime('%H:%M') }}</td>
-                    <td class="align-middle fw-semibold text-brand-black">
-                        <i class="fa-solid fa-user-circle text-muted me-1"></i> {{ venta.vendedor.nombre }}
+                <tr class="venta-row">
+                    <!-- Ticket ID -->
+                    <td>
+                        <span class="ticket-badge">
+                            <i class="fa-solid fa-receipt text-brand-pink"></i>
+                            #{{ "%05d"|format(venta.id) }}
+                        </span>
                     </td>
-                    <td class="text-center align-middle">
-                        {% if venta.pagos|length > 1 %}
-                            <span class="badge bg-light text-dark border border-warning border-opacity-50 rounded-pill px-3 py-2" 
-                                  data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="left"
-                                  title="{% for p in venta.pagos %}{{ p.metodo_pago|capitalize }}: ${{ (p.monto)|cop }}{% if not loop.last %}<br>{% endif %}{% endfor %}"
-                                  style="cursor: help;">
-                                <i class="fa-solid fa-arrows-split-up-and-left me-1" style="color: #fd7e14;"></i> Pago Mixto
+
+                    <!-- Hora -->
+                    <td class="text-muted fw-semibold">
+                        <span class="d-inline-flex align-items-center gap-1">
+                            <i class="fa-regular fa-clock text-brand-pink small"></i>
+                            {{ venta.fecha_venta.strftime('%H:%M') }}
+                        </span>
+                    </td>
+
+                    <!-- Vendedor Responsable -->
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light border text-brand-black" style="width: 28px; height: 28px; font-size: 0.75rem;">
+                                <i class="fa-solid fa-user"></i>
                             </span>
-                        {% elif venta.pagos|length == 1 %}
-                            {% set metodo = venta.pagos[0].metodo_pago %}
-                            {% if metodo == 'efectivo' %}
-                                <span class="badge bg-light text-success border border-success border-opacity-25 rounded-pill px-3 py-2"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</span>
-                            {% else %}
-                                <span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2"><i class="fa-solid fa-building-columns me-1"></i> {{ metodo|capitalize }}</span>
-                            {% endif %}
+                            <span class="fw-bold text-brand-black">{{ (venta.vendedor.nombre if venta.vendedor else 'Cajero General') }}</span>
+                        </div>
+                    </td>
+
+                    <!-- Resumen de Items Vendidos -->
+                    <td>
+                        {% if venta.detalles %}
+                            <div class="d-flex flex-wrap align-items-center gap-1">
+                                <span class="badge rounded-pill bg-light text-brand-black border px-2 py-0.5 fw-bold" style="font-size: 0.72rem;">
+                                    {{ venta.detalles|sum(attribute='cantidad_vendida') }} unids
+                                </span>
+                                <span class="text-muted small text-truncate" style="max-width: 280px; font-size: 0.8rem;">
+                                    {% for d in venta.detalles[:2] %}
+                                        {{ d.producto.nombre if d.producto else 'Item' }}{% if d.variante %} ({{ d.variante.nombre_variante }}){% endif %}{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                    {% if venta.detalles|length > 2 %}
+                                        <span class="text-brand-pink fw-semibold">+{{ venta.detalles|length - 2 }} más</span>
+                                    {% endif %}
+                                </span>
+                            </div>
                         {% else %}
-                            <!-- Fallback retrocompatibilidad -->
-                            <span class="badge bg-light text-dark border rounded-pill px-3 py-2">{{ venta.metodo_pago|capitalize }}</span>
+                            <span class="text-muted small italic">Venta general sin desglose</span>
                         {% endif %}
                     </td>
-                    <td class="text-end align-middle fw-bolder text-brand-black fs-5 pe-4">
-                        ${{ (venta.monto_total)|cop }}
+
+                    <!-- Vía de Pago -->
+                    <td class="text-center">
+                        {% if venta.pagos|length > 1 %}
+                            {% set pagos_text %}
+                                {% for p in venta.pagos %}
+                                    <strong>{{ p.metodo_pago|capitalize }}:</strong> ${{ (p.monto)|cop }}{% if not loop.last %}<br>{% endif %}
+                                {% endfor %}
+                            {% endset %}
+                            <span class="badge-payment badge-pay-mixto" 
+                                  data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="left"
+                                  title="{{ pagos_text }}">
+                                <i class="fa-solid fa-arrows-split-up-and-left"></i> Pago Mixto
+                            </span>
+                        {% elif venta.pagos|length == 1 %}
+                            {% set metodo = (venta.pagos[0].metodo_pago or '')|lower %}
+                            {% if metodo == 'efectivo' %}
+                                <span class="badge-payment badge-pay-efectivo"><i class="fa-solid fa-money-bills"></i> Efectivo</span>
+                            {% elif metodo == 'bancolombia' %}
+                                <span class="badge-payment badge-pay-bancolombia"><i class="fa-solid fa-building-columns"></i> Bancolombia</span>
+                            {% elif metodo == 'nequi' %}
+                                <span class="badge-payment badge-pay-nequi"><i class="fa-solid fa-mobile-screen"></i> Nequi</span>
+                            {% elif metodo == 'daviplata' %}
+                                <span class="badge-payment badge-pay-daviplata"><i class="fa-solid fa-mobile-screen"></i> Daviplata</span>
+                            {% else %}
+                                <span class="badge-payment badge-pay-bancolombia"><i class="fa-solid fa-credit-card"></i> {{ metodo|capitalize }}</span>
+                            {% endif %}
+                        {% else %}
+                            {% set metodo = (venta.metodo_pago or '')|lower %}
+                            {% if metodo == 'efectivo' %}
+                                <span class="badge-payment badge-pay-efectivo"><i class="fa-solid fa-money-bills"></i> Efectivo</span>
+                            {% elif metodo == 'bancolombia' %}
+                                <span class="badge-payment badge-pay-bancolombia"><i class="fa-solid fa-building-columns"></i> Bancolombia</span>
+                            {% elif metodo == 'nequi' %}
+                                <span class="badge-payment badge-pay-nequi"><i class="fa-solid fa-mobile-screen"></i> Nequi</span>
+                            {% elif metodo == 'daviplata' %}
+                                <span class="badge-payment badge-pay-daviplata"><i class="fa-solid fa-mobile-screen"></i> Daviplata</span>
+                            {% else %}
+                                <span class="badge-payment badge-pay-efectivo">{{ (venta.metodo_pago or 'Efectivo')|capitalize }}</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+
+                    <!-- Total Cobrado -->
+                    <td class="text-end">
+                        <span class="fs-5 fw-bolder text-brand-black font-monospace">
+                            ${{ (venta.monto_total or 0)|cop }}
+                        </span>
+                    </td>
+
+                    <!-- Botón de Ver Desglose / Modal -->
+                    <td class="text-center d-print-none">
+                        <button type="button" class="btn btn-sm btn-light border rounded-pill shadow-2xs text-secondary hover-pink" 
+                                data-bs-toggle="modal" data-bs-target="#modalTicket{{ venta.id }}" title="Ver Desglose">
+                            <i class="fa-solid fa-eye text-brand-pink"></i>
+                        </button>
+
+                        <!-- Modal Desglose Ticket -->
+                        <div class="modal fade text-start" id="modalTicket{{ venta.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header p-3 border-bottom" style="background: linear-gradient(135deg, #FFF1F5 0%, #FFFFFF 100%);">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 32px; height: 32px; background: #F9C8D3; color: #881337;">
+                                                <i class="fa-solid fa-receipt small"></i>
+                                            </span>
+                                            <div>
+                                                <h6 class="modal-title fw-bold text-brand-black mb-0">Ticket #{{ "%05d"|format(venta.id) }}</h6>
+                                                <span class="text-muted" style="font-size: 0.72rem;">{{ venta.fecha_venta.strftime('%d/%m/%Y - %H:%M') }} · {{ venta.vendedor.nombre if venta.vendedor else 'Cajero' }}</span>
+                                            </div>
+                                        </div>
+                                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-4">
+                                        <h6 class="text-muted small fw-bold text-uppercase mb-2" style="letter-spacing: 0.5px;">Productos Cobrados</h6>
+                                        <div class="table-responsive mb-3 rounded-3 border">
+                                            <table class="table table-sm mb-0">
+                                                <thead class="bg-light small">
+                                                    <tr>
+                                                        <th>Item</th>
+                                                        <th class="text-center">Cant</th>
+                                                        <th class="text-end">Precio</th>
+                                                        <th class="text-end">Subtotal</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="small">
+                                                    {% for d in venta.detalles %}
+                                                    <tr>
+                                                        <td>
+                                                            <strong>{{ d.producto.nombre if d.producto else 'Item' }}</strong>
+                                                            {% if d.variante %}
+                                                                <div class="text-muted" style="font-size: 0.7rem;">Var: {{ d.variante.nombre_variante }}</div>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td class="text-center">{{ d.cantidad_vendida }}</td>
+                                                        <td class="text-end text-muted font-monospace">${{ (d.precio_unitario)|cop }}</td>
+                                                        <td class="text-end fw-bold font-monospace">${{ (d.subtotal or (d.cantidad_vendida * d.precio_unitario))|cop }}</td>
+                                                    </tr>
+                                                    {% else %}
+                                                    <tr>
+                                                        <td colspan="4" class="text-center py-2 text-muted">Sin desglose de items</td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+
+                                        <!-- Medios de Pago Desglosados -->
+                                        <div class="p-3 rounded-3 bg-light border mb-3">
+                                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                                <span class="text-muted small fw-semibold">Método(s) de Pago:</span>
+                                                <div class="d-flex flex-wrap gap-1">
+                                                    {% if venta.pagos %}
+                                                        {% for p in venta.pagos %}
+                                                            <span class="badge bg-white text-dark border font-monospace small">
+                                                                {{ p.metodo_pago|capitalize }}: ${{ (p.monto)|cop }}
+                                                            </span>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <span class="badge bg-white text-dark border small">{{ (venta.metodo_pago or 'Efectivo')|capitalize }}</span>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="d-flex justify-content-between align-items-center pt-2 border-top">
+                                                <span class="fw-bold text-brand-black">Total Cobrado:</span>
+                                                <span class="fs-5 fw-bolder text-brand-black font-monospace">${{ (venta.monto_total)|cop }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer p-2 bg-light border-top">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3" data-bs-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="text-center py-5">
-                        <i class="fa-solid fa-store-slash fs-1 mb-3" style="color: var(--brand-pink);"></i>
-                        <h4 class="text-brand-black fw-bold">No hay ventas registradas el día de hoy</h4>
-                        <p class="text-muted mb-0">Cada día este registro inicia limpio desde cero.</p>
+                    <td colspan="7" class="text-center py-5">
+                        <div class="py-4">
+                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width: 60px; height: 60px; background: #FFF1F5; color: #BE185D;">
+                                <i class="fa-solid fa-store-slash fs-3"></i>
+                            </span>
+                            <h4 class="text-brand-black fw-bold mb-1" style="font-family: 'Outfit', sans-serif;">No hay ventas registradas el día de hoy</h4>
+                            <p class="text-muted small mb-3">Las ventas procesadas en las cajas aparecerán aquí en tiempo real.</p>
+                            <a href="/sales/caja_visual" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="fa-solid fa-cart-plus me-1 text-brand-pink"></i> Ir a Facturar en Caja
+                            </a>
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -103,10 +468,29 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        // Inicializar tooltips
         var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (el) {
             return new bootstrap.Tooltip(el);
         });
+
+        // Filtro de búsqueda en vivo en la tabla
+        const inputFiltro = document.getElementById('filtroVentasHoy');
+        if (inputFiltro) {
+            inputFiltro.addEventListener('keyup', function () {
+                const valor = this.value.toLowerCase().trim();
+                const filas = document.querySelectorAll('#tablaVentasHoy tbody tr.venta-row');
+                
+                filas.forEach(function (fila) {
+                    const texto = fila.textContent.toLowerCase();
+                    if (texto.includes(valor)) {
+                        fila.style.display = '';
+                    } else {
+                        fila.style.display = 'none';
+                    }
+                });
+            });
+        }
     });
 </script>
 {% endblock %}

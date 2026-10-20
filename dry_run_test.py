@@ -82,6 +82,26 @@ def test_dry_run():
             errors.append(f"sales/historial.html: {e}")
             failed += 1
 
+        # 2c. Sales Ventas Hoy
+        try:
+            out = render_template('sales/ventas_hoy.html',
+                                  ventas=[mock_venta],
+                                  total_efectivo=Decimal('50000.00'),
+                                  total_transferencias=Decimal('35000.00'),
+                                  total_nequi=Decimal('20000.00'),
+                                  total_bancolombia=Decimal('15000.00'),
+                                  total_daviplata=Decimal('0.00'),
+                                  total_general=Decimal('85000.00'),
+                                  total_mixto=0,
+                                  hoy='2026-10-20')
+            assert "Ventas del Día" in out
+            print("  [OK] Render sales/ventas_hoy.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] sales/ventas_hoy.html: {e}")
+            errors.append(f"sales/ventas_hoy.html: {e}")
+            failed += 1
+
         # 3. Bodega Dashboard
         login_user(user_bodega)
         try:

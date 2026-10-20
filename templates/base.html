@@ -382,20 +382,11 @@
             <div class="w-100 px-3 py-2 flex-grow-1">
                 {% if current_user.rol == 'admin' %}
                     <!-- SECCIÓN: PRINCIPAL -->
-                    <div class="sidebar-section-header">
-                        <i class="fa-solid fa-compass me-1.5 text-muted"></i> Navegación Principal
-                    </div>
                     <ul class="navbar-nav w-100 gap-1 mb-2">
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center" href="/admin/dashboard">
                                 <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-chart-pie"></i></span>
                                 <span>Dashboard Principal</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/sales/historial">
-                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-clock-rotate-left"></i></span>
-                                <span>Historial Operaciones</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -407,7 +398,7 @@
                     </ul>
 
                     <!-- SECCIÓN: CANALES DE VENTA & STOCK -->
-                    <div class="sidebar-section-header mt-2">
+                    <div class="sidebar-section-header mt-1">
                         <i class="fa-solid fa-store me-1.5 text-muted"></i> Puntos de Venta & Stock
                     </div>
                     <ul class="navbar-nav w-100 gap-1 mb-2">
@@ -479,40 +470,10 @@
                                 </ul>
                             </div>
                         </li>
-
-                        <!-- Módulo Bodega Mayorista -->
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseBodega" role="button" aria-expanded="false" aria-controls="collapseBodega">
-                                <div class="d-flex align-items-center">
-                                    <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i class="fa-solid fa-truck-ramp-box"></i></span>
-                                    <span>Bodega Mayorista</span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down small text-muted"></i>
-                            </a>
-                            <div class="collapse" id="collapseBodega">
-                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #FDA4AF !important;">
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.dashboard') }}"><i class="fa-solid fa-boxes-stacked text-brand-blue me-2" style="width:18px;"></i> Panel Bodega</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.facturas') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:18px;"></i> Facturas Realizadas</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.caja_rapida') }}"><i class="fa-solid fa-store text-success me-2" style="width:18px;"></i> Caja Rápida Bodega</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.clientes') }}"><i class="fa-solid fa-address-book text-muted me-2" style="width:18px;"></i> Directorio Clientes</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.modulo_abonos') }}"><i class="fa-solid fa-money-bill-transfer text-success me-2" style="width:18px;"></i> Módulo Abonos</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
                     </ul>
 
                     <!-- SECCIÓN: GESTIÓN & CIERRES -->
-                    <div class="sidebar-section-header mt-2">
+                    <div class="sidebar-section-header mt-1">
                         <i class="fa-solid fa-sliders me-1.5 text-muted"></i> Administración & Cierres
                     </div>
                     <ul class="navbar-nav w-100 gap-1 mb-2">
@@ -538,12 +499,6 @@
                             <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
                                 <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i class="fa-solid fa-calculator"></i></span>
                                 <span>Arqueo de Caja</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/arqueo/reporte">
-                                <span class="sidebar-icon-badge" style="background: #F5F3FF; color: #7C3AED;"><i class="fa-solid fa-file-invoice-dollar"></i></span>
-                                <span>Reportes de Arqueo</span>
                             </a>
                         </li>
                     </ul>
