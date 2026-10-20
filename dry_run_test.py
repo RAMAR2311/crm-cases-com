@@ -49,10 +49,29 @@ def test_dry_run():
             out = render_template('auth/login.html')
             assert "Bienvenido" in out
             print("  [OK] Render auth/login.html")
+            # 2a. Factura Detalle Pública (WhatsApp Link sin Login)
+            mock_f_public = MagicMock(
+                id=337,
+                numero_factura="FAC-00337",
+                cliente=MagicMock(nombre_o_razon_social="CLIENTE PRUEBA", documento_o_nit="901234567", telefono="3001234567", direccion="Calle 1 #2-3", zona="Centro"),
+                fecha_subida=datetime.now(),
+                estado="Pendiente",
+                modalidad="credito",
+                usuario=MagicMock(nombre="Asesor Bodega"),
+                monto_total=Decimal('290000.00'),
+                total_abonado=Decimal('0.00'),
+                saldo_pendiente=Decimal('290000.00'),
+                detalles=[],
+                abonos=[],
+                archivo_ruta=None
+            )
+            out_public = render_template('bodega/factura_detalle.html', f=mock_f_public)
+            assert "Factura Mayorista" in out_public
+            print("  [OK] Render bodega/factura_detalle.html (Acceso Público WhatsApp)")
             passed += 1
         except Exception as e:
-            print(f"  [FAIL] auth/login.html: {e}")
-            errors.append(f"auth/login.html: {e}")
+            print(f"  [FAIL] auth/login.html / factura_detalle pública: {e}")
+            errors.append(f"factura_detalle pública: {e}")
             failed += 1
 
         # 2b. Sales Historial

@@ -595,11 +595,9 @@ def facturas():
     )
 
 @bodega_bp.route('/facturas/<int:id>', methods=['GET'])
-@login_required
-@any_bodega_required
 def factura_detalle(id):
     factura = FacturaBodega.query.get_or_404(id)
-    if current_user.rol == 'vendedor_bodega' and factura.usuario_id != current_user.id:
+    if current_user.is_authenticated and current_user.rol == 'vendedor_bodega' and factura.usuario_id != current_user.id:
         flash('No tienes permiso para consultar esta factura.', 'danger')
         return redirect(url_for('bodega_bp.facturas'))
     
