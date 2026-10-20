@@ -243,6 +243,10 @@ def create_app():
                 'server_payment_info': server_payment_info
             }
         except Exception as e:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
             return {'pago_servidor': None, 'server_payment_info': None}
 
     @app.route('/servidor/confirmar-pago', methods=['GET', 'POST'])
@@ -409,6 +413,15 @@ def create_app():
     @app.errorhandler(500)
     def internal_server_error(e):
         return render_template('errors/500.html'), 500
+
+    with app.app_context():
+        try:
+            db.create_all()
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
 
     return app
 

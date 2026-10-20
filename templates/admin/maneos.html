@@ -59,10 +59,10 @@
             <tbody>
                 {% for m in maneos %}
                 <tr>
-                    <td class="ps-4 text-muted"><small>{{ m.fecha_prestamo.strftime('%d/%m/%Y %H:%M') }}</small></td>
+                    <td class="ps-4 text-muted"><small>{{ m.fecha_prestamo.strftime('%d/%m/%Y %H:%M') if m.fecha_prestamo else 'N/A' }}</small></td>
                     <td class="fw-bold text-brand-black"><i class="fa-solid fa-store text-muted me-2"></i>{{ m.local_vecino }}</td>
                     <td>
-                        <span class="text-brand-black fw-semibold">{{ m.producto.nombre }}</span> <small class="text-muted">({{ m.producto.sku }})</small>
+                        <span class="text-brand-black fw-semibold">{{ m.producto.nombre if m.producto else 'Ítem no disponible' }}</span> <small class="text-muted">({{ m.producto.sku if m.producto else '—' }})</small>
                         {% if m.variante %}
                             <br><span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill px-2 mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-layer-group me-1"></i>{{ m.variante.nombre_variante }}</span>
                         {% endif %}
@@ -73,10 +73,10 @@
                             <span class="badge bg-warning text-dark border border-warning rounded-pill px-3 py-2">Pendiente</span>
                         {% elif m.estado == 'FACTURADO' %}
                             <span class="badge bg-success rounded-pill px-3 py-2">Facturado</span>
-                            <br><small class="text-muted d-block mt-1">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>
+                            {% if m.fecha_resolucion %}<br><small class="text-muted d-block mt-1">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>{% endif %}
                         {% elif m.estado == 'DEVUELTO' %}
                             <span class="badge bg-secondary rounded-pill px-3 py-2">Devuelto</span>
-                            <br><small class="text-muted d-block mt-1">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>
+                            {% if m.fecha_resolucion %}<br><small class="text-muted d-block mt-1">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>{% endif %}
                         {% endif %}
                     </td>
                     <td class="text-center">
@@ -97,13 +97,13 @@
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
                                                 <div class="modal-body p-4">
-                                                    <p>Registrarás la venta del producto <strong>{{ m.producto.nombre }}</strong>
+                                                    <p>Registrarás la venta del producto <strong>{{ m.producto.nombre if m.producto else 'Ítem no disponible' }}</strong>
                                                         {% if m.variante %}<span class="badge bg-primary bg-opacity-10 text-primary border rounded-pill ms-1">{{ m.variante.nombre_variante }}</span>{% endif %}
                                                         entregado a <strong>{{ m.local_vecino }}</strong>.</p>
                                                     
                                                     <div class="row w-100 g-2 mt-2">
                                                         <div class="col-md-6">
-                                                            <label class="form-label fw-bold">Cantidad</label>
+                                                             <label class="form-label fw-bold">Cantidad</label>
                                                             <div class="input-group">
                                                                 <input type="number" name="cantidad_vendida" class="form-control bg-light border-0" min="1" max="{{ m.cantidad }}" value="{{ m.cantidad }}" required>
                                                                 <span class="input-group-text border-0 bg-light text-muted">/ {{ m.cantidad }}</span>
@@ -113,11 +113,9 @@
                                                             <label class="form-label fw-bold">Precio Unitario</label>
                                                             <div class="input-group">
                                                                 <span class="input-group-text border-0 bg-light text-success fw-bold">$</span>
-                                                                {% if m.variante and m.variante.precio_sugerido %}
-                                                                    <input type="number" step="1" min="{{ "%.0f"|format((m.variante.precio_minimo or m.producto.precio_minimo)|float) }}" class="form-control bg-light border-0" name="precio_venta" value="{{ "%.0f"|format((m.variante.precio_sugerido or m.producto.precio_sugerido)|float) }}" required>
-                                                                {% else %}
-                                                                    <input type="number" step="1" min="{{ "%.0f"|format(m.producto.precio_minimo) }}" class="form-control bg-light border-0" name="precio_venta" value="{{ "%.0f"|format(m.producto.precio_sugerido) }}" required>
-                                                                {% endif %}
+                                                                {% set precio_min = (m.variante.precio_minimo if m.variante and m.variante.precio_minimo is not none else (m.producto.precio_minimo if m.producto and m.producto.precio_minimo is not none else 0)) %}
+                                                                {% set precio_sug = (m.variante.precio_sugerido if m.variante and m.variante.precio_sugerido is not none else (m.producto.precio_sugerido if m.producto and m.producto.precio_sugerido is not none else 0)) %}
+                                                                <input type="number" step="1" min="{{ "%.0f"|format(precio_min|float) }}" class="form-control bg-light border-0" name="precio_venta" value="{{ "%.0f"|format(precio_sug|float) }}" required>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -158,7 +156,7 @@
                                                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                                 </div>
                                                 <div class="modal-body p-4">
-                                                    <p class="mb-3">¿Cuántas unidades de <strong>{{ m.producto.nombre }}</strong>
+                                                    <p class="mb-3">¿Cuántas unidades de <strong>{{ m.producto.nombre if m.producto else 'Ítem no disponible' }}</strong>
                                                         {% if m.variante %}<span class="badge bg-primary bg-opacity-10 text-primary border rounded-pill ms-1">{{ m.variante.nombre_variante }}</span>{% endif %}
                                                         devuelve <strong>{{ m.local_vecino }}</strong>?
                                                     </p>

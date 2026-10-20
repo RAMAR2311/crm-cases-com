@@ -81,8 +81,8 @@ def index():
         
     gastos_mes = query.order_by(Expense.fecha_gasto.desc()).all()
 
-    total_diarios = sum((g.monto for g in gastos_mes if g.tipo_gasto == 'Gasto Diario'))
-    total_indirectos = sum((g.monto for g in gastos_mes if g.tipo_gasto == 'Costo Indirecto'))
+    total_diarios = sum((float(g.monto or 0) for g in gastos_mes if g.tipo_gasto == 'Gasto Diario'), 0.0)
+    total_indirectos = sum((float(g.monto or 0) for g in gastos_mes if g.tipo_gasto == 'Costo Indirecto'), 0.0)
 
     # Provide today's date formatted for HTML5 <input type="date">
     hoy_str = ahora.strftime('%Y-%m-%d')
