@@ -6,6 +6,7 @@ from datetime import datetime, date
 from decimal import Decimal
 import re
 import pytz
+from utils import safe_int, safe_float, safe_decimal
 
 arqueo_bp = Blueprint('arqueo_bp', __name__)
 
@@ -149,7 +150,7 @@ def nuevo():
             flash('Ya existe un arqueo cerrado para esta fecha. No se puede duplicar.', 'warning')
             return redirect(url_for('arqueo_bp.reporte', fecha_inicio=fecha_str, fecha_fin=fecha_str))
 
-        base_inicial = float(request.form.get('base_inicial', 0.0))
+        base_inicial = safe_float(request.form.get('base_inicial'), 0.0)
         
         # Recalcular gastos automáticos por seguridad en el backend
         gastos_recalculados = Expense.query.filter(

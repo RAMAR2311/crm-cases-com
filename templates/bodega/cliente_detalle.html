@@ -31,8 +31,8 @@
     <div class="col-md-6 col-lg-3">
         <div class="card card-custom h-100 p-3 border-0 shadow-sm" style="border-left: 6px solid var(--brand-pink) !important;">
             <p class="text-muted fw-bold text-uppercase mb-1 small">Saldo Deudor Actual</p>
-            <h3 class="fw-bolder m-0 {% if cliente.deuda_total > 0 %}text-danger{% else %}text-success{% endif %}">
-                ${{ (cliente.deuda_total)|cop }}
+            <h3 class="fw-bolder m-0 {% if (cliente.deuda_total or 0) > 0 %}text-danger{% else %}text-success{% endif %}">
+                ${{ (cliente.deuda_total or 0)|cop }}
             </h3>
         </div>
     </div>
@@ -86,15 +86,41 @@
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        <div class="d-flex justify-content-center gap-2">
+                        <div class="d-flex justify-content-center gap-1 flex-wrap">
+                            <!-- Ver Detalle / Comprobante -->
+                            <a href="{{ url_for('bodega_bp.factura_detalle', id=f.id) }}" class="btn btn-sm btn-light border rounded-pill shadow-sm" title="Ver Comprobante">
+                                <i class="fa-solid fa-eye text-primary"></i>
+                            </a>
+
+                            <!-- Enviar por WhatsApp -->
+                            <button type="button" 
+                                    class="btn btn-sm btn-success rounded-pill px-2 shadow-sm btn-whatsapp-trigger" 
+                                    title="Enviar Factura por WhatsApp"
+                                    data-factura-id="{{ f.id }}"
+                                    data-archivo-ruta="{{ f.archivo_ruta or '' }}"
+                                    data-factura-num="{{ f.numero_factura }}"
+                                    data-cliente-nombre="{{ cliente.nombre_o_razon_social }}"
+                                    data-cliente-telefono="{{ cliente.telefono or '' }}"
+                                    data-cliente-nit="{{ cliente.documento_o_nit }}"
+                                    data-cliente-zona="{{ cliente.zona or '' }}"
+                                    data-fecha="{{ f.fecha_subida.strftime('%d/%m/%Y %H:%M') if f.fecha_subida else '' }}"
+                                    data-modalidad="{{ f.modalidad or 'credito' }}"
+                                    data-estado="{{ f.estado or 'Pendiente' }}"
+                                    data-total="{{ (f.monto_total or 0)|cop }}"
+                                    data-abonado="{{ (f.total_abonado or 0)|cop }}"
+                                    data-saldo="{{ (f.saldo_pendiente or 0)|cop }}"
+                                    data-productos='[{% for d in f.detalles %}{"nombre": "{{ (d.producto.nombre if d.producto else 'Item') }}{% if d.variante %} ({{ d.variante.nombre_variante }}){% endif %}", "cantidad": {{ d.cantidad or 0 }}, "subtotal": "{{ ((d.cantidad or 0) * (d.precio_venta or 0))|cop }}"}{% if not loop.last %},{% endif %}{% endfor %}]'>
+                                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                            </button>
+
                             {% if f.archivo_ruta %}
                             <a href="{{ url_for('static', filename=f.archivo_ruta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill" title="Ver Documento">
                                 <i class="fa-solid fa-file-pdf"></i> Archivo
                             </a>
                             {% endif %}
                             
-                            {% if f.saldo_pendiente > 0 %}
-                            <button type="button" class="btn btn-sm btn-success rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#abonoModal{{ f.id }}">
+                            {% if (f.saldo_pendiente or 0) > 0 %}
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#abonoModal{{ f.id }}">
                                 <i class="fa-solid fa-money-bill-transfer"></i> Abonar
                             </button>
                             {% else %}
@@ -192,7 +218,7 @@
 
 <!-- Modales generados fuera del flujo de la tabla DOM -->
 {% for f in cliente.facturas %}
-    {% if f.saldo_pendiente > 0 %}
+    {% if (f.saldo_pendiente or 0) > 0 %}
     <div class="modal fade" id="abonoModal{{ f.id }}" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -454,4 +480,38 @@
     </div>
 </div>
 
+<!-- Componente Modal de WhatsApp -->
+{% include "bodega/_modal_whatsapp.html" %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.btn-whatsapp-trigger').forEach(btn => {
+            btn.addEventListener('click', function() {
+                let prods = [];
+                try {
+                    prods = JSON.parse(this.dataset.productos || '[]');
+                } catch(e) {
+                    prods = [];
+                }
+
+                prepararModalWhatsApp({
+                    factura_id: this.dataset.facturaId,
+                    archivo_ruta: this.dataset.archivoRuta,
+                    numero_factura: this.dataset.facturaNum,
+                    cliente_nombre: this.dataset.clienteNombre,
+                    cliente_telefono: this.dataset.clienteTelefono,
+                    cliente_nit: this.dataset.clienteNit,
+                    cliente_zona: this.dataset.clienteZona,
+                    fecha: this.dataset.fecha,
+                    modalidad: this.dataset.modalidad,
+                    estado: this.dataset.estado,
+                    total_formateado: this.dataset.total,
+                    abonado_formateado: this.dataset.abonado,
+                    saldo_formateado: this.dataset.saldo,
+                    productos: prods
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

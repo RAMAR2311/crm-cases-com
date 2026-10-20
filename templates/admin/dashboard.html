@@ -81,64 +81,131 @@
 </div>
 {% endif %}
 
+<style>
+    /* Tarjetas del Dashboard con Destellos Rosados de Marca */
+    .dashboard-kpi-card {
+        background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.28) 0%, #FFFFFF 65%);
+        border: 1px solid rgba(249, 200, 211, 0.65) !important;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(249, 200, 211, 0.22), 0 2px 8px rgba(0, 0, 0, 0.02);
+        transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    .dashboard-kpi-card::before {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -40px;
+        width: 100px;
+        height: 100px;
+        background: radial-gradient(circle, rgba(249, 200, 211, 0.4) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    .dashboard-kpi-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 16px 36px rgba(249, 200, 211, 0.45), 0 4px 12px rgba(163, 216, 222, 0.2);
+        border-color: rgba(249, 200, 211, 0.95) !important;
+    }
+    .kpi-icon-box {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+        position: relative;
+        z-index: 1;
+    }
+    .kpi-metric-number {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.15rem;
+        font-weight: 800;
+        letter-spacing: -0.5px;
+        line-height: 1.1;
+    }
+</style>
+
 <!-- Layout de Tarjetas (Fila de 4 Elementos) -->
 <div class="row g-3 mb-4">
-    <!-- 1. Tarjeta: Ingresos Totales (Botones/Textos Azul Turquesa / .btn-blue) -->
-    <div class="col-md-3">
-        <div class="card card-custom h-100 p-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <i class="fa-solid fa-sack-dollar fs-1" style="color: var(--brand-blue);"></i>
-                <span class="badge bg-brand-blue rounded-pill">Quincena Actual</span>
+    <!-- 1. Tarjeta: Ingresos Totales -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card dashboard-kpi-card h-100 p-4 border-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="kpi-icon-box" style="background: rgba(163, 216, 222, 0.3); color: #0E6B7A;">
+                    <i class="fa-solid fa-sack-dollar fs-4"></i>
+                </div>
+                <span class="badge badge-soft-blue px-3 py-1 rounded-pill">Quincena Actual</span>
             </div>
-            <h5 class="text-brand-black fw-bold">Ingresos (Quincena)</h5>
-            <h2 class="fw-bolder" style="color: var(--brand-blue);">${{ (total_ventas)|cop }}</h2>
-            <p class="text-muted small mb-0"><i class="fa-solid fa-receipt me-1"></i> {{ conteo_ventas }} ventas realizadas</p>
-            <div class="mt-auto pt-3">
-                <a href="{{ url_for('sales_bp.historial') }}" class="btn btn-blue w-100 rounded-pill"><i class="fa-solid fa-file-invoice-dollar me-2"></i> Ver Historial</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- 2. Tarjeta: Productos en Catálogo (Rosa Pastel / .btn-pink) -->
-    <div class="col-md-3">
-        <div class="card card-custom h-100 p-4">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <i class="fa-solid fa-cubes fs-1" style="color: var(--brand-pink);"></i>
-            </div>
-            <h5 class="text-brand-black fw-bold">Productos en Catálogo</h5>
-            <h2 class="fw-bolder text-brand-black">{{ total_productos }} uds.</h2>
+            <h6 class="text-muted fw-bold small text-uppercase mb-1" style="letter-spacing: 0.5px;">Ingresos (Quincena)</h6>
+            <h2 class="kpi-metric-number text-brand-black mb-1">${{ (total_ventas or 0)|cop }}</h2>
+            <p class="text-muted small mb-0"><i class="fa-solid fa-receipt text-brand-blue me-1"></i> {{ conteo_ventas or 0 }} ventas realizadas</p>
             <div class="mt-auto pt-4">
-                <a href="/inventory/" class="btn btn-pink w-100 rounded-pill text-brand-black"><i class="fa-solid fa-sliders me-2"></i> Gestionar Inventario</a>
+                <a href="{{ url_for('sales_bp.historial') }}" class="btn btn-blue w-100 rounded-pill fw-bold shadow-sm py-2">
+                    <i class="fa-solid fa-file-invoice-dollar me-2"></i> Ver Historial
+                </a>
             </div>
         </div>
     </div>
 
-    <!-- 3. Tarjeta: Alertas de Stock (Danger Colors / Bootstrap Nativo) -->
-    <div class="col-md-3">
-        <div class="card card-custom h-100 p-4 border border-danger border-2">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <i class="fa-solid fa-triangle-exclamation fs-1 text-danger"></i>
+    <!-- 2. Tarjeta: Productos en Catálogo -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card dashboard-kpi-card h-100 p-4 border-0">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="kpi-icon-box" style="background: rgba(249, 200, 211, 0.45); color: #C04368;">
+                    <i class="fa-solid fa-cubes fs-4"></i>
+                </div>
+                <span class="badge badge-soft-pink px-3 py-1 rounded-pill">Stock Central</span>
             </div>
-            <h5 class="text-brand-black fw-bold">Alertas Críticas de Stock</h5>
-            <h2 class="fw-bolder text-danger">{{ productos_bajo_stock }} productos</h2>
-            <p class="text-muted small">Tienen existencias limitadas (10 o menos unidades).</p>
-            <div class="mt-auto pt-3">
-                <a href="/inventory/" class="btn btn-outline-danger w-100 rounded-pill fw-bold"><i class="fa-solid fa-eye me-2"></i> Revisar Urgencias</a>
+            <h6 class="text-muted fw-bold small text-uppercase mb-1" style="letter-spacing: 0.5px;">Productos en Catálogo</h6>
+            <h2 class="kpi-metric-number text-brand-black mb-1">{{ total_productos or 0 }} <span class="fs-5 text-muted fw-semibold">uds.</span></h2>
+            <p class="text-muted small mb-0"><i class="fa-solid fa-boxes-stacked text-brand-pink me-1"></i> Ítems disponibles para venta</p>
+            <div class="mt-auto pt-4">
+                <a href="/inventory/" class="btn btn-pink w-100 rounded-pill fw-bold shadow-sm text-brand-black py-2">
+                    <i class="fa-solid fa-sliders me-2"></i> Gestionar Inventario
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. Tarjeta: Alertas de Stock -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card dashboard-kpi-card h-100 p-4 border-0" style="background: radial-gradient(120% 120% at 100% 0%, rgba(254, 226, 226, 0.45) 0%, #FFFFFF 65%); border-color: rgba(248, 113, 113, 0.5) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="kpi-icon-box" style="background: #FEE2E2; color: #DC2626;">
+                    <i class="fa-solid fa-triangle-exclamation fs-4"></i>
+                </div>
+                <span class="badge badge-soft-danger px-3 py-1 rounded-pill">Crítico</span>
+            </div>
+            <h6 class="text-muted fw-bold small text-uppercase mb-1" style="letter-spacing: 0.5px;">Alertas Críticas de Stock</h6>
+            <h2 class="kpi-metric-number text-danger mb-1">{{ productos_bajo_stock or 0 }} <span class="fs-5 fw-semibold text-danger">productos</span></h2>
+            <p class="text-muted small mb-0">Tienen existencias limitadas (&le; 10 unidades).</p>
+            <div class="mt-auto pt-4">
+                <a href="/inventory/" class="btn btn-outline-danger w-100 rounded-pill fw-bold shadow-sm py-2">
+                    <i class="fa-solid fa-eye me-2"></i> Revisar Urgencias
+                </a>
             </div>
         </div>
     </div>
 
     <!-- 4. Tarjeta: Maneos de Mercancía -->
-    <div class="col-md-3">
-        <div class="card card-custom h-100 p-4 border border-warning border-2">
-            <div class="d-flex justify-content-between align-items-start mb-3">
-                <i class="fa-solid fa-handshake fs-1 text-warning"></i>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card dashboard-kpi-card h-100 p-4 border-0" style="background: radial-gradient(120% 120% at 100% 0%, rgba(254, 243, 199, 0.45) 0%, #FFFFFF 65%); border-color: rgba(251, 191, 36, 0.5) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="kpi-icon-box" style="background: #FEF3C7; color: #D97706;">
+                    <i class="fa-solid fa-handshake fs-4"></i>
+                </div>
+                <span class="badge badge-soft-warning px-3 py-1 rounded-pill">Vecinos</span>
             </div>
-            <h5 class="text-brand-black fw-bold">Maneos Activos</h5>
-            <h2 class="fw-bolder text-warning">{{ maneos_activos }} docs.</h2>
-            <p class="text-muted small">Préstamos vecinos esperando resolución.</p>
-            <div class="mt-auto pt-3">
-                <a href="{{ url_for('admin_bp.maneos') }}" class="btn btn-outline-warning text-dark w-100 rounded-pill fw-bold"><i class="fa-solid fa-eye me-2"></i> Ver Maneos</a>
+            <h6 class="text-muted fw-bold small text-uppercase mb-1" style="letter-spacing: 0.5px;">Maneos Activos</h6>
+            <h2 class="kpi-metric-number mb-1" style="color: #B45309;">{{ maneos_activos or 0 }} <span class="fs-5 fw-semibold text-muted">docs.</span></h2>
+            <p class="text-muted small mb-0">Préstamos vecinos esperando resolución.</p>
+            <div class="mt-auto pt-4">
+                <a href="{{ url_for('admin_bp.maneos') }}" class="btn btn-outline-warning text-dark w-100 rounded-pill fw-bold shadow-sm py-2">
+                    <i class="fa-solid fa-eye me-2"></i> Ver Maneos
+                </a>
             </div>
         </div>
     </div>

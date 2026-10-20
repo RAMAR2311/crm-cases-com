@@ -1,16 +1,24 @@
 {
-    "name": "Cases App",
-    "short_name": "Cases",
-    "description": "Sistema de gestión y punto de venta web",
+    "name": "cases.com - CRM & POS",
+    "short_name": "cases.com",
+    "description": "Sistema integral de gestión de bodega, inventario y punto de venta web y móvil",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#F9C8D3",
+    "orientation": "any",
     "icons": [
         {
-            "src": "/static/img/cases.png",
+            "src": "/static/img/icons/icon-192x192.png",
             "sizes": "192x192",
-            "type": "image/png"
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/static/img/icons/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
         },
         {
             "src": "/static/img/cases.png",

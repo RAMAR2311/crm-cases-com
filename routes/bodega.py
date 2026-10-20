@@ -1,10 +1,12 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, jsonify
 from flask_login import login_required, current_user
 from decorators import any_bodega_required
-from models import db, Cliente, FacturaBodega, AbonoBodega, Product, StockAdjustment, FacturaBodegaDetalle, obtener_hora_bogota
+from models import db, Cliente, FacturaBodega, AbonoBodega, Product, StockAdjustment, FacturaBodegaDetalle, User, obtener_hora_bogota
+from sqlalchemy import or_
 import os
 from decimal import Decimal
 from werkzeug.utils import secure_filename
+from utils import safe_int, safe_float, safe_decimal
 
 bodega_bp = Blueprint('bodega_bp', __name__)
 
@@ -193,12 +195,9 @@ def caja_rapida():
             
         monto_total = Decimal(0)
         for item in cart:
-            monto_total += Decimal(item.get('precio_final', 0)) * int(item.get('cantidad', 1))
+            monto_total += safe_decimal(item.get('precio_final', 0)) * safe_int(item.get('cantidad', 1), 1)
 
-        try:
-            monto_abono = Decimal(monto_abono_str or 0)
-        except:
-            monto_abono = Decimal(0)
+        monto_abono = safe_decimal(monto_abono_str, Decimal(0))
 
         modalidad = 'credito' if metodo_pago == 'credito' else 'contado'
         
@@ -254,8 +253,8 @@ def caja_rapida():
                 producto = Product.query.get(item['product_id'])
                 variant_id = item.get('variant_id')
                 if producto:
-                    cantidad = int(item['cantidad'])
-                    precio_venta = Decimal(item['precio_final'])
+                    cantidad = safe_int(item.get('cantidad', 1), 1)
+                    precio_venta = safe_decimal(item.get('precio_final', 0))
                     es_obsequio = item.get('es_obsequio', False)
                     
                     if es_obsequio:
@@ -313,8 +312,8 @@ def caja_rapida():
                     db.session.add(detalle)
                     
             db.session.commit()
-            flash(f'Venta rápida registrada con éxito. Factura: {numero_factura}', 'success')
-            return redirect(url_for('bodega_bp.dashboard'))
+            flash(f'Venta rápida registrada con éxito. Factura #{numero_factura}', 'success')
+            return redirect(url_for('bodega_bp.factura_detalle', id=nueva_fact.id))
             
         except Exception as e:
             db.session.rollback()
@@ -381,27 +380,25 @@ def nueva_factura():
         monto_abono_inicial_str = request.form.get('monto_abono_inicial', '0').replace('.', '').replace(',', '')
         metodo_pago_abono = request.form.get('metodo_pago_abono', 'efectivo')
         
-        try:
-            monto_abono_inicial = Decimal(monto_abono_inicial_str or 0)
-        except:
-            monto_abono_inicial = Decimal(0)
+        monto_abono_inicial = safe_decimal(monto_abono_inicial_str, Decimal(0))
+        monto_total_val = safe_decimal(monto_total_raw, Decimal(0))
 
         # Si es de contado y no pusieron abono manual, asumimos el total
         if modalidad_pago == 'contado' and monto_abono_inicial <= 0:
-            monto_abono_inicial = Decimal(monto_total or 0)
+            monto_abono_inicial = monto_total_val
 
         try:
             nueva_fact = FacturaBodega(
                 cliente_id=cliente_id,
                 usuario_id=current_user.id,
                 numero_factura=num_factura,
-                monto_total=Decimal(monto_total or 0),
+                monto_total=monto_total_val,
                 archivo_ruta=archivo_ruta_bd,
                 modalidad=modalidad_pago
             )
             
             # Ajustar estado inicial según el abono
-            if monto_abono_inicial >= Decimal(monto_total or 0):
+            if monto_abono_inicial >= monto_total_val:
                 nueva_fact.estado = 'Pagado'
             elif monto_abono_inicial > 0:
                 nueva_fact.estado = 'Parcial'
@@ -432,10 +429,10 @@ def nueva_factura():
             # Procesar productos y descontar el stock
             for i in range(len(productos_ids)):
                 p_id = productos_ids[i]
-                cant = int(cantidades[i])
-                precio_uni = Decimal(precios_unitarios[i] or 0)
+                cant = safe_int(cantidades[i], 1)
+                precio_uni = safe_decimal(precios_unitarios[i] if i < len(precios_unitarios) else 0, Decimal(0))
                 v_id_str = variantes_ids[i] if len(variantes_ids) > i else ""
-                variant_id = int(v_id_str) if v_id_str.strip() else None
+                variant_id = safe_int(v_id_str, None) if v_id_str and v_id_str.strip() else None
 
                 producto = Product.query.get(p_id)
                 variante = None
@@ -496,8 +493,8 @@ def nueva_factura():
                 db.session.add(ajuste)
 
             db.session.commit()
-            flash('Factura guardada y stock de inventario descontado correctamente.', 'success')
-            return redirect(url_for('bodega_bp.dashboard'))
+            flash(f'Factura #{num_factura} guardada con éxito.', 'success')
+            return redirect(url_for('bodega_bp.factura_detalle', id=nueva_fact.id))
             
         except Exception as e:
             db.session.rollback()
@@ -533,6 +530,80 @@ def api_buscar_producto_bodega(sku):
         'precio_costo': float(producto.precio_costo),
         'variantes': [{"id": v.id, "nombre": v.nombre_variante, "stock": v.cantidad_stock, "precio_minimo": float(v.precio_minimo or producto.precio_minimo), "precio_limite": float(v.precio_costo or producto.precio_costo), "precio_sugerido": float(v.precio_sugerido or producto.precio_sugerido)} for v in producto.variantes]
     })
+
+@bodega_bp.route('/facturas', methods=['GET'])
+@login_required
+@any_bodega_required
+def facturas():
+    search = request.args.get('search', '').strip()
+    estado = request.args.get('estado', '').strip()
+    modalidad = request.args.get('modalidad', '').strip()
+    vendedor_id = request.args.get('vendedor_id', type=int)
+    page = request.args.get('page', 1, type=int)
+    per_page = 20
+
+    query = FacturaBodega.query.join(Cliente)
+
+    # Si es vendedor_bodega, solo ve sus propias facturas
+    if current_user.rol == 'vendedor_bodega':
+        query = query.filter(FacturaBodega.usuario_id == current_user.id)
+    elif vendedor_id:
+        query = query.filter(FacturaBodega.usuario_id == vendedor_id)
+
+    if search:
+        query = query.filter(
+            or_(
+                FacturaBodega.numero_factura.ilike(f"%{search}%"),
+                Cliente.nombre_o_razon_social.ilike(f"%{search}%"),
+                Cliente.documento_o_nit.ilike(f"%{search}%")
+            )
+        )
+
+    if estado and estado != 'todos':
+        query = query.filter(FacturaBodega.estado == estado)
+
+    if modalidad and modalidad != 'todas':
+        query = query.filter(FacturaBodega.modalidad == modalidad)
+
+    query = query.order_by(FacturaBodega.fecha_subida.desc())
+
+    todas = query.all()
+    total_facturado = sum((f.monto_total for f in todas), Decimal('0'))
+    total_abonado = sum((f.total_abonado for f in todas), Decimal('0'))
+    total_pendiente = sum((f.saldo_pendiente for f in todas), Decimal('0'))
+
+    paginacion = query.paginate(page=page, per_page=per_page, error_out=False)
+    facturas_items = paginacion.items
+
+    vendedores = []
+    if current_user.rol in ['admin', 'bodega']:
+        vendedores = User.query.filter(User.rol.in_(['bodega', 'vendedor_bodega', 'admin'])).all()
+
+    return render_template(
+        'bodega/facturas_lista.html',
+        facturas=facturas_items,
+        paginacion=paginacion,
+        search=search,
+        estado=estado,
+        modalidad=modalidad,
+        vendedor_id=vendedor_id,
+        vendedores=vendedores,
+        total_facturado=total_facturado,
+        total_abonado=total_abonado,
+        total_pendiente=total_pendiente,
+        total_count=len(todas)
+    )
+
+@bodega_bp.route('/facturas/<int:id>', methods=['GET'])
+@login_required
+@any_bodega_required
+def factura_detalle(id):
+    factura = FacturaBodega.query.get_or_404(id)
+    if current_user.rol == 'vendedor_bodega' and factura.usuario_id != current_user.id:
+        flash('No tienes permiso para consultar esta factura.', 'danger')
+        return redirect(url_for('bodega_bp.facturas'))
+    
+    return render_template('bodega/factura_detalle.html', f=factura)
 
 @bodega_bp.route('/clientes')
 @login_required

@@ -68,11 +68,11 @@
                     <td class="fw-semibold text-brand-black">{{ p.nombre }}</td>
                     <td>
                         <!-- Regla Estricta: Badge rojo si el stock <= 3 -->
-                        {% if p.total_stock <= 3 %}
-                            <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock }} (Stock Bajo)</span>
+                        {% if (p.total_stock or 0) <= 3 %}
+                            <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock or 0 }} (Stock Bajo)</span>
                         {% else %}
                             <!-- Badge en Rosa Pastel para stock normal -->
-                            <span class="badge bg-brand-pink text-dark rounded-pill px-3 py-2 border">{{ p.total_stock }} unidades</span>
+                            <span class="badge bg-brand-pink text-dark rounded-pill px-3 py-2 border">{{ p.total_stock or 0 }} unidades</span>
                         {% endif %}
                     </td>
                     <td class="text-end fw-bold" style="color: var(--brand-pink);">
@@ -154,15 +154,15 @@
                                     <tr class="align-middle">
                                         <td class="ps-4 fw-semibold text-brand-black" style="font-size: 0.95rem;">{{ v.nombre_variante }}</td>
                                         <td class="text-center">
-                                            {% if v.cantidad_stock <= 3 %}
-                                                <span class="badge bg-danger rounded-pill">{{ v.cantidad_stock }}</span>
+                                            {% if (v.cantidad_stock or 0) <= 3 %}
+                                                <span class="badge bg-danger rounded-pill">{{ v.cantidad_stock or 0 }}</span>
                                             {% else %}
-                                                <span class="badge bg-secondary rounded-pill text-white">{{ v.cantidad_stock }}</span>
+                                                <span class="badge bg-secondary rounded-pill text-white">{{ v.cantidad_stock or 0 }}</span>
                                             {% endif %}
                                         </td>
-                                        <td class="text-end text-muted">${{ (v.precio_costo or p.precio_costo)|cop }}</td>
-                                        <td class="text-end fw-bold text-success">${{ ((v.precio_costo or p.precio_costo) * v.cantidad_stock)|cop }}</td>
-                                        <td class="text-end text-muted">${{ (v.precio_sugerido or p.precio_sugerido)|cop }}</td>
+                                        <td class="text-end text-muted">${{ (v.precio_costo or p.precio_costo or 0)|cop }}</td>
+                                        <td class="text-end fw-bold text-success">${{ ((v.precio_costo or p.precio_costo or 0) * (v.cantidad_stock or 0))|cop }}</td>
+                                        <td class="text-end text-muted">${{ (v.precio_sugerido or p.precio_sugerido or 0)|cop }}</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>

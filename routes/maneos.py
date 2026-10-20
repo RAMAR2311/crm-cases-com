@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, redirect, url_for, flash
 from flask_login import login_required, current_user
 from models import db, Product, ProductVariant, Maneo, StockAdjustment, Sale, SaleDetail, SalePayment, obtener_hora_bogota
 from decorators import admin_required
+from utils import safe_int, safe_float
 
 maneos_bp = Blueprint('maneos_bp', __name__)
 
@@ -20,7 +21,7 @@ def index():
 def prestar():
     sku_busqueda = request.form.get('sku_busqueda', '').strip()
     local_vecino = request.form.get('local_vecino', '').strip()
-    cantidad = int(request.form.get('cantidad', 1))
+    cantidad = safe_int(request.form.get('cantidad'), 1)
 
     if not sku_busqueda or not local_vecino or cantidad < 1:
         flash("Todos los campos son obligatorios y la cantidad debe ser mayor a 0.", "danger")
@@ -114,7 +115,7 @@ def facturar(id):
 
     # Opciones de facturación (puede venir del form)
     sugerido = maneo.variante.precio_sugerido if maneo.variant_id and maneo.variante else maneo.producto.precio_sugerido
-    precio_unidad = float(request.form.get('precio_unidad', sugerido))
+    precio_unidad = safe_float(request.form.get('precio_unidad'), sugerido)
     metodo_pago = request.form.get('metodo_pago', 'efectivo')
     
     total_venta = precio_unidad * maneo.cantidad

@@ -4,6 +4,7 @@ from models import db, Expense, obtener_hora_bogota
 from decorators import admin_required
 from sqlalchemy import extract
 from datetime import datetime
+from utils import safe_float
 
 gastos_bp = Blueprint('gastos_bp', __name__)
 
@@ -42,7 +43,7 @@ def index():
 
         try:
             for monto, metodo in zip(montos, metodos_pago):
-                valor_float = float(monto)
+                valor_float = safe_float(monto, default=0.0)
                 if valor_float > 0:
                     nuevo_gasto = Expense(
                         usuario_id=current_user.id,

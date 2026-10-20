@@ -1,0 +1,251 @@
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<!-- MODAL UNIVERSAL PARA ENVIAR FACTURA DE BODEGA POR WHATSAPP        -->
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="modal fade" id="modalEnviarWhatsApp" tabindex="-1" aria-labelledby="modalEnviarWhatsAppLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg" style="border-radius: 20px; overflow: hidden;">
+            <!-- Cabecera Verde WhatsApp -->
+            <div class="modal-header border-0 text-white px-4 py-3" style="background: linear-gradient(135deg, #128c7e 0%, #25d366 100%);">
+                <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle bg-white text-success d-flex align-items-center justify-content-center shadow-sm" style="width: 42px; height: 42px;">
+                        <i class="fa-brands fa-whatsapp fa-xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title fw-bold m-0" id="modalEnviarWhatsAppLabel">Enviar Factura por WhatsApp</h5>
+                        <small class="text-white-50" id="waHeaderSubtitle">Factura #---</small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body p-4 bg-light">
+                <!-- Tarjeta Resumen Cliente -->
+                <div class="card border-0 shadow-sm p-3 mb-3 bg-white" style="border-radius: 14px;">
+                    <div class="row align-items-center g-2">
+                        <div class="col-md-7">
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.72rem;">Cliente Destinatario</small>
+                            <h6 class="fw-bold mb-0 text-brand-black" id="waClienteNombre">---</h6>
+                            <small class="text-muted" id="waClienteDoc">NIT/CC: ---</small>
+                        </div>
+                        <div class="col-md-5 text-md-end">
+                            <span class="badge px-3 py-2 rounded-pill fw-bold" id="waEstadoBadge" style="font-size: 0.8rem;">---</span>
+                            <div class="mt-1">
+                                <small class="text-muted fw-semibold">Saldo Pendiente: </small>
+                                <strong class="text-danger" id="waSaldoPendienteText">$0</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Campo para escribir / editar el número de teléfono -->
+                <div class="card border-0 shadow-sm p-3 mb-3 bg-white" style="border-radius: 14px;">
+                    <label class="form-label fw-bold text-brand-black mb-1">
+                        <i class="fa-solid fa-phone text-success me-1"></i> Número de WhatsApp / Móvil:
+                    </label>
+                    <p class="text-muted small mb-2">
+                        Puedes cambiar o corregir el número antes de enviar para remitir la factura al contacto que desees:
+                    </p>
+                    <div class="input-group input-group-lg">
+                        <span class="input-group-text bg-light border-2 border-end-0 text-muted fw-bold">
+                            <img src="https://flagcdn.com/w20/co.png" alt="CO" class="me-1"> +57
+                        </span>
+                        <input type="tel" 
+                               id="waTelefonoInput" 
+                               class="form-control border-2 border-start-0 fw-bold text-brand-black shadow-none" 
+                               placeholder="Ej. 3159998877 o 3001234567" 
+                               autocomplete="off">
+                        <button class="btn btn-outline-secondary border-2" type="button" id="btnRestaurarTel" title="Restaurar teléfono original del cliente">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                    </div>
+                    <div id="waTelError" class="text-danger small mt-1 d-none fw-semibold">
+                        <i class="fa-solid fa-circle-exclamation me-1"></i> Por favor ingresa un número de teléfono válido.
+                    </div>
+                </div>
+
+                <!-- Opción de Archivo PDF -->
+                <div class="card border-0 shadow-sm p-3 mb-3 bg-white" style="border-radius: 14px;">
+                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle p-2 bg-danger bg-opacity-10 text-danger d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;">
+                                <i class="fa-solid fa-file-pdf fa-lg"></i>
+                            </div>
+                            <div>
+                                <strong class="d-block text-brand-black" style="font-size: 0.88rem;">Documento / Factura PDF</strong>
+                                <small class="text-muted" style="font-size: 0.75rem;">Descárgalo con 1 clic para adjuntarlo con el clip 📎 en el chat de WhatsApp</small>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-danger btn-sm rounded-pill fw-bold px-3 shadow-sm" id="btnDescargarPDFModal">
+                            <i class="fa-solid fa-download me-1"></i> Descargar / Ver PDF
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Previsualización del Mensaje Estructurado -->
+                <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: 14px;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label fw-bold text-brand-black mb-0">
+                            <i class="fa-solid fa-file-lines text-primary me-1"></i> Mensaje que recibirá el cliente:
+                        </label>
+                        <button type="button" class="btn btn-sm btn-light border text-muted rounded-pill px-3 py-1" id="btnCopiarMensaje">
+                            <i class="fa-solid fa-copy me-1"></i> Copiar Texto
+                        </button>
+                    </div>
+                    <textarea id="waMensajePreview" 
+                              class="form-control border bg-light text-dark font-monospace small p-3" 
+                              rows="8" 
+                              style="resize: vertical; font-size: 0.85rem; line-height: 1.5; border-radius: 10px;"></textarea>
+                    <small class="text-muted mt-2" style="font-size: 0.75rem;">
+                        <i class="fa-solid fa-circle-info me-1"></i> El mensaje incluye el enlace directo para que el cliente pueda abrir y descargar su factura digital en PDF.
+                    </small>
+                </div>
+            </div>
+
+            <!-- Footer con Botones -->
+            <div class="modal-footer border-0 p-3 bg-white justify-content-between">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-semibold border" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+                <button type="button" class="btn btn-success btn-lg rounded-pill px-4 fw-bold shadow-sm d-flex align-items-center gap-2" id="btnDispararWhatsApp">
+                    <i class="fa-brands fa-whatsapp fa-lg"></i>
+                    <span>Enviar a WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let _waOriginalPhone = "";
+    let _waCurrentData = null;
+
+    function prepararModalWhatsApp(data) {
+        _waCurrentData = data;
+
+        // Asignar datos del encabezado
+        document.getElementById('modalEnviarWhatsAppLabel').innerText = `Enviar Factura #${data.numero_factura} por WhatsApp`;
+        document.getElementById('waHeaderSubtitle').innerText = `Cliente: ${data.cliente_nombre}`;
+        document.getElementById('waClienteNombre').innerText = data.cliente_nombre;
+        document.getElementById('waClienteDoc').innerText = `NIT/CC: ${data.cliente_nit || 'No registra'} ${data.cliente_zona ? ' | Zona: ' + data.cliente_zona : ''}`;
+
+        // Badge de estado
+        const estadoBadge = document.getElementById('waEstadoBadge');
+        estadoBadge.innerText = data.estado || 'Pendiente';
+        if (data.estado === 'Pagado') {
+            estadoBadge.className = 'badge px-3 py-2 rounded-pill bg-success';
+        } else if (data.estado === 'Parcial') {
+            estadoBadge.className = 'badge px-3 py-2 rounded-pill bg-warning text-dark';
+        } else {
+            estadoBadge.className = 'badge px-3 py-2 rounded-pill bg-danger';
+        }
+
+        // Saldo Pendiente
+        document.getElementById('waSaldoPendienteText').innerText = `$${data.saldo_formateado || '0'} COP`;
+
+        // Prellenar Teléfono
+        _waOriginalPhone = data.cliente_telefono || '';
+        document.getElementById('waTelefonoInput').value = _waOriginalPhone;
+        document.getElementById('waTelError').classList.add('d-none');
+
+        // Botón de descarga de PDF
+        const btnPdf = document.getElementById('btnDescargarPDFModal');
+        btnPdf.onclick = function() {
+            if (data.archivo_ruta) {
+                window.open('/static/' + data.archivo_ruta, '_blank');
+            } else if (data.factura_id) {
+                window.open('/bodega/facturas/' + data.factura_id, '_blank');
+            }
+        };
+
+        // Enlace para consulta digital
+        const urlFactura = data.factura_id ? `${window.location.origin}/bodega/facturas/${data.factura_id}` : '';
+
+        // Construir Mensaje Estructurado
+        let listaProductosTexto = "";
+        if (data.productos && data.productos.length > 0) {
+            listaProductosTexto = data.productos.map(p => {
+                const subtotal = p.subtotal ? ` - $${p.subtotal} COP` : '';
+                return `• ${p.cantidad}x ${p.nombre}${subtotal}`;
+            }).join('\n');
+        } else {
+            listaProductosTexto = "• Detalle registrado en soporte adjunto";
+        }
+
+        const linkTexto = urlFactura ? `\n🔗 *Ver / Imprimir Factura Digital:*\n${urlFactura}\n` : '';
+
+        const mensaje = 
+`🧾 *COMPROBANTE DE FACTURA - CASES.COM (BODEGA)*
+━━━━━━━━━━━━━━━━━━━━━━━━
+📄 *Factura:* #${data.numero_factura}
+📅 *Fecha:* ${data.fecha || 'Hoy'}
+👤 *Cliente:* ${data.cliente_nombre}
+🆔 *NIT / CC:* ${data.cliente_nit || 'Consumidor Final'}
+📍 *Zona:* ${data.cliente_zona || 'General'}
+💳 *Modalidad:* ${data.modalidad ? data.modalidad.toUpperCase() : 'CONTADO'}
+📊 *Estado:* ${data.estado || 'Pendiente'}
+
+📦 *DETALLE DE PRODUCTOS:*
+${listaProductosTexto}
+
+💰 *TOTAL FACTURA:* $${data.total_formateado} COP
+💵 *Total Abonado:* $${data.abonado_formateado || '0'} COP
+⚠️ *Saldo Pendiente:* $${data.saldo_formateado || '0'} COP
+${linkTexto}━━━━━━━━━━━━━━━━━━━━━━━━
+¡Muchas gracias por su compra mayorista!`;
+
+        document.getElementById('waMensajePreview').value = mensaje;
+
+        // Abrir el modal Bootstrap
+        const modalEl = document.getElementById('modalEnviarWhatsApp');
+        const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modalInstance.show();
+    }
+
+    // Eventos del Modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnRestaurar = document.getElementById('btnRestaurarTel');
+        if (btnRestaurar) {
+            btnRestaurar.addEventListener('click', function() {
+                document.getElementById('waTelefonoInput').value = _waOriginalPhone;
+            });
+        }
+
+        const btnCopiar = document.getElementById('btnCopiarMensaje');
+        if (btnCopiar) {
+            btnCopiar.addEventListener('click', function() {
+                const text = document.getElementById('waMensajePreview').value;
+                navigator.clipboard.writeText(text).then(() => {
+                    const originalHtml = btnCopiar.innerHTML;
+                    btnCopiar.innerHTML = '<i class="fa-solid fa-check text-success me-1"></i> ¡Copiado!';
+                    setTimeout(() => { btnCopiar.innerHTML = originalHtml; }, 2000);
+                });
+            });
+        }
+
+        const btnDisparar = document.getElementById('btnDispararWhatsApp');
+        if (btnDisparar) {
+            btnDisparar.addEventListener('click', function() {
+                let telRaw = document.getElementById('waTelefonoInput').value.trim();
+                let cleanPhone = telRaw.replace(/\D/g, ''); // Deja solo dígitos
+
+                if (!cleanPhone || cleanPhone.length < 7) {
+                    document.getElementById('waTelError').classList.remove('d-none');
+                    document.getElementById('waTelefonoInput').focus();
+                    return;
+                }
+                document.getElementById('waTelError').classList.add('d-none');
+
+                // Si es un número colombiano de 10 dígitos (inicia por 3), anteponer prefijo de Colombia 57
+                if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+                    cleanPhone = '57' + cleanPhone;
+                }
+
+                const mensajeFinal = document.getElementById('waMensajePreview').value;
+                const encodedMsg = encodeURIComponent(mensajeFinal);
+                const url = `https://wa.me/${cleanPhone}?text=${encodedMsg}`;
+
+                window.open(url, '_blank');
+            });
+        }
+    });
+</script>

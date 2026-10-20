@@ -8,6 +8,7 @@ import os
 from werkzeug.utils import secure_filename
 from decimal import Decimal
 from models import db, Product, Sale, SaleDetail, SalePayment, ProductVariant, ArqueoCaja
+from utils import safe_int, safe_float, safe_decimal
 
 celulares_bp = Blueprint('celulares_bp', __name__)
 
@@ -278,7 +279,7 @@ def venta():
     
     if request.method == 'POST':
         celular_id = request.form.get('celular_id')
-        precio_venta_final = float(request.form.get('precio_venta_final', 0.0))
+        precio_venta_final = safe_float(request.form.get('precio_venta_final'), 0.0)
         
         # Pagos mixtos
         metodos_pago = request.form.getlist('metodo_pago[]')

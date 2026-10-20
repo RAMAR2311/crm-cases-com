@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row align-items-center mb-4 g-3">
+    <div class="col-md-7">
+        <h2 class="fw-bolder text-brand-black m-0 mb-1">
+            <i class="fa-solid fa-file-invoice text-brand-blue me-2"></i> Facturas Realizadas - Bodega
+        </h2>
+        <p class="text-muted m-0 small">
+            Consulta, gestiona y envía por WhatsApp las facturas mayoristas generadas en el sistema.
+        </p>
+    </div>
+    <div class="col-md-5 text-md-end d-flex gap-2 justify-content-md-end flex-wrap">
+        <a href="{{ url_for('bodega_bp.caja_rapida') }}" class="btn btn-pink rounded-pill px-4 shadow-sm fw-bold">
+            <i class="fa-solid fa-store me-1"></i> Caja Rápida (POS)
+        </a>
+        <a href="{{ url_for('bodega_bp.nueva_factura') }}" class="btn btn-blue rounded-pill px-4 shadow-sm fw-bold">
+            <i class="fa-solid fa-plus me-1"></i> Factura Manual
+        </a>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════ KPI CARDS ═══════════════════════════════════════════ -->
+<div class="row g-3 mb-4">
+    <!-- Tarjeta 1: Total Facturas -->
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-custom border-0 shadow-sm h-100 p-3" style="border-left: 5px solid var(--brand-blue) !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Facturas</p>
+            <h3 class="fw-bolder m-0 text-brand-black">{{ total_count }}</h3>
+            <small class="text-muted">documentos generados</small>
+        </div>
+    </div>
+
+    <!-- Tarjeta 2: Total Facturado -->
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-custom border-0 shadow-sm h-100 p-3" style="border-left: 5px solid #2979ff !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Monto Total Facturado</p>
+            <h3 class="fw-bolder m-0 text-primary">${{ total_facturado|cop }}</h3>
+            <small class="text-muted">volumen bruto de ventas</small>
+        </div>
+    </div>
+
+    <!-- Tarjeta 3: Total Recaudado (Abonos) -->
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-custom border-0 shadow-sm h-100 p-3" style="border-left: 5px solid #00c853 !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Total Recaudado / Pagado</p>
+            <h3 class="fw-bolder m-0 text-success">${{ total_abonado|cop }}</h3>
+            <small class="text-muted">ingreso efectivo a caja</small>
+        </div>
+    </div>
+
+    <!-- Tarjeta 4: Cartera Pendiente -->
+    <div class="col-12 col-sm-6 col-lg-3">
+        <div class="card card-custom border-0 shadow-sm h-100 p-3" style="border-left: 5px solid #ff5252 !important;">
+            <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.72rem; letter-spacing: 0.5px;">Saldo Pendiente (Cartera)</p>
+            <h3 class="fw-bolder m-0 text-danger">${{ total_pendiente|cop }}</h3>
+            <small class="text-muted">por cobrar a clientes</small>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════ BARRA DE FILTROS ════════════════════════════════════ -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm bg-white">
+    <form method="GET" action="{{ url_for('bodega_bp.facturas') }}" class="row g-2 align-items-center">
+        <!-- Buscador -->
+        <div class="col-12 col-md-4">
+            <div class="input-group rounded-pill border">
+                <span class="input-group-text bg-white border-0 ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" name="search" class="form-control border-0 bg-white shadow-none ps-2" placeholder="Buscar por N° Factura, Cliente o NIT..." value="{{ search }}" style="border-radius: 0 50px 50px 0;">
+            </div>
+        </div>
+
+        <!-- Filtro Estado -->
+        <div class="col-6 col-md-3">
+            <select name="estado" class="form-select rounded-pill border bg-light shadow-none">
+                <option value="todos" {% if not estado or estado == 'todos' %}selected{% endif %}>Todos los Estados</option>
+                <option value="Pendiente" {% if estado == 'Pendiente' %}selected{% endif %}>🔴 Pendiente</option>
+                <option value="Parcial" {% if estado == 'Parcial' %}selected{% endif %}>🟡 Abono Parcial</option>
+                <option value="Pagado" {% if estado == 'Pagado' %}selected{% endif %}>🟢 Pagado</option>
+            </select>
+        </div>
+
+        <!-- Filtro Modalidad -->
+        <div class="col-6 col-md-2">
+            <select name="modalidad" class="form-select rounded-pill border bg-light shadow-none">
+                <option value="todas" {% if not modalidad or modalidad == 'todas' %}selected{% endif %}>Todas las Modalidades</option>
+                <option value="credito" {% if modalidad == 'credito' %}selected{% endif %}>⏳ Crédito</option>
+                <option value="contado" {% if modalidad == 'contado' %}selected{% endif %}>💵 Contado</option>
+            </select>
+        </div>
+
+        <!-- Botones Filtrar y Limpiar -->
+        <div class="col-12 col-md-3 text-md-end d-flex gap-2 justify-content-md-end">
+            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm flex-grow-1 flex-md-grow-0">
+                <i class="fa-solid fa-filter me-1"></i> Filtrar
+            </button>
+            {% if search or estado or modalidad %}
+            <a href="{{ url_for('bodega_bp.facturas') }}" class="btn btn-light rounded-pill px-3 border shadow-sm" title="Limpiar Filtros">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- ════════════════════════════════════ TABLA PRINCIPAL ════════════════════════════════════ -->
+<div class="card card-custom border-0 shadow-sm p-0 overflow-hidden mb-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0 align-middle">
+            <thead class="bg-light text-muted">
+                <tr>
+                    <th class="ps-4">N° FACTURA</th>
+                    <th>FECHA EMISIÓN</th>
+                    <th>CLIENTE (MAYORISTA)</th>
+                    <th class="text-center">MODALIDAD</th>
+                    <th class="text-end">TOTAL FACTURA</th>
+                    <th class="text-end">SALDO PENDIENTE</th>
+                    <th class="text-center">ESTADO</th>
+                    <th class="text-center pe-4" style="min-width: 170px;">ACCIONES</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in facturas %}
+                <tr>
+                    <!-- Factura N° -->
+                    <td class="ps-4">
+                        <a href="{{ url_for('bodega_bp.factura_detalle', id=f.id) }}" class="fw-bold text-brand-black text-decoration-none">
+                            <span class="badge bg-light text-dark border px-2 py-1">#{{ f.numero_factura }}</span>
+                        </a>
+                    </td>
+
+                    <!-- Fecha -->
+                    <td class="text-muted small">
+                        <i class="fa-regular fa-calendar me-1"></i>
+                        {{ f.fecha_subida.strftime('%d/%m/%Y %H:%M') if f.fecha_subida else 'N/A' }}
+                    </td>
+
+                    <!-- Cliente -->
+                    <td>
+                        {% if f.cliente %}
+                        <a href="{{ url_for('bodega_bp.cliente_detalle', id=f.cliente.id) }}" class="fw-bold text-brand-black text-decoration-none">
+                            <i class="fa-solid fa-user-circle text-brand-blue me-1"></i> {{ f.cliente.nombre_o_razon_social }}
+                        </a>
+                        <div class="text-muted" style="font-size: 0.75rem;">
+                            NIT: {{ f.cliente.documento_o_nit or 'N/A' }}
+                            {% if f.cliente.telefono %}&nbsp;·&nbsp;<i class="fa-solid fa-phone me-1"></i>{{ f.cliente.telefono }}{% endif %}
+                            {% if f.cliente.zona %}&nbsp;·&nbsp;<span class="badge bg-light text-secondary border">{{ f.cliente.zona }}</span>{% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted fst-italic">Sin cliente asignado</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Modalidad -->
+                    <td class="text-center">
+                        {% if f.modalidad == 'contado' %}
+                            <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-3 py-1">Contado</span>
+                        {% else %}
+                            <span class="badge bg-warning bg-opacity-10 text-warning border border-warning rounded-pill px-3 py-1">Crédito</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Total Factura -->
+                    <td class="text-end fw-bold text-brand-black">
+                        ${{ (f.monto_total or 0)|cop }}
+                    </td>
+
+                    <!-- Saldo Pendiente -->
+                    <td class="text-end">
+                        {% if (f.saldo_pendiente or 0) > 0 %}
+                            <span class="fw-bold text-danger">${{ (f.saldo_pendiente or 0)|cop }}</span>
+                            <div class="text-muted" style="font-size: 0.72rem;">Abonado: ${{ (f.total_abonado or 0)|cop }}</div>
+                        {% else %}
+                            <span class="text-success fw-bold"><i class="fa-solid fa-check me-1"></i> $0</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Estado -->
+                    <td class="text-center">
+                        {% if f.estado == 'Pagado' %}
+                            <span class="badge bg-success rounded-pill px-3 py-2">Pagado</span>
+                        {% elif f.estado == 'Parcial' %}
+                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">Parcial</span>
+                        {% else %}
+                            <span class="badge bg-danger rounded-pill px-3 py-2">Pendiente</span>
+                        {% endif %}
+                    </td>
+
+                    <!-- Acciones -->
+                    <td class="text-center pe-4">
+                        <div class="d-flex justify-content-center align-items-center gap-1">
+                            <!-- Botón Ver Detalle -->
+                            <a href="{{ url_for('bodega_bp.factura_detalle', id=f.id) }}" class="btn btn-sm btn-light border rounded-pill shadow-sm" title="Ver Detalle / Imprimir">
+                                <i class="fa-solid fa-eye text-primary"></i>
+                            </a>
+
+                            <!-- BOTÓN ENVIAR WHATSAPP (Con datos inyectados para el Modal) -->
+                            <button type="button" 
+                                    class="btn btn-sm btn-success rounded-pill shadow-sm px-2 fw-semibold btn-whatsapp-trigger" 
+                                    title="Enviar a WhatsApp"
+                                    data-factura-id="{{ f.id }}"
+                                    data-archivo-ruta="{{ f.archivo_ruta or '' }}"
+                                    data-factura-num="{{ f.numero_factura }}"
+                                    data-cliente-nombre="{{ (f.cliente.nombre_o_razon_social if f.cliente else 'Sin cliente') }}"
+                                    data-cliente-telefono="{{ ((f.cliente.telefono if f.cliente else '') or '') }}"
+                                    data-cliente-nit="{{ ((f.cliente.documento_o_nit if f.cliente else '') or '') }}"
+                                    data-cliente-zona="{{ ((f.cliente.zona if f.cliente else '') or '') }}"
+                                    data-fecha="{{ f.fecha_subida.strftime('%d/%m/%Y %H:%M') if f.fecha_subida else '' }}"
+                                    data-modalidad="{{ f.modalidad or 'credito' }}"
+                                    data-estado="{{ f.estado or 'Pendiente' }}"
+                                    data-total="{{ (f.monto_total or 0)|cop }}"
+                                    data-abonado="{{ (f.total_abonado or 0)|cop }}"
+                                    data-saldo="{{ (f.saldo_pendiente or 0)|cop }}"
+                                    data-productos='[{% for d in f.detalles %}{"nombre": "{{ (d.producto.nombre if d.producto else 'Item') }}{% if d.variante %} ({{ d.variante.nombre_variante }}){% endif %}", "cantidad": {{ d.cantidad or 0 }}, "subtotal": "{{ ((d.cantidad or 0) * (d.precio_venta or 0))|cop }}"}{% if not loop.last %},{% endif %}{% endfor %}]'>
+                                <i class="fa-brands fa-whatsapp fa-lg me-1"></i> WhatsApp
+                            </button>
+
+                            <!-- Descarga de archivo soporte si existe -->
+                            {% if f.archivo_ruta %}
+                            <a href="{{ url_for('static', filename=f.archivo_ruta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill" title="Descargar Soporte Adjunto">
+                                <i class="fa-solid fa-file-pdf"></i>
+                            </a>
+                            {% endif %}
+
+                            <!-- Editar -->
+                            <a href="{{ url_for('bodega_bp.editar_factura', id=f.id) }}" class="btn btn-sm btn-light border rounded-pill" title="Editar Factura">
+                                <i class="fa-solid fa-pen-to-square text-warning"></i>
+                            </a>
+
+                            <!-- Eliminar (solo admin/bodega) -->
+                            {% if current_user.rol != 'vendedor_bodega' %}
+                            <form method="POST" action="{{ url_for('bodega_bp.eliminar_factura', id=f.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar factura #{{ f.numero_factura }}? El inventario será devuelto.');">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-light border rounded-pill text-danger" title="Eliminar">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-file-circle-question fa-3x text-black-50 mb-3 d-block"></i>
+                        No se encontraron facturas con los filtros seleccionados.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════ PAGINACIÓN ════════════════════════════════════ -->
+{% if paginacion and paginacion.pages and paginacion.pages > 1 %}
+<nav aria-label="Paginación" class="mt-4">
+    <ul class="pagination justify-content-center flex-wrap gap-1 mb-0">
+        <li class="page-item {% if not paginacion.has_prev %}disabled{% endif %}">
+            <a class="page-link rounded-pill px-3 shadow-sm" href="{{ url_for('bodega_bp.facturas', page=paginacion.prev_num, search=search, estado=estado, modalidad=modalidad) }}">
+                <i class="fa-solid fa-chevron-left"></i>
+            </a>
+        </li>
+        {% for p_num in paginacion.iter_pages(left_edge=1, left_current=2, right_current=2, right_edge=1) %}
+            {% if p_num %}
+                <li class="page-item {% if p_num == paginacion.page %}active{% endif %}">
+                    <a class="page-link rounded-pill px-3 shadow-sm" href="{{ url_for('bodega_bp.facturas', page=p_num, search=search, estado=estado, modalidad=modalidad) }}">{{ p_num }}</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link rounded-pill px-3">…</span></li>
+            {% endif %}
+        {% endfor %}
+        <li class="page-item {% if not paginacion.has_next %}disabled{% endif %}">
+            <a class="page-link rounded-pill px-3 shadow-sm" href="{{ url_for('bodega_bp.facturas', page=paginacion.next_num, search=search, estado=estado, modalidad=modalidad) }}">
+                <i class="fa-solid fa-chevron-right"></i>
+            </a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
+
+<!-- Incluir el componente Modal de WhatsApp -->
+{% include "bodega/_modal_whatsapp.html" %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Enlazar todos los botones con clase btn-whatsapp-trigger al modal
+        document.querySelectorAll('.btn-whatsapp-trigger').forEach(btn => {
+            btn.addEventListener('click', function() {
+                let prods = [];
+                try {
+                    prods = JSON.parse(this.dataset.productos || '[]');
+                } catch(e) {
+                    prods = [];
+                }
+
+                prepararModalWhatsApp({
+                    factura_id: this.dataset.facturaId,
+                    archivo_ruta: this.dataset.archivoRuta,
+                    numero_factura: this.dataset.facturaNum,
+                    cliente_nombre: this.dataset.clienteNombre,
+                    cliente_telefono: this.dataset.clienteTelefono,
+                    cliente_nit: this.dataset.clienteNit,
+                    cliente_zona: this.dataset.clienteZona,
+                    fecha: this.dataset.fecha,
+                    modalidad: this.dataset.modalidad,
+                    estado: this.dataset.estado,
+                    total_formateado: this.dataset.total,
+                    abonado_formateado: this.dataset.abonado,
+                    saldo_formateado: this.dataset.saldo,
+                    productos: prods
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

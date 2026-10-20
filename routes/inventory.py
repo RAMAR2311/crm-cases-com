@@ -6,6 +6,7 @@ from models import db, Product, StockAdjustment, ProductVariant
 from decorators import admin_required, admin_or_bodega_required
 import pandas as pd
 from io import BytesIO
+from utils import safe_int, safe_float, safe_decimal
 
 inventory_bp = Blueprint('inventory_bp', __name__)
 
@@ -87,16 +88,16 @@ def nuevo():
         v_sugs = request.form.getlist('v_sug[]')
 
         # Si hay variantes, el stock base del producto maestro se ignora o se pone en 0
-        stock_base = 0 if v_nombres else int(request.form.get('cantidad_stock') or 0)
+        stock_base = 0 if v_nombres else safe_int(request.form.get('cantidad_stock'), 0)
 
         nuevo_prod = Product(
             sku=request.form.get('sku').strip(),
             nombre=request.form.get('nombre').strip(),
             tipo_inventario=tipo,
             cantidad_stock=stock_base,
-            precio_costo=float(request.form.get('precio_costo') or 0.0),
-            precio_minimo=float(request.form.get('precio_minimo') or 0.0),
-            precio_sugerido=float(request.form.get('precio_sugerido') or 0.0),
+            precio_costo=safe_float(request.form.get('precio_costo'), 0.0),
+            precio_minimo=safe_float(request.form.get('precio_minimo'), 0.0),
+            precio_sugerido=safe_float(request.form.get('precio_sugerido'), 0.0),
             imagen=imagen_filename,
             observacion=request.form.get('observacion')
         )
@@ -175,9 +176,9 @@ def editar_producto(id):
         # Datos básicos
         producto.sku = request.form.get('sku').strip()
         producto.nombre = request.form.get('nombre').strip()
-        producto.precio_costo = float(request.form.get('precio_costo') or 0.0)
-        producto.precio_minimo = float(request.form.get('precio_minimo') or 0.0)
-        producto.precio_sugerido = float(request.form.get('precio_sugerido') or 0.0)
+        producto.precio_costo = safe_float(request.form.get('precio_costo'), 0.0)
+        producto.precio_minimo = safe_float(request.form.get('precio_minimo'), 0.0)
+        producto.precio_sugerido = safe_float(request.form.get('precio_sugerido'), 0.0)
         producto.observacion = request.form.get('observacion')
         
         # Sincronización de Variantes
@@ -188,7 +189,7 @@ def editar_producto(id):
         v_mins = request.form.getlist('v_min[]')
         v_sugs = request.form.getlist('v_sug[]')
 
-        ids_en_formulario = [int(vid) for vid in v_ids if vid]
+        ids_en_formulario = [safe_int(vid, 0) for vid in v_ids if vid and safe_int(vid, 0) > 0]
         
         # 1. Eliminar las que ya no están en el formulario
         for v_existente in producto.variantes[:]:
@@ -198,7 +199,7 @@ def editar_producto(id):
         # 2. Actualizar o crear
         if not v_nombres:
             # Si no hay variantes, el stock es el base
-            producto.cantidad_stock = int(request.form.get('cantidad_stock') or 0)
+            producto.cantidad_stock = safe_int(request.form.get('cantidad_stock'), 0)
         else:
             # Si hay variantes, el stock base es 0
             producto.cantidad_stock = 0
@@ -207,7 +208,7 @@ def editar_producto(id):
                 if not nombre_v: continue
                 
                 vid = v_ids[i] if i < len(v_ids) else None
-                stock_v = int(v_stocks[i] or 0)
+                stock_v = safe_int(v_stocks[i] if i < len(v_stocks) else 0, 0)
                 costo_v = float(v_costos[i]) if v_costos[i] else producto.precio_costo
                 min_v = float(v_mins[i]) if v_mins[i] else producto.precio_minimo
                 sug_v = float(v_sugs[i]) if v_sugs[i] else producto.precio_sugerido
@@ -327,7 +328,7 @@ def eliminar_producto(id):
 def agregar_variante(id):
     producto = Product.query.get_or_404(id)
     nombre_variante = request.form.get('nombre_variante')
-    cantidad_stock = int(request.form.get('cantidad_stock', 0))
+    cantidad_stock = safe_int(request.form.get('cantidad_stock'), 0)
     
     precio_costo_req = request.form.get('precio_costo')
     precio_minimo_req = request.form.get('precio_minimo')
@@ -341,9 +342,9 @@ def agregar_variante(id):
         product_id=producto.id,
         nombre_variante=nombre_variante,
         cantidad_stock=cantidad_stock,
-        precio_costo=float(precio_costo_req) if precio_costo_req else producto.precio_costo,
-        precio_minimo=float(precio_minimo_req) if precio_minimo_req else producto.precio_minimo,
-        precio_sugerido=float(precio_sugerido_req) if precio_sugerido_req else producto.precio_sugerido
+        precio_costo=safe_float(precio_costo_req, producto.precio_costo),
+        precio_minimo=safe_float(precio_minimo_req, producto.precio_minimo),
+        precio_sugerido=safe_float(precio_sugerido_req, producto.precio_sugerido)
     )
     try:
         db.session.add(nueva_variante)

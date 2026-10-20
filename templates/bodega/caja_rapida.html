@@ -19,17 +19,17 @@
         <!-- Grilla de productos -->
         <div class="row g-3 overflow-auto pb-4" id="productsGrid" style="max-height: calc(100vh - 250px);">
             {% for p in productos %}
-            {% set total_stock = p.cantidad_stock %}
+            {% set total_stock = p.cantidad_stock or 0 %}
             {% set vars_data = [] %}
             {% if p.variantes %}
                 {% set total_stock = p.variantes | sum(attribute='cantidad_stock') %}
                 {% for v in p.variantes %}
-                    {% set _ = vars_data.append({"id": v.id, "nombre": v.nombre_variante, "stock": v.cantidad_stock, "precio_sugerido": v.precio_sugerido or p.precio_sugerido or 0, "precio_minimo": v.precio_minimo or p.precio_minimo or 0}) %}
+                    {% set _ = vars_data.append({"id": v.id, "nombre": v.nombre_variante, "stock": v.cantidad_stock or 0, "precio_sugerido": v.precio_sugerido or p.precio_sugerido or 0, "precio_minimo": v.precio_minimo or p.precio_minimo or 0}) %}
                 {% endfor %}
             {% endif %}
-            <div class="col-6 col-md-4 col-xl-3 product-card-container" data-name="{{ p.nombre|lower }}" data-sku="{{ p.sku|lower }}">
+            <div class="col-6 col-md-4 col-xl-3 product-card-container" data-name="{{ (p.nombre or '')|lower }}" data-sku="{{ (p.sku or '')|lower }}">
                 <div class="card h-100 border-0 shadow-sm cursor-pointer product-card" 
-                     data-product='{{ {"id": p.id, "nombre": p.nombre, "sku": p.sku, "precio_sugerido": p.precio_sugerido or 0, "precio_minimo": p.precio_minimo or 0, "cantidad_stock": total_stock, "tipo_inventario": p.tipo_inventario}|tojson|safe }}'
+                     data-product='{{ {"id": p.id, "nombre": p.nombre or "", "sku": p.sku or "", "precio_sugerido": p.precio_sugerido or 0, "precio_minimo": p.precio_minimo or 0, "cantidad_stock": total_stock, "tipo_inventario": p.tipo_inventario or "bodega"}|tojson|safe }}'
                      data-variants='{{ vars_data|tojson|safe }}'
                      onclick="handleProductClick(this)">
                     <div class="ratio ratio-1x1 bg-light rounded-top d-flex align-items-center justify-content-center overflow-hidden">
@@ -45,7 +45,7 @@
                             <small class="text-muted d-block mb-2">{{ p.sku }}</small>
                         </div>
                         <div>
-                            <h5 class="fw-bolder mb-1" style="color: var(--brand-pink);">${{ p.precio_sugerido|cop }}</h5>
+                            <h5 class="fw-bolder mb-1" style="color: var(--brand-pink);">${{ (p.precio_sugerido or 0)|cop }}</h5>
                             <small class="text-muted"><i class="fa-solid fa-box text-secondary"></i> {{ total_stock }} en stock</small>
                         </div>
                     </div>

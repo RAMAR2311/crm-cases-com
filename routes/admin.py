@@ -5,6 +5,7 @@ from sqlalchemy.sql import func
 from werkzeug.security import generate_password_hash
 from decorators import admin_required
 from decimal import Decimal
+from utils import safe_int, safe_float, safe_decimal
 
 admin_bp = Blueprint('admin_bp', __name__)
 
@@ -143,7 +144,7 @@ def maneos():
 @login_required
 def maneos_prestar():
     sku = request.form.get('sku')
-    cantidad = int(request.form.get('cantidad', 0))
+    cantidad = safe_int(request.form.get('cantidad'), 0)
     local_vecino = request.form.get('local_vecino')
     variant_id_str = request.form.get('variant_id')
 
@@ -226,8 +227,8 @@ def maneos_facturar(id):
         precio_costo_ref = float(maneo.producto.precio_costo)
         precio_minimo_ref = float(maneo.producto.precio_minimo)
 
-    precio_venta = float(request.form.get('precio_venta', precio_sugerido_ref))
-    cantidad_vendida = int(request.form.get('cantidad_vendida', maneo.cantidad))
+    precio_venta = safe_float(request.form.get('precio_venta'), precio_sugerido_ref)
+    cantidad_vendida = safe_int(request.form.get('cantidad_vendida'), maneo.cantidad)
 
     if cantidad_vendida <= 0 or cantidad_vendida > maneo.cantidad:
         flash(f'Operación rechazada: La cantidad vendida ({cantidad_vendida}) es inválida.', 'danger')
@@ -317,7 +318,7 @@ def maneos_devolver(id):
         flash('Este maneo ya fue resuelto.', 'warning')
         return redirect(url_for('admin_bp.maneos'))
 
-    cantidad_devuelta = int(request.form.get('cantidad_devuelta', maneo.cantidad))
+    cantidad_devuelta = safe_int(request.form.get('cantidad_devuelta'), maneo.cantidad)
 
     if cantidad_devuelta <= 0:
         flash('La cantidad a devolver debe ser mayor a 0.', 'danger')

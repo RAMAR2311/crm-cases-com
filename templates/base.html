@@ -2,141 +2,289 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>cases.com - CRM & POS</title>
     <!-- Favicon y PWA -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/cases.png') }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
     
-    <!-- Meta tags para iOS y PWA -->
+    <!-- Meta tags para iOS y PWA Nativa -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Cases">
+    <meta name="apple-mobile-web-app-title" content="cases.com">
     <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/cases.png') }}">
     <meta name="theme-color" content="#F9C8D3">
 
+    <!-- Google Fonts: Plus Jakarta Sans (UI/Lectura) & Outfit (Títulos/Branding) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome -->
+    <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
     <style>
-        /* REGLA DE BRANDING ESTRICTA Y COLORES */
+        /* ══════════════════════════════════════════════════════════════
+           SISTEMA DE DISEÑO PREMIUM - BRANDING NATIVO CASES.COM
+           ══════════════════════════════════════════════════════════════ */
         :root {
-            --brand-pink: #F9C8D3;   /* Rosa Pastel */
-            --brand-blue: #A3D8DE;   /* Azul Turquesa */
-            --brand-black: #1A1A1A;  /* Negro */
-            --brand-white: #FFFFFF;  /* Blanco */
+            /* Paleta Nativa Estricta */
+            --brand-pink: #F9C8D3;          /* Rosa Pastel */
+            --brand-pink-hover: #F2ADC0;
+            --brand-pink-subtle: #FFF2F5;
+            --brand-blue: #A3D8DE;          /* Azul Turquesa */
+            --brand-blue-hover: #8CCBD3;
+            --brand-blue-subtle: #F0F9FA;
+            --brand-black: #1A1A1A;         /* Negro Principal */
+            --brand-white: #FFFFFF;
             
-            --brand-bg: #F8F9FA;     /* Fondo gris súper claro para dar profundidad al blanco */
+            /* Superficies y Neutros */
+            --brand-bg: #F8F9FA;            /* Fondo gris claro con profundidad */
+            --brand-surface: #FFFFFF;
+            --brand-border: #E8EDF2;
+            --brand-border-subtle: #F1F4F8;
+            --brand-text-muted: #64748B;
+            
+            /* Sombras Suaves Multicapa */
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+            --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.04), 0 0 1px 1px rgba(0, 0, 0, 0.02);
+            --shadow-hover: 0 16px 32px -6px rgba(0, 0, 0, 0.08);
+            
+            /* Bordes Redondeados Ergonómicos */
+            --radius-sm: 10px;
+            --radius-md: 14px;
+            --radius-lg: 18px;
+            --radius-pill: 50px;
         }
 
+        /* Tipografía Base y Suavizado */
         body {
             background-color: var(--brand-bg);
             color: var(--brand-black);
-            font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
         }
 
-        /* Variables Utilitarias */
+        /* Jerarquía Tipográfica de Títulos */
+        h1, h2, h3, h4, .font-heading, .navbar-brand {
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            letter-spacing: -0.02em;
+            color: var(--brand-black);
+        }
+
+        /* Utilidades de Marca */
         .bg-brand-blue { background-color: var(--brand-blue) !important; color: var(--brand-black); }
         .bg-brand-pink { background-color: var(--brand-pink) !important; color: var(--brand-black); }
         .bg-brand-white { background-color: var(--brand-white) !important; }
         .text-brand-black { color: var(--brand-black) !important; }
         .text-brand-pink { color: var(--brand-pink) !important; }
+        .text-brand-blue { color: #5aa4ac !important; }
 
-        /* Navbar E-commerce Vibe (Ahora en Rosa Pastel) */
+        /* ══════════════════════════════════════════════════════════════
+           NAVBAR TRANSLÚCIDA CON GLASSMORPHISM
+           ══════════════════════════════════════════════════════════════ */
         .navbar-custom {
-            background-color: var(--brand-pink);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            padding: 1rem 0;
+            background: rgba(249, 200, 211, 0.94) !important;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            padding: 0.85rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+            transition: all 0.25s ease;
         }
         
         .navbar-custom .navbar-brand {
             font-weight: 800;
             color: var(--brand-black);
-            font-size: 1.75rem;
+            font-size: 1.7rem;
             letter-spacing: -0.5px;
+            transition: transform 0.2s ease;
+        }
+        .navbar-custom .navbar-brand:hover {
+            transform: scale(1.02);
         }
 
         .navbar-custom .nav-link {
             color: var(--brand-black);
-            font-weight: 500;
+            font-weight: 600;
             margin-left: 1rem;
             transition: opacity 0.2s;
         }
-
         .navbar-custom .nav-link:hover {
-            opacity: 0.7;
+            opacity: 0.75;
         }
 
-        /* Botones Pro */
+        /* ══════════════════════════════════════════════════════════════
+           BOTONES ERGONÓMICOS Y CON MICRO-INTERACCIONES
+           ══════════════════════════════════════════════════════════════ */
         .btn-pink {
             background-color: var(--brand-pink);
             color: var(--brand-black);
-            font-weight: 600;
-            border: none;
-            transition: all 0.2s ease-in-out;
+            font-weight: 700;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            border-radius: var(--radius-pill);
+            padding: 0.55rem 1.4rem;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 12px rgba(249, 200, 211, 0.45);
         }
-        .btn-pink:hover {
-            background-color: #f0aebb;
+        .btn-pink:hover, .btn-pink:focus {
+            background-color: var(--brand-pink-hover);
+            color: var(--brand-black);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(249, 200, 211, 0.4);
+            box-shadow: 0 6px 16px rgba(249, 200, 211, 0.6);
+        }
+        .btn-pink:active {
+            transform: translateY(0);
         }
 
         .btn-blue {
             background-color: var(--brand-blue);
             color: var(--brand-black);
-            font-weight: 600;
-            border: none;
-            transition: all 0.2s ease-in-out;
+            font-weight: 700;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+            border-radius: var(--radius-pill);
+            padding: 0.55rem 1.4rem;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 4px 12px rgba(163, 216, 222, 0.45);
         }
-        .btn-blue:hover {
-            background-color: #8bc3c9;
+        .btn-blue:hover, .btn-blue:focus {
+            background-color: var(--brand-blue-hover);
+            color: var(--brand-black);
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(163, 216, 222, 0.4);
+            box-shadow: 0 6px 16px rgba(163, 216, 222, 0.6);
+        }
+        .btn-blue:active {
+            transform: translateY(0);
         }
 
-        /* Superficies Claras y Limpias */
+        /* ══════════════════════════════════════════════════════════════
+           TARJETAS DE MÉTRICAS Y SUPERFICIES (ELEVACIÓN PREMIUM)
+           ══════════════════════════════════════════════════════════════ */
         .card-custom {
             background-color: var(--brand-white);
-            border: none;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.03);
+            border: 1px solid var(--brand-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+        }
+        .card-custom:hover {
+            box-shadow: var(--shadow-hover);
+            border-color: rgba(163, 216, 222, 0.5);
         }
 
-        /* Tablas */
+        /* ══════════════════════════════════════════════════════════════
+           TABLAS DE DATOS MODERNAS Y ESPACIOSAS
+           ══════════════════════════════════════════════════════════════ */
         .table-custom {
             background-color: var(--brand-white);
-            border-radius: 12px;
+            border-radius: var(--radius-md);
+            border-collapse: separate;
+            border-spacing: 0;
+            width: 100%;
         }
         .table-custom thead th {
-            color: var(--brand-black);
-            /* Borde inferior de la tabla ahora en rosa pastel para hacer juego con el navbar */
+            color: #475569;
+            background-color: #F8FAFC;
             border-bottom: 2px solid var(--brand-pink);
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-            padding: 1.25rem 1rem;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.6px;
+            padding: 1.1rem 1rem;
+            white-space: nowrap;
+        }
+        .table-custom tbody tr {
+            transition: background-color 0.15s ease;
+        }
+        .table-custom tbody tr:hover {
+            background-color: rgba(163, 216, 222, 0.08) !important;
         }
         .table-custom tbody td {
-            padding: 1.25rem 1rem;
+            padding: 1.15rem 1rem;
             vertical-align: middle;
+            border-bottom: 1px solid #F1F5F9;
+        }
+        .table-custom tbody tr:last-child td {
+            border-bottom: none;
         }
 
-        /* Sidebar Offcanvas Estilos */
+        /* ══════════════════════════════════════════════════════════════
+           INSIGNIAS (BADGES) SUAVES TIPO PÍLDORA
+           ══════════════════════════════════════════════════════════════ */
+        .badge-soft-pink {
+            background-color: var(--brand-pink-subtle);
+            color: #C04368;
+            border: 1px solid rgba(249, 200, 211, 0.7);
+            font-weight: 700;
+        }
+        .badge-soft-blue {
+            background-color: var(--brand-blue-subtle);
+            color: #176571;
+            border: 1px solid rgba(163, 216, 222, 0.7);
+            font-weight: 700;
+        }
+        .badge-soft-success {
+            background-color: #ECFDF5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+            font-weight: 700;
+        }
+        .badge-soft-warning {
+            background-color: #FFFBEB;
+            color: #92400E;
+            border: 1px solid #FDE68A;
+            font-weight: 700;
+        }
+        .badge-soft-danger {
+            background-color: #FEF2F2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+            font-weight: 700;
+        }
+
+        /* ══════════════════════════════════════════════════════════════
+           SIDEBAR OFFCANVAS PULIDO
+           ══════════════════════════════════════════════════════════════ */
+        .offcanvas {
+            border-top-right-radius: 20px;
+            border-bottom-right-radius: 20px;
+        }
         .offcanvas-body .nav-link {
-            transition: all 0.2s ease-in-out;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            border-radius: var(--radius-sm);
+            margin-bottom: 2px;
+            color: var(--brand-black);
+            font-weight: 600;
         }
         .offcanvas-body .nav-link:hover {
-            background-color: rgba(163, 216, 222, 0.15); /* bg-brand-blue transparente */
+            background-color: rgba(163, 216, 222, 0.2);
             transform: translateX(4px);
-            border-left: 3px solid var(--brand-pink) !important;
+            color: var(--brand-black);
+            border-left: 4px solid var(--brand-pink) !important;
+        }
+        .offcanvas-header {
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        /* Inputs y Focus Rings */
+        .form-control:focus, .form-select:focus {
+            border-color: var(--brand-pink);
+            box-shadow: 0 0 0 0.25rem rgba(249, 200, 211, 0.35);
         }
     </style>
 </head>
 <body>
     <!-- Navbar cases.com -->
-    <nav class="navbar navbar-custom mb-5 position-relative">
+    <nav class="navbar navbar-custom mb-4 position-relative">
         <div class="container-fluid px-3 d-flex justify-content-between align-items-center">
             
             {% if current_user.is_authenticated %}
@@ -150,9 +298,9 @@
             {% endif %}
 
             <!-- Brand Logo (Centro) -->
-            <a class="navbar-brand d-flex align-items-center fw-bold m-0 position-absolute start-50 translate-middle-x" href="{{ url_for('index') }}">
-                <img src="{{ url_for('static', filename='img/cases.png') }}" alt="cases.com" style="height: 38px; width: auto; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));" class="me-2">
-                cases.com
+            <a class="navbar-brand d-flex align-items-center m-0 position-absolute start-50 translate-middle-x px-3 py-1 rounded-pill brand-logo-pill" href="{{ url_for('index') }}" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 4px 18px rgba(249, 200, 211, 0.35); text-decoration: none;">
+                <img src="{{ url_for('static', filename='img/cases.png') }}" alt="cases.com" style="height: 42px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.08));" class="me-2">
+                <span class="fw-extrabold text-brand-black" style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; letter-spacing: -0.5px; line-height: 1;">cases<span style="color: #E26888; font-weight: 800;">.com</span></span>
             </a>
 
             <!-- Icono redondo en la parte superior derecha de estado del Servidor (Solo Admin) -->
@@ -188,38 +336,29 @@
 
     {% if current_user.is_authenticated %}
     <!-- Offcanvas Menú Lateral (Sidebar) -->
-    <div class="offcanvas offcanvas-start border-0 shadow" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="width: 280px;">
-        <div class="offcanvas-header bg-brand-pink border-bottom">
-            <h5 class="offcanvas-title fw-bold text-brand-black" id="offcanvasNavbarLabel">
-                <i class="fa-solid fa-user-circle me-2"></i>{{ current_user.rol | capitalize }}
-            </h5>
-            <button type="button" class="btn-close shadow-none" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    <div class="offcanvas offcanvas-start border-0 shadow-lg" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="width: 300px;">
+        <div class="offcanvas-header p-3 border-bottom position-relative" style="background: linear-gradient(135deg, rgba(249, 200, 211, 0.45) 0%, rgba(163, 216, 222, 0.35) 100%);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 44px; height: 44px; border: 2px solid var(--brand-pink);">
+                    <i class="fa-solid fa-user text-brand-black fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold text-brand-black mb-0" style="font-family: 'Outfit', sans-serif; font-size: 1.05rem;">{{ current_user.nombre or (current_user.rol | capitalize) }}</h6>
+                    <span class="badge badge-soft-pink px-2 py-0.5 rounded-pill small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ current_user.rol }}</span>
+                </div>
+            </div>
+            <button type="button" class="btn-close shadow-none p-2 rounded-circle bg-white bg-opacity-75" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column p-0">
-            <ul class="navbar-nav w-100 mb-auto px-3 py-3 gap-2">
+            <ul class="navbar-nav w-100 mb-auto px-3 py-3 gap-1">
                 {% if current_user.rol == 'admin' %}
                     <!-- Enlaces Únicos para el Administrador de la Tienda -->
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/admin/dashboard"><i class="fa-solid fa-chart-pie text-primary me-2" style="width:20px; text-align:center;"></i> Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="#" data-bs-toggle="modal" data-bs-target="#modalPagoServidor">
-                            <i class="fa-solid fa-server text-warning me-2" style="width:20px; text-align:center;"></i> Pago de Servidor
-                            {% if server_payment_info and not server_payment_info.esta_pagado %}
-                                <span class="badge bg-danger rounded-pill float-end">Pendiente</span>
-                            {% elif server_payment_info %}
-                                <span class="badge bg-success rounded-pill float-end">Al día</span>
-                            {% endif %}
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('admin_bp.configuracion_servidor_zenic') }}">
-                            <i class="fa-solid fa-gears text-secondary me-2" style="width:20px; text-align:center;"></i> Config. Servidor (Zenic)
-                        </a>
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/admin/dashboard"><i class="fa-solid fa-chart-pie text-primary me-2" style="width:20px; text-align:center;"></i> Dashboard</a>
                     </li>
                     <!-- Módulo Inventario -->
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseInventario" role="button" aria-expanded="false" aria-controls="collapseInventario">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseInventario" role="button" aria-expanded="false" aria-controls="collapseInventario">
                             <span><i class="fa-solid fa-box text-success me-2" style="width:20px; text-align:center;"></i> Módulo Inventario</span>
                             <i class="fa-solid fa-chevron-down small text-muted"></i>
                         </a>
@@ -236,7 +375,7 @@
                     </li>
                     <!-- Módulo Celulares Independiente (Agrupado) -->
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseCelulares" role="button" aria-expanded="false" aria-controls="collapseCelulares">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseCelulares" role="button" aria-expanded="false" aria-controls="collapseCelulares">
                             <span><i class="fa-solid fa-mobile-screen-button text-brand-blue me-2" style="width:20px; text-align:center;"></i> Módulo Celulares</span>
                             <i class="fa-solid fa-chevron-down small text-muted"></i>
                         </a>
@@ -259,7 +398,7 @@
                     </li>
                     <!-- Módulo Caja -->
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseCaja" role="button" aria-expanded="false" aria-controls="collapseCaja">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseCaja" role="button" aria-expanded="false" aria-controls="collapseCaja">
                             <span><i class="fa-solid fa-cash-register text-warning me-2" style="width:20px; text-align:center;"></i> Módulo Caja</span>
                             <i class="fa-solid fa-chevron-down small text-muted"></i>
                         </a>
@@ -275,16 +414,16 @@
                         </div>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/admin/vendedores"><i class="fa-solid fa-users text-info me-2" style="width:20px; text-align:center;"></i> Personal</a>
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/admin/vendedores"><i class="fa-solid fa-users text-info me-2" style="width:20px; text-align:center;"></i> Personal</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/gastos"><i class="fa-solid fa-money-bill-transfer text-danger me-2" style="width:20px; text-align:center;"></i> Gastos</a>
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/gastos"><i class="fa-solid fa-money-bill-transfer text-danger me-2" style="width:20px; text-align:center;"></i> Gastos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/admin/maneos"><i class="fa-solid fa-handshake text-primary me-2" style="width:20px; text-align:center;"></i> Maneos</a>
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/admin/maneos"><i class="fa-solid fa-handshake text-primary me-2" style="width:20px; text-align:center;"></i> Maneos</a>
                     </li>
                     <li class="nav-item mt-2">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold bg-light border" href="/arqueo/nuevo"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:20px; text-align:center;"></i> Arqueo de Caja</a>
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold bg-light border shadow-sm" href="/arqueo/nuevo"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:20px; text-align:center;"></i> Arqueo de Caja</a>
                     </li>
                 {% elif current_user.rol == 'vendedor' %}
                     <!-- Vistas Estrictamente Operativas (Cajeros) -->
@@ -318,6 +457,9 @@
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.dashboard') }}"><i class="fa-solid fa-boxes-stacked text-brand-blue me-2" style="width:20px; text-align:center;"></i> Bodega</a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.facturas') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:20px; text-align:center;"></i> Facturas Realizadas</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('inventory_bp.index') }}"><i class="fa-solid fa-box text-brand-pink me-2" style="width:20px; text-align:center;"></i> Mi Inventario (Bodega)</a>
                     </li>
                     <li class="nav-item">
@@ -330,7 +472,7 @@
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.caja_rapida') }}"><i class="fa-solid fa-store text-brand-pink me-2" style="width:20px; text-align:center;"></i> Caja Rápida (POS)</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-invoice text-muted me-2" style="width:20px; text-align:center;"></i> Factura Manual</a>
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-lines text-muted me-2" style="width:20px; text-align:center;"></i> Factura Manual</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold border-bottom" href="{{ url_for('bodega_bp.modulo_abonos') }}"><i class="fa-solid fa-money-bill-transfer text-success me-2" style="width:20px; text-align:center;"></i> Módulo Abonos</a>
@@ -339,6 +481,9 @@
                     <!-- Vistas para el Vendedor de Bodega (Sin Inventario) -->
                     <li class="nav-item">
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.dashboard') }}"><i class="fa-solid fa-house-chimney text-brand-blue me-2" style="width:20px; text-align:center;"></i> Mi Panel</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.facturas') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:20px; text-align:center;"></i> Mis Facturas</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.clientes') }}"><i class="fa-solid fa-address-book text-muted me-2" style="width:20px; text-align:center;"></i> Mis Clientes</a>
@@ -350,7 +495,7 @@
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.caja_rapida') }}"><i class="fa-solid fa-store text-brand-pink me-2" style="width:20px; text-align:center;"></i> Caja Rápida (POS)</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-invoice text-muted me-2" style="width:20px; text-align:center;"></i> Factura Manual</a>
+                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-lines text-muted me-2" style="width:20px; text-align:center;"></i> Factura Manual</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold border-bottom" href="{{ url_for('bodega_bp.modulo_abonos') }}"><i class="fa-solid fa-money-bill-transfer text-success me-2" style="width:20px; text-align:center;"></i> Registrar Abono</a>
@@ -359,9 +504,9 @@
             </ul>
             
             <!-- Interfaz de Desconexión / Fin de Turno al final del sidebar -->
-            <div class="px-3 pb-4 mt-auto">
-                <a class="btn btn-outline-danger w-100 rounded-pill fw-bold" href="{{ url_for('auth_bp.logout') }}">
-                    <i class="fa-solid fa-sign-out-alt me-2"></i> Salir del Sistema
+            <div class="p-3 border-top mt-auto bg-light bg-opacity-50">
+                <a class="btn btn-outline-danger w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center gap-2" href="{{ url_for('auth_bp.logout') }}">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir del Sistema
                 </a>
             </div>
         </div>

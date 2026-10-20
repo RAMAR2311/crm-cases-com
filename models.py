@@ -326,10 +326,11 @@ class FacturaBodega(db.Model):
         super(FacturaBodega, self).__init__(**kwargs)
 
     @property
+    def total_abonado(self):
+        return sum((abono.monto for abono in self.abonos), 0)
+
+    @property
     def saldo_pendiente(self):
-        # Esta propiedad se vuelve menos relevante con abonos globales, 
-        # pero podemos mantenerla como una referencia teórica si no hay abonos.
-        # Sin embargo, para no romper código existente, la dejamos así por ahora.
         total_abonado_factura = sum(abono.monto for abono in self.abonos) or 0
         return self.monto_total - total_abonado_factura
 
