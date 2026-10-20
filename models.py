@@ -66,6 +66,18 @@ class Product(db.Model):
         return self.cantidad_stock
 
     @property
+    def tiene_alerta_stock(self):
+        if self.variantes:
+            return any((v.cantidad_stock or 0) <= 10 for v in self.variantes) or self.total_stock <= 10
+        return (self.cantidad_stock or 0) <= 10
+
+    @property
+    def subcategorias_bajo_stock(self):
+        if not self.variantes:
+            return []
+        return [v for v in self.variantes if (v.cantidad_stock or 0) <= 10]
+
+    @property
     def rango_precios(self):
         if not self.variantes:
             return None

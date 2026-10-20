@@ -47,12 +47,39 @@ def test_dry_run():
             user_anon = MagicMock(is_authenticated=False)
             login_user(user_anon)
             out = render_template('auth/login.html')
-            assert "Acceso al Panel" in out
+            assert "Bienvenido" in out
             print("  [OK] Render auth/login.html")
             passed += 1
         except Exception as e:
             print(f"  [FAIL] auth/login.html: {e}")
             errors.append(f"auth/login.html: {e}")
+            failed += 1
+
+        # 2b. Sales Historial
+        try:
+            mock_venta = MagicMock(
+                id=123,
+                fecha_venta=datetime.now(),
+                vendedor=MagicMock(nombre="Admin"),
+                pagos=[MagicMock(metodo_pago="efectivo", monto=Decimal('50000.00'))],
+                metodo_pago="efectivo",
+                monto_total=Decimal('50000.00')
+            )
+            out = render_template('sales/historial.html', 
+                                  ventas=[mock_venta], 
+                                  total_efectivo=Decimal('50000.00'), 
+                                  total_nequi=Decimal('0.00'), 
+                                  total_bancolombia=Decimal('0.00'), 
+                                  total_daviplata=Decimal('0.00'), 
+                                  total_transferencia_legacy=Decimal('0.00'),
+                                  fecha_inicio=None, 
+                                  fecha_fin=None)
+            assert "Historial de Operaciones" in out
+            print("  [OK] Render sales/historial.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] sales/historial.html: {e}")
+            errors.append(f"sales/historial.html: {e}")
             failed += 1
 
         # 3. Bodega Dashboard
@@ -332,6 +359,173 @@ def test_dry_run():
         except Exception as e:
             print(f"  [FAIL] Torture Test inventory/index.html: {e}")
             errors.append(f"Torture Test inventory/index.html: {e}")
+            failed += 1
+
+        # 16. Celulares Inventario
+        try:
+            mock_cel = MagicMock(
+                id=1,
+                nombre="iPhone 14 Pro",
+                cantidad_stock=3,
+                variantes=[MagicMock(id=1, nombre_variante="Morado", cantidad_stock=2, imei="123456789012345")],
+                imagen=None
+            )
+            out_cel_inv = render_template('celulares/inventario.html', celulares=[mock_cel])
+            assert "iPhone 14 Pro" in out_cel_inv
+            print("  [OK] Render celulares/inventario.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] celulares/inventario.html: {e}")
+            errors.append(f"celulares/inventario.html: {e}")
+            failed += 1
+
+        # 17. Celulares Historial Ventas
+        try:
+            mock_hist_cel = [{
+                'id_venta': 101,
+                'fecha': datetime.now(),
+                'vendedor': 'Carlos',
+                'celular': 'iPhone 14 Pro (IMEI: 123456)',
+                'precio_venta': 2500000,
+                'metodo_pago': 'Efectivo'
+            }]
+            out_cel_hist = render_template('celulares/historial_ventas.html', historial=mock_hist_cel)
+            assert "iPhone 14 Pro" in out_cel_hist
+            print("  [OK] Render celulares/historial_ventas.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] celulares/historial_ventas.html: {e}")
+            errors.append(f"celulares/historial_ventas.html: {e}")
+            failed += 1
+
+        # 18. Celulares Clientes
+        try:
+            mock_cliente_cel = MagicMock(nombre="Juan Pérez", documento="10203040", telefono="3001234567", sale_id=101, venta=MagicMock(fecha_venta=datetime.now()))
+            mock_det_cel = MagicMock(producto=MagicMock(nombre="iPhone 14 Pro", imei="123456"), variante=None, precio_venta_final=2500000)
+            out_cel_cli = render_template('celulares/clientes.html', clientes=[(mock_cliente_cel, mock_det_cel)])
+            assert "Juan Pérez" in out_cel_cli
+            print("  [OK] Render celulares/clientes.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] celulares/clientes.html: {e}")
+            errors.append(f"celulares/clientes.html: {e}")
+            failed += 1
+
+        # 19. Celulares Arqueo Form
+        try:
+            out_arq_form = render_template('celulares/arqueo/form.html', fecha="2026-10-20", arqueo_existente=None, total_efectivo=1500000, total_transferencia=500000)
+            assert "Arqueo y Cierre de Celulares" in out_arq_form
+            print("  [OK] Render celulares/arqueo/form.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] celulares/arqueo/form.html: {e}")
+            errors.append(f"celulares/arqueo/form.html: {e}")
+            failed += 1
+
+        # 20. Celulares Arqueo Reporte
+        try:
+            mock_resumen = MagicMock(total_recaudado_neto=2000000, total_efectivo=1500000, total_transferencia=500000)
+            out_arq_rep = render_template(
+                'celulares/arqueo/reporte.html',
+                fecha_inicio="2026-10-01",
+                fecha_fin="2026-10-20",
+                fecha_generacion="2026-10-20 17:00",
+                resumen=mock_resumen,
+                arqueos=[],
+                ventas_periodo=[]
+            )
+            assert "Reporte Arqueo de Celulares" in out_arq_rep
+            print("  [OK] Render celulares/arqueo/reporte.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] celulares/arqueo/reporte.html: {e}")
+            errors.append(f"celulares/arqueo/reporte.html: {e}")
+            failed += 1
+
+        # 21. Caja Visual
+        try:
+            mock_p_caja = MagicMock(
+                id=1,
+                nombre="Funda MagSafe",
+                sku="FND-001",
+                precio_sugerido=25000,
+                cantidad_stock=10,
+                tipo_inventario="general",
+                variantes=[],
+                imagen=None
+            )
+            out_caja_vis = render_template('sales/caja_visual.html', productos=[mock_p_caja], hoy="2026-10-20")
+            assert "cambio_efectivo_container" in out_caja_vis
+            assert "toggle_auto_print" in out_caja_vis
+            assert "metodos_pago_grid" in out_caja_vis
+            print("  [OK] Render sales/caja_visual.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] sales/caja_visual.html: {e}")
+            errors.append(f"sales/caja_visual.html: {e}")
+            failed += 1
+
+        # 22. Caja Terminal (nueva.html)
+        try:
+            out_caja_term = render_template('sales/nueva.html', hoy="2026-10-20")
+            assert "cambio_efectivo_container" in out_caja_term
+            assert "toggle_auto_print" in out_caja_term
+            assert "metodos_pago_grid" in out_caja_term
+            print("  [OK] Render sales/nueva.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] sales/nueva.html: {e}")
+            errors.append(f"sales/nueva.html: {e}")
+            failed += 1
+
+        # 23. Arqueo General Form
+        try:
+            out_gen_arq_form = render_template(
+                'arqueo/form.html',
+                fecha="2026-10-20",
+                arqueo_existente=None,
+                total_efectivo=1200000,
+                total_transferencia=800000,
+                total_general_ch=50000,
+                total_celulares=300000,
+                gastos_automaticos=10000
+            )
+            assert "Cierre Diario y Arqueo de Caja" in out_gen_arq_form
+            print("  [OK] Render arqueo/form.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] arqueo/form.html: {e}")
+            errors.append(f"arqueo/form.html: {e}")
+            failed += 1
+
+        # 24. Arqueo General Reporte
+        try:
+            mock_res_gen = MagicMock(
+                total_recaudado_neto=1640000,
+                total_gastos=10000,
+                total_gastos_efectivo=10000,
+                total_unidades_ch=50000,
+                total_recaudado_bruto=2000000,
+                total_transferencia=800000,
+                efectivo_esperado=840000
+            )
+            out_gen_arq_rep = render_template(
+                'arqueo/reporte.html',
+                fecha_inicio="2026-10-01",
+                fecha_fin="2026-10-20",
+                fecha_generacion="2026-10-20 17:00",
+                resumen=mock_res_gen,
+                arqueos=[],
+                ventas_periodo=[],
+                desglose_ch=[],
+                total_general_ch=50000
+            )
+            assert "Reporte General de Arqueo" in out_gen_arq_rep
+            print("  [OK] Render arqueo/reporte.html")
+            passed += 1
+        except Exception as e:
+            print(f"  [FAIL] arqueo/reporte.html: {e}")
+            errors.append(f"arqueo/reporte.html: {e}")
             failed += 1
 
     print("\n" + "="*60)

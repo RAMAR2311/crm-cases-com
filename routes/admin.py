@@ -110,25 +110,114 @@ def eliminar_vendedor(id):
 def dashboard():
     # Se obtienen métricas clave para que el administrador tenga un resumen rápido de las operaciones del negocio
     total_productos = Product.query.count()
-    productos_bajo_stock = Product.query.filter(Product.cantidad_stock <= 10).count()
+    
+    # Productos con stock bajo (<= 10) considerando variantes
+    from sqlalchemy import or_, and_
+    has_variants = db.session.query(ProductVariant.id).filter(ProductVariant.product_id == Product.id).exists()
+    low_variant_exists = db.session.query(ProductVariant.id).filter(
+        ProductVariant.product_id == Product.id,
+        ProductVariant.cantidad_stock <= 10
+    ).exists()
+    productos_bajo_stock = Product.query.filter(
+        or_(
+            low_variant_exists,
+            and_(~has_variants, Product.cantidad_stock <= 10)
+        )
+    ).count()
+
     maneos_activos = Maneo.query.filter_by(estado='PENDIENTE').count()
     
-    # Se filtran las ventas de la quincena actual (del 1 al 15 o del 16 al fin de mes)
+    # Soporte de Filtro Temporal: Quincenas, Meses, Hoy, etc.
+    import calendar
+    from datetime import datetime, timedelta
+
+    periodo = request.args.get('periodo', 'quincena_actual')
+    fecha_inicio_param = request.args.get('fecha_inicio', '').strip()
+    fecha_fin_param = request.args.get('fecha_fin', '').strip()
+
     hoy = obtener_hora_bogota()
-    if hoy.day <= 15:
-        inicio_quincena = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    else:
-        inicio_quincena = hoy.replace(day=16, hour=0, minute=0, second=0, microsecond=0)
-    
-    total_ventas = db.session.query(func.sum(Sale.monto_total)).filter(Sale.fecha_venta >= inicio_quincena).scalar() or 0.0
-    conteo_ventas = Sale.query.filter(Sale.fecha_venta >= inicio_quincena).count()
+    dt_inicio = None
+    dt_fin = None
+    periodo_label = "Quincena Actual"
+
+    MESES_ES = {
+        1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril", 5: "Mayo", 6: "Junio",
+        7: "Julio", 8: "Agosto", 9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+    }
+
+    if fecha_inicio_param and fecha_fin_param:
+        try:
+            dt_inicio = datetime.strptime(fecha_inicio_param, '%Y-%m-%d')
+            dt_fin = datetime.strptime(fecha_fin_param, '%Y-%m-%d') + timedelta(days=1)
+            periodo = 'personalizado'
+            periodo_label = f"{fecha_inicio_param} a {fecha_fin_param}"
+        except ValueError:
+            dt_inicio = None
+
+    if not dt_inicio and periodo != 'personalizado':
+        if periodo == 'hoy':
+            dt_inicio = hoy.replace(hour=0, minute=0, second=0, microsecond=0)
+            dt_fin = dt_inicio + timedelta(days=1)
+            periodo_label = f"Hoy ({hoy.strftime('%d/%m/%Y')})"
+        elif periodo == 'quincena_anterior':
+            if hoy.day <= 15:
+                primer_dia_este_mes = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                ultimo_dia_mes_ant = primer_dia_este_mes - timedelta(days=1)
+                dt_inicio = ultimo_dia_mes_ant.replace(day=16, hour=0, minute=0, second=0, microsecond=0)
+                dt_fin = primer_dia_este_mes
+                nombre_mes = MESES_ES.get(dt_inicio.month, '')
+                periodo_label = f"Quincena Anterior (16 al {ultimo_dia_mes_ant.day} {nombre_mes})"
+            else:
+                dt_inicio = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                dt_fin = hoy.replace(day=16, hour=0, minute=0, second=0, microsecond=0)
+                nombre_mes = MESES_ES.get(hoy.month, '')
+                periodo_label = f"Quincena Anterior (1 al 15 {nombre_mes})"
+        elif periodo == 'quincena_actual':
+            nombre_mes = MESES_ES.get(hoy.month, '')
+            if hoy.day <= 15:
+                dt_inicio = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+                dt_fin = hoy.replace(day=16, hour=0, minute=0, second=0, microsecond=0)
+                periodo_label = f"Quincena Actual (1 al 15 {nombre_mes})"
+            else:
+                dt_inicio = hoy.replace(day=16, hour=0, minute=0, second=0, microsecond=0)
+                dias_en_mes = calendar.monthrange(hoy.year, hoy.month)[1]
+                dt_fin = hoy.replace(day=dias_en_mes, hour=23, minute=59, second=59, microsecond=999999) + timedelta(seconds=1)
+                periodo_label = f"Quincena Actual (16 al {dias_en_mes} {nombre_mes})"
+        elif periodo == 'todo':
+            dt_inicio = None
+            dt_fin = None
+            periodo_label = "Histórico Total"
+        else: # default: este_mes
+            periodo = 'este_mes'
+            dt_inicio = hoy.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            dias_en_mes = calendar.monthrange(hoy.year, hoy.month)[1]
+            dt_fin = hoy.replace(day=dias_en_mes, hour=23, minute=59, second=59, microsecond=999999) + timedelta(seconds=1)
+            nombre_mes = MESES_ES.get(hoy.month, '')
+            periodo_label = f"Mes Actual ({nombre_mes} {hoy.year})"
+
+    sales_query = db.session.query(func.sum(Sale.monto_total))
+    count_query = Sale.query
+
+    if dt_inicio:
+        sales_query = sales_query.filter(Sale.fecha_venta >= dt_inicio)
+        count_query = count_query.filter(Sale.fecha_venta >= dt_inicio)
+    if dt_fin:
+        sales_query = sales_query.filter(Sale.fecha_venta < dt_fin)
+        count_query = count_query.filter(Sale.fecha_venta < dt_fin)
+
+    total_ventas = sales_query.scalar() or 0.0
+    conteo_ventas = count_query.count()
 
     return render_template('admin/dashboard.html', 
                            total_productos=total_productos,
                            productos_bajo_stock=productos_bajo_stock,
                            total_ventas=total_ventas,
                            conteo_ventas=conteo_ventas,
-                           maneos_activos=maneos_activos)
+                           maneos_activos=maneos_activos,
+                           periodo=periodo,
+                           periodo_label=periodo_label,
+                           fecha_inicio=fecha_inicio_param,
+                           fecha_fin=fecha_fin_param)
 
 @admin_bp.route('/maneos')
 @login_required
@@ -137,8 +226,17 @@ def maneos():
     # Priorizar PENDIENTE temporalmente
     lista_maneos.sort(key=lambda m: 0 if m.estado == 'PENDIENTE' else 1)
     
+    total_pendientes = sum(1 for m in lista_maneos if m.estado == 'PENDIENTE')
+    unidades_prestadas = sum((m.cantidad or 0) for m in lista_maneos if m.estado == 'PENDIENTE')
+    locales_activos = len(set(m.local_vecino for m in lista_maneos if m.estado == 'PENDIENTE' and m.local_vecino))
+
     productos = Product.query.order_by(Product.nombre).all()
-    return render_template('admin/maneos.html', maneos=lista_maneos, productos=productos)
+    return render_template('admin/maneos.html', 
+                           maneos=lista_maneos, 
+                           productos=productos,
+                           total_pendientes=total_pendientes,
+                           unidades_prestadas=unidades_prestadas,
+                           locales_activos=locales_activos)
 
 @admin_bp.route('/maneos/prestar', methods=['POST'])
 @login_required

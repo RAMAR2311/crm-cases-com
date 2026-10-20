@@ -2,6 +2,7 @@ import os
 from werkzeug.utils import secure_filename
 from flask import current_app, Blueprint, render_template, request, redirect, url_for, flash, abort, send_file, jsonify
 from flask_login import login_required, current_user
+from sqlalchemy import or_, and_
 from models import db, Product, StockAdjustment, ProductVariant
 from decorators import admin_required, admin_or_bodega_required
 import pandas as pd
@@ -16,10 +17,27 @@ inventory_bp = Blueprint('inventory_bp', __name__)
 def index():
     tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
     page = request.args.get('page', 1, type=int)
+    filtro = request.args.get('filtro', '').strip()
     per_page = 20
 
-    # Paginación del listado principal
-    paginacion = Product.query.filter_by(tipo_inventario=tipo).order_by(Product.nombre).paginate(
+    # Construir query base
+    query = Product.query.filter_by(tipo_inventario=tipo)
+
+    if filtro == 'bajo_stock':
+        has_variants = db.session.query(ProductVariant.id).filter(ProductVariant.product_id == Product.id).exists()
+        low_variant_exists = db.session.query(ProductVariant.id).filter(
+            ProductVariant.product_id == Product.id,
+            ProductVariant.cantidad_stock <= 10
+        ).exists()
+        query = query.filter(
+            or_(
+                low_variant_exists,
+                and_(~has_variants, Product.cantidad_stock <= 10)
+            )
+        )
+
+    # Paginación del listado
+    paginacion = query.order_by(Product.nombre).paginate(
         page=page, per_page=per_page, error_out=False
     )
     productos = paginacion.items
@@ -56,7 +74,8 @@ def index():
         total_productos=total_productos,
         valor_costo=valor_costo,
         valor_sugerido=valor_sugerido,
-        total_unidades_fisicas=total_unidades_fisicas
+        total_unidades_fisicas=total_unidades_fisicas,
+        filtro=filtro
     )
 
 @inventory_bp.route('/nuevo', methods=['GET', 'POST'])

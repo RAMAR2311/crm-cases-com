@@ -3,92 +3,170 @@
 {% block title %}Clientes de Celulares - cases.com{% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
-    <div class="row align-items-center mb-4">
-        <div class="col-md-6">
-            <h2 class="fw-bold mb-0 text-brand-black"><i class="fa-solid fa-users me-2 text-brand-blue"></i>Clientes de Celulares</h2>
-            <p class="text-muted">Registro de clientes y garantías de equipos vendidos.</p>
-        </div>
-        <div class="col-md-6 text-end">
-            <!-- Search bar -->
-            <div class="input-group" style="max-width: 400px; margin-left: auto;">
-                <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
-                <input type="text" id="buscadorClientes" class="form-control border-start-0" placeholder="Buscar por Nombre, Cédula o Modelo...">
+{% set total_clientes = (clientes|length) if (clientes is defined and clientes) else 0 %}
+
+<!-- Encabezado -->
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 44px; height: 44px; background: rgba(37, 99, 235, 0.12); color: #2563EB;">
+                <i class="fa-solid fa-users fs-4"></i>
+            </span>
+            <div>
+                <h2 class="fw-bold text-brand-black m-0 lh-1">Clientes de Celulares</h2>
+                <small class="text-muted">Directorio de compradores, garantías y trazabilidad de smartphones</small>
             </div>
         </div>
     </div>
+    <div class="d-flex align-items-center gap-2">
+        <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-bold">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
+        </a>
+        <a href="{{ url_for('celulares_bp.historial_ventas') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+            <i class="fa-solid fa-clock-rotate-left me-1"></i> Historial Ventas
+        </a>
+    </div>
+</div>
 
-    <div class="card card-custom border-0 shadow-sm">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0" id="tablaClientes">
-                    <thead class="table-light">
-                        <tr>
-                            <th class="ps-4">Cliente</th>
-                            <th>Contacto</th>
-                            <th>Equipo Adquirido</th>
-                            <th>Fecha y Venta</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for cliente, detalle in clientes %}
-                        <tr>
-                            <td class="ps-4">
-                                <div class="fw-bold text-dark">{{ cliente.nombre }}</div>
-                                <div class="small text-muted"><i class="fa-regular fa-id-card me-1"></i> CC: {{ cliente.documento }}</div>
-                            </td>
-                            <td>
-                                <div class="d-flex align-items-center">
-                                    <i class="fa-solid fa-phone small text-muted me-2"></i> {{ cliente.telefono }}
-                                    <a href="https://wa.me/57{{ cliente.telefono|replace(' ', '') }}" target="_blank" class="btn btn-sm btn-outline-success ms-2 rounded-pill py-0 px-2" title="Contactar por WhatsApp">
-                                        <i class="fa-brands fa-whatsapp"></i> Chat
-                                    </a>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="fw-bold">{{ detalle.producto.nombre }}</div>
-                                {% if detalle.variante %}
-                                <div class="small text-muted" style="max-width: 250px;">{{ detalle.variante.nombre_variante }}</div>
-                                {% endif %}
-                                <div class="small fw-bold text-success mt-1">Total: ${{ detalle.precio_venta_final|cop }}</div>
-                            </td>
-                            <td>
-                                <div class="fw-bold">{{ cliente.venta.fecha_venta.strftime('%d/%m/%Y') }}</div>
-                                <div class="small text-muted">{{ cliente.venta.fecha_venta.strftime('%I:%M %p') }}</div>
-                                <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=cliente.sale_id) }}" target="_blank" class="badge bg-primary text-decoration-none mt-1">
-                                    Factura #{{ cliente.sale_id }}
-                                </a>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="4" class="text-center py-5">
-                                <div class="text-muted fs-5"><i class="fa-solid fa-folder-open mb-3 fs-1 d-block text-secondary"></i>No hay clientes registrados aún.</div>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+<!-- Barra de Resumen y Búsqueda -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card border-0 rounded-4 shadow-sm p-3 h-100 bg-white d-flex flex-row align-items-center justify-content-between">
+            <div>
+                <span class="text-uppercase fw-bold text-muted small">Clientes Registrados</span>
+                <h3 class="fw-bolder text-dark mb-0 mt-1">{{ total_clientes }}</h3>
+            </div>
+            <span class="p-3 rounded-circle bg-light text-primary fs-4">
+                <i class="fa-solid fa-address-book"></i>
+            </span>
+        </div>
+    </div>
+    <div class="col-12 col-md-8">
+        <div class="card border-0 rounded-4 shadow-sm p-3 h-100 bg-white d-flex justify-content-center">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-0 ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" id="buscadorClientes" class="form-control border-0 bg-light" placeholder="Buscar por Nombre, Cédula, Teléfono o Modelo...">
+                <button type="button" class="btn btn-light border-0" id="btnLimpiarBusqueda" style="display: none;">
+                    <i class="fa-solid fa-xmark text-muted"></i>
+                </button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- Tabla de Clientes -->
+<div class="card card-custom border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="tablaClientes">
+            <thead class="table-light">
+                <tr class="text-muted small text-uppercase">
+                    <th class="ps-4">Cliente</th>
+                    <th>Contacto Directo</th>
+                    <th>Equipo Adquirido</th>
+                    <th>Fecha de Venta</th>
+                    <th class="text-center pe-4">Comprobante</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cliente, detalle in clientes %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm" style="width: 40px; height: 40px; background: linear-gradient(135deg, #F43F5E 0%, #BE123C 100%); font-size: 0.95rem;">
+                                {{ cliente.nombre[:1]|upper if cliente.nombre else 'C' }}
+                            </div>
+                            <div>
+                                <div class="fw-bold text-dark fs-6">{{ cliente.nombre }}</div>
+                                <div class="small text-muted">
+                                    <i class="fa-regular fa-id-card me-1"></i> CC: <strong>{{ cliente.documento or 'Sin registrar' }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-semibold text-secondary"><i class="fa-solid fa-phone small text-muted me-1"></i>{{ cliente.telefono or 'N/A' }}</span>
+                            {% if cliente.telefono %}
+                            <a href="https://wa.me/57{{ cliente.telefono|replace(' ', '')|replace('-', '') }}" target="_blank" class="btn btn-sm rounded-pill px-3 py-1 fw-bold text-white shadow-sm" style="background: #25D366; font-size: 0.78rem;" title="Abrir chat en WhatsApp">
+                                <i class="fa-brands fa-whatsapp me-1"></i> WhatsApp
+                            </a>
+                            {% endif %}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="fa-solid fa-mobile-screen-button text-muted"></i>
+                            <div>
+                                <div class="fw-bold text-dark">{{ detalle.producto.nombre if detalle.producto else 'Celular' }}</div>
+                                {% if detalle.variante %}
+                                <small class="text-muted d-block">{{ detalle.variante.nombre_variante }}</small>
+                                {% endif %}
+                                {% if detalle.producto and detalle.producto.imei %}
+                                <small class="badge bg-light text-secondary border">IMEI: {{ detalle.producto.imei }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="small fw-bolder text-success mt-1">
+                            Total: ${{ (detalle.precio_venta_final)|cop }}
+                        </div>
+                    </td>
+                    <td>
+                        {% if cliente.venta %}
+                        <div class="fw-semibold text-dark">{{ cliente.venta.fecha_venta.strftime('%d/%m/%Y') }}</div>
+                        <small class="text-muted">{{ cliente.venta.fecha_venta.strftime('%I:%M %p') }}</small>
+                        {% else %}
+                        <span class="text-muted">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center pe-4">
+                        {% if cliente.sale_id %}
+                        <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=cliente.sale_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-semibold">
+                            <i class="fa-solid fa-receipt me-1"></i> Factura #{{ cliente.sale_id }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center py-5">
+                        <div class="p-4">
+                            <i class="fa-solid fa-users fa-3x mb-3 text-secondary opacity-50"></i>
+                            <h5 class="fw-bold text-muted">No hay clientes registrados aún</h5>
+                            <p class="small text-muted mb-0">Cuando se venda un celular en la caja, se solicitarán los datos del cliente para su garantía y se verán aquí.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const input = document.getElementById('buscadorClientes');
+        const btnLimpiar = document.getElementById('btnLimpiarBusqueda');
         const rows = document.querySelectorAll('#tablaClientes tbody tr');
 
-        input.addEventListener('keyup', function(e) {
-            const term = e.target.value.toLowerCase();
-            rows.forEach(row => {
-                if(row.innerText.toLowerCase().includes(term)){
-                    row.style.display = '';
-                } else {
-                    row.style.display = 'none';
-                }
+        if (input) {
+            input.addEventListener('keyup', function(e) {
+                const term = e.target.value.toLowerCase().trim();
+                btnLimpiar.style.display = term ? 'block' : 'none';
+                rows.forEach(row => {
+                    const text = row.innerText.toLowerCase();
+                    row.style.display = text.includes(term) ? '' : 'none';
+                });
             });
-        });
+
+            btnLimpiar.addEventListener('click', function() {
+                input.value = '';
+                btnLimpiar.style.display = 'none';
+                rows.forEach(row => row.style.display = '');
+                input.focus();
+            });
+        }
     });
 </script>
 {% endblock %}

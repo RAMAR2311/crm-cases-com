@@ -1,33 +1,53 @@
 {% extends "base.html" %}
 
+{% block title %}Arqueo de Celulares - cases.com{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <h2 class="fw-bold text-center mb-4" style="color: #6f42c1;">
-            <i class="fa-solid fa-mobile-screen-button me-2"></i> Arqueo de Celulares
-        </h2>
+    <div class="col-12 col-md-9 col-lg-8">
+        <!-- Encabezado -->
+        <div class="text-center mb-4">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 56px; height: 56px; background: rgba(225, 29, 72, 0.12); color: #E11D48;">
+                <i class="fa-solid fa-mobile-screen-button fs-3"></i>
+            </span>
+            <h2 class="fw-bold text-brand-black mb-1">Arqueo y Cierre de Celulares</h2>
+            <p class="text-muted small">Consolidado contable diario exclusivo para ventas de telefonía móvil</p>
+        </div>
 
         <!-- Seleccionador de Fecha -->
-        <div class="card card-custom p-4 mb-4 border-0 shadow-sm">
-            <form id="fechaForm" action="{{ url_for('celulares_bp.arqueo_nuevo') }}" method="GET" class="d-flex align-items-center">
-                <label for="fecha" class="fw-bold me-3 text-brand-black">Fecha del Arqueo:</label>
-                <input type="date" id="fecha" name="fecha" value="{{ fecha }}" class="form-control w-auto me-3" onchange="this.form.submit()" required>
-                <button type="submit" class="btn btn-outline-secondary rounded-pill px-4" style="display:none;">Consultar</button>
+        <div class="card card-custom p-3 p-md-4 mb-4 border-0 shadow-sm rounded-4 bg-white">
+            <form id="fechaForm" action="{{ url_for('celulares_bp.arqueo_nuevo') }}" method="GET" class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-regular fa-calendar-days text-brand-pink fs-5"></i>
+                    <label for="fecha" class="fw-bold text-brand-black m-0">Fecha del Arqueo:</label>
+                </div>
+                <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
+                    <input type="date" id="fecha" name="fecha" value="{{ fecha }}" class="form-control rounded-pill px-3 shadow-none border bg-light" onchange="this.form.submit()" required>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="display:none;">Consultar</button>
+                </div>
             </form>
         </div>
 
         {% if arqueo_existente %}
-        <div class="alert alert-warning text-center rounded-4 p-4 shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation me-1"></i> La caja de celulares del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{ arqueo_existente.cajero.nombre if arqueo_existente.cajero else 'Usuario' }}</strong>. No se puede volver a cerrar.
-            <div class="mt-3 d-flex justify-content-center align-items-center gap-3">
-                <a href="{{ url_for('celulares_bp.arqueo_reporte', fecha_inicio=fecha, fecha_fin=fecha) }}" class="btn btn-sm btn-outline-dark rounded-pill px-4 fw-bold">
-                    <i class="fa-solid fa-eye me-1"></i> Ver Reporte
+        <div class="card border-0 rounded-4 shadow-sm p-4 text-center mb-4" style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-left: 5px solid #F59E0B !important;">
+            <div class="mb-3">
+                <span class="p-3 rounded-circle bg-warning bg-opacity-25 text-warning fs-3 d-inline-block">
+                    <i class="fa-solid fa-lock"></i>
+                </span>
+            </div>
+            <h5 class="fw-bold text-dark mb-2">Caja de Celulares Cerrada</h5>
+            <p class="text-secondary mb-3">
+                La caja de celulares del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{ arqueo_existente.cajero.nombre if arqueo_existente.cajero else 'Usuario' }}</strong>.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
+                <a href="{{ url_for('celulares_bp.arqueo_reporte', fecha_inicio=fecha, fecha_fin=fecha) }}" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="fa-solid fa-file-invoice me-1"></i> Ver Reporte del Día
                 </a>
                 {% if current_user.rol == 'admin' %}
                 <form action="{{ url_for('celulares_bp.anular_arqueo', id=arqueo_existente.id, fecha_inicio=fecha, fecha_fin=fecha) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de anular el cierre de arqueo de celulares del día {{ fecha }}? La caja se reabrirá para poder guardar un nuevo arqueo.');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm">
-                        <i class="fa-solid fa-trash me-1"></i> Anular Cierre
+                    <button type="submit" class="btn btn-outline-danger rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-arrow-rotate-left me-1"></i> Anular Cierre (Reabrir)
                     </button>
                 </form>
                 {% endif %}
@@ -38,42 +58,55 @@
         <form action="{{ url_for('celulares_bp.arqueo_nuevo') }}?fecha={{ fecha }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <div class="row g-4">
-                <div class="col-12">
-                    <div class="card card-custom p-4 h-100 border-0 shadow-sm" style="background-color: #fafbfc;">
-                        <h5 class="fw-bold text-muted mb-3"><i class="fa-solid fa-calculator me-2"></i> Datos de Ventas de Celulares (Automáticos)</h5>
-                        
-                        <div class="mb-3">
-                            <label class="form-label text-muted mb-1">Total Celulares en Efectivo</label>
+            <div class="card card-custom p-4 border-0 shadow-sm rounded-4 bg-white mb-4">
+                <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+                    <h5 class="fw-bold text-brand-black m-0">
+                        <i class="fa-solid fa-calculator text-brand-pink me-2"></i> Balance del Sistema (Solo Celulares)
+                    </h5>
+                    <span class="badge bg-light text-secondary border px-3 py-1 rounded-pill">Automático</span>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded-4 border bg-light h-100">
+                            <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                                <i class="fa-solid fa-money-bill-wave text-success me-1"></i> Total Celulares en Efectivo
+                            </label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white">$</span>
-                                <input type="text" id="total_efectivo_visual" class="form-control fw-bold text-success" value="{{ (total_efectivo)|cop }}" readonly disabled>
+                                <span class="input-group-text bg-white border-0 fw-bold text-success">$</span>
+                                <input type="text" id="total_efectivo_visual" class="form-control fw-bolder text-success fs-5 bg-white border-0" value="{{ (total_efectivo)|cop }}" readonly disabled>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted mb-1">Total Celulares por Medios Digitales (Transferencia)</label>
+                    <div class="col-12 col-md-6">
+                        <div class="p-3 rounded-4 border bg-light h-100">
+                            <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                                <i class="fa-solid fa-mobile-screen text-primary me-1"></i> Bancos / Transferencia
+                            </label>
                             <div class="input-group">
-                                <span class="input-group-text bg-white">$</span>
-                                <input type="text" id="total_transferencia_visual" class="form-control fw-bold text-info" value="{{ (total_transferencia)|cop }}" readonly disabled>
+                                <span class="input-group-text bg-white border-0 fw-bold text-primary">$</span>
+                                <input type="text" id="total_transferencia_visual" class="form-control fw-bolder text-primary fs-5 bg-white border-0" value="{{ (total_transferencia)|cop }}" readonly disabled>
                             </div>
-                        </div>
-
-                        <!-- Venta Total del Día Celulares -->
-                        <div class="alert mt-3 rounded-3 p-3 text-center" style="background-color: #f3e8ff; color: #553098; border: 1px solid #d8b4fe;">
-                            <span class="d-block mb-1 fw-semibold" style="font-size: 0.85rem;"><i class="fa-solid fa-chart-line me-1"></i> Total Venta Celulares</span>
-                            <span class="fs-3 fw-bold">
-                                ${{ (total_efectivo|float + total_transferencia|float)|cop }}
-                            </span>
-                            <span class="d-block mt-1 opacity-75" style="font-size: 0.7rem;">(Efectivo + Bancos) de Solo Celulares</span>
                         </div>
                     </div>
                 </div>
+
+                <!-- Gran Total Destacado -->
+                <div class="card border-0 rounded-4 p-4 text-center shadow-sm" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border-left: 5px solid #E11D48 !important;">
+                    <span class="text-uppercase fw-bold small mb-1" style="color: #9F1239; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-chart-line me-1"></i> Venta Total del Día (Celulares)
+                    </span>
+                    <h2 class="fw-bolder mb-1" style="color: #881337;">
+                        ${{ (total_efectivo|float + total_transferencia|float)|cop }}
+                    </h2>
+                    <span class="text-muted small">Efectivo + Transferencias de Smartphones</span>
+                </div>
             </div>
 
-            <div class="d-flex justify-content-center mt-5">
-                <button type="submit" class="btn btn-lg rounded-pill px-5 fw-bold text-white w-100 shadow-sm" style="background-color: #6f42c1;">
-                    <i class="fa-solid fa-lock me-2"></i> Cerrar Caja de Celulares
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-lg rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%); border: none;">
+                    <i class="fa-solid fa-lock me-2"></i> Cerrar Caja de Celulares del Día
                 </button>
             </div>
         </form>

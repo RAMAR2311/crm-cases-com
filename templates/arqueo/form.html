@@ -1,33 +1,53 @@
 {% extends "base.html" %}
 
+{% block title %}Arqueo de Caja - cases.com{% endblock %}
+
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8">
-        <h2 class="fw-bold text-center mb-4" style="color: #A3D8DE;">
-            <i class="fa-solid fa-cash-register me-2"></i> Nuevo Arqueo de Caja
-        </h2>
+    <div class="col-12 col-lg-10 col-xl-9">
+        <!-- Encabezado de la Sección -->
+        <div class="text-center mb-4">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 56px; height: 56px; background: rgba(225, 29, 72, 0.12); color: #E11D48;">
+                <i class="fa-solid fa-cash-register fs-3"></i>
+            </span>
+            <h2 class="fw-bold text-brand-black mb-1">Cierre Diario y Arqueo de Caja</h2>
+            <p class="text-muted small">Consolidación de ingresos en efectivo, transferencias bancarias y balance físico en caja</p>
+        </div>
 
         <!-- Seleccionador de Fecha -->
-        <div class="card card-custom p-4 mb-4 border-0 shadow-sm">
-            <form id="fechaForm" action="{{ url_for('arqueo_bp.nuevo') }}" method="GET" class="d-flex align-items-center">
-                <label for="fecha" class="fw-bold me-3 text-brand-black">Fecha del Arqueo:</label>
-                <input type="date" id="fecha" name="fecha" value="{{ fecha }}" class="form-control w-auto me-3" onchange="this.form.submit()" required>
-                <button type="submit" class="btn btn-outline-secondary rounded-pill px-4" style="display:none;">Consultar</button>
+        <div class="card card-custom p-3 p-md-4 mb-4 border-0 shadow-sm rounded-4 bg-white">
+            <form id="fechaForm" action="{{ url_for('arqueo_bp.nuevo') }}" method="GET" class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-regular fa-calendar-days text-brand-pink fs-5"></i>
+                    <label for="fecha" class="fw-bold text-brand-black m-0">Fecha del Arqueo:</label>
+                </div>
+                <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
+                    <input type="date" id="fecha" name="fecha" value="{{ fecha }}" class="form-control rounded-pill px-3 shadow-none border bg-light" onchange="this.form.submit()" required>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="display:none;">Consultar</button>
+                </div>
             </form>
         </div>
 
         {% if arqueo_existente %}
-        <div class="alert alert-warning text-center rounded-4 p-4 shadow-sm">
-            <i class="fa-solid fa-triangle-exclamation me-1"></i> La caja del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{ arqueo_existente.cajero.nombre if arqueo_existente.cajero else 'Usuario' }}</strong>. No se puede volver a cerrar.
-            <div class="mt-3 d-flex justify-content-center align-items-center gap-3">
-                <a href="{{ url_for('arqueo_bp.reporte', fecha_inicio=fecha, fecha_fin=fecha) }}" class="btn btn-sm btn-outline-dark rounded-pill px-4 fw-bold">
-                    <i class="fa-solid fa-eye me-1"></i> Ver Reporte
+        <div class="card border-0 rounded-4 shadow-sm p-4 text-center mb-4" style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-left: 5px solid #F59E0B !important;">
+            <div class="mb-3">
+                <span class="p-3 rounded-circle bg-warning bg-opacity-25 text-warning fs-3 d-inline-block">
+                    <i class="fa-solid fa-lock"></i>
+                </span>
+            </div>
+            <h5 class="fw-bold text-dark mb-2">Caja del Día Cerrada</h5>
+            <p class="text-secondary mb-3">
+                La caja del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{ arqueo_existente.cajero.nombre if arqueo_existente.cajero else 'Usuario' }}</strong>. No se puede volver a cerrar.
+            </p>
+            <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
+                <a href="{{ url_for('arqueo_bp.reporte', fecha_inicio=fecha, fecha_fin=fecha) }}" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
+                    <i class="fa-solid fa-file-invoice me-1"></i> Ver Reporte del Cierre
                 </a>
                 {% if current_user.rol == 'admin' %}
                 <form action="{{ url_for('arqueo_bp.anular', id=arqueo_existente.id, fecha_inicio=fecha, fecha_fin=fecha) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de anular el cierre de caja del día {{ fecha }}? La caja se reabrirá para poder guardar un nuevo arqueo.');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                    <button type="submit" class="btn btn-sm btn-danger rounded-pill px-4 fw-bold shadow-sm">
-                        <i class="fa-solid fa-trash me-1"></i> Anular Cierre
+                    <button type="submit" class="btn btn-outline-danger rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-arrow-rotate-left me-1"></i> Anular Cierre (Reabrir)
                     </button>
                 </form>
                 {% endif %}
@@ -38,92 +58,130 @@
         <form action="{{ url_for('arqueo_bp.nuevo') }}?fecha={{ fecha }}" method="POST">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
-            <div class="row g-4">
+            <div class="row g-4 mb-4">
                 <!-- Columna Izquierda: Datos del Sistema -->
                 <div class="col-12 col-md-6">
-                    <div class="card card-custom p-4 h-100 border-0 shadow-sm" style="background-color: #fafbfc;">
-                        <h5 class="fw-bold text-muted mb-3"><i class="fa-solid fa-calculator me-2"></i> Datos del Sistema (Automáticos)</h5>
-                        
-                        <div class="mb-3">
-                            <label class="form-label text-muted mb-1">Total Ventas en Efectivo</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white">$</span>
-                                <input type="text" id="total_efectivo_visual" class="form-control fw-bold" value="{{ (total_efectivo)|cop }}" readonly disabled>
+                    <div class="card card-custom p-4 h-100 border-0 shadow-sm rounded-4 bg-white d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                                <h5 class="fw-bold text-brand-black m-0">
+                                    <i class="fa-solid fa-calculator text-brand-pink me-2"></i> Datos del Sistema
+                                </h5>
+                                <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill small">Automático</span>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                                    <i class="fa-solid fa-money-bill-wave text-success me-1"></i> Total Ventas en Efectivo
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-0 fw-bold text-success">$</span>
+                                    <input type="text" id="total_efectivo_visual" class="form-control fw-bolder text-success fs-5 bg-white border-0" value="{{ (total_efectivo)|cop }}" readonly disabled>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label text-muted small fw-bold text-uppercase mb-1">
+                                    <i class="fa-solid fa-mobile-screen text-primary me-1"></i> Total Medios Digitales / Bancos
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white border-0 fw-bold text-primary">$</span>
+                                    <input type="text" id="total_transferencia_visual" class="form-control fw-bolder text-primary fs-5 bg-white border-0" value="{{ (total_transferencia)|cop }}" readonly disabled>
+                                </div>
+                            </div>
+
+                            <!-- Venta Neta Total (Venta + Banco) -->
+                            <div class="p-3 rounded-4 mb-3 text-center shadow-sm" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border-left: 4px solid #10B981 !important;">
+                                <span class="d-block mb-1 fw-bold text-uppercase" style="color: #065F46; font-size: 0.75rem; letter-spacing: 0.5px;">
+                                    <i class="fa-solid fa-chart-line me-1"></i> Venta Neta + Banco
+                                </span>
+                                <h3 class="fw-bolder mb-1" style="color: #047857;">
+                                    ${{ (total_efectivo|float + total_transferencia|float - total_general_ch|float - total_celulares|float - (gastos_automaticos|float if gastos_automaticos else 0.0))|cop }}
+                                </h3>
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">(Efectivo + Bancos) &minus; CH &minus; Celulares &minus; Gastos</small>
+                            </div>
+
+                            <!-- Deducciones informativas -->
+                            <div class="d-flex flex-column gap-2">
+                                <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border bg-light" style="font-size: 0.85rem;">
+                                    <span class="text-secondary fw-semibold"><i class="fa-solid fa-tags me-2 text-brand-pink"></i> Unidades CH detectadas:</span>
+                                    <strong class="text-dark">${{ (total_general_ch)|cop }}</strong>
+                                </div>
+                                <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border bg-light" style="font-size: 0.85rem;">
+                                    <span class="text-secondary fw-semibold"><i class="fa-solid fa-mobile-screen-button me-2 text-primary"></i> Venta de Celulares:</span>
+                                    <strong class="text-dark">${{ (total_celulares)|cop }}</strong>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label class="form-label text-muted mb-1">Total Ventas por Medios Digitales</label>
-                            <div class="input-group">
-                                <span class="input-group-text bg-white">$</span>
-                                <input type="text" id="total_transferencia_visual" class="form-control fw-bold" value="{{ (total_transferencia)|cop }}" readonly disabled>
-                            </div>
-                        </div>
-
-                        <!-- Venta Total del Día -->
-                        <div class="alert mt-3 rounded-3 p-3 text-center" style="background-color: #d4edda; color: #155724; border: 1px solid #b1dfbb;">
-                            <span class="d-block mb-1 fw-semibold" style="font-size: 0.85rem;"><i class="fa-solid fa-chart-line me-1"></i> Venta + Banco</span>
-                            <span class="fs-3 fw-bold">
-                                ${{ (total_efectivo|float + total_transferencia|float - total_general_ch|float - total_celulares|float - (gastos_automaticos|float if gastos_automaticos else 0.0))|cop }}
+                        <!-- Tarjeta Destacada: Efectivo Esperado en Caja -->
+                        <div class="card border-0 rounded-4 p-3 text-center shadow-sm mt-3" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border-left: 5px solid #E11D48 !important;">
+                            <span class="text-uppercase fw-bold small d-block mb-1" style="color: #9F1239; font-size: 0.75rem; letter-spacing: 0.5px;">
+                                <i class="fa-solid fa-coins me-1"></i> Efectivo Físico Esperado en Caja
                             </span>
-                            <span class="d-block mt-1 opacity-75" style="font-size: 0.7rem;">(Efectivo + Bancos) - CH - Celulares - Gastos</span>
-                        </div>
-
-                        <div class="alert mt-3 rounded-3 p-3 text-center" style="background-color: #F9C8D3; color: #4a4a4a; border: 1px solid #ebaebc;">
-                            <span class="d-block mb-1 opacity-75 fw-semibold" style="font-size: 0.9rem;">Efectivo Esperado en Caja</span>
-                            <span class="fs-3 fw-bold align-middle d-flex justify-content-center align-items-center">
-                                $ <span id="efectivo_esperado" class="ms-1">0</span>
-                            </span>
-                            <span class="d-block mt-1 opacity-75" style="font-size: 0.7rem;">(Base + Efectivo) - Gastos - CH - Celulares</span>
-                        </div>
-
-                        <div class="alert mt-3 rounded-3 p-3 text-center shadow-sm" style="background-color: #f8f9fa; color: #495057; border: 2px dashed #A3D8DE;">
-                            <span class="d-block mb-0 fw-bold" style="font-size: 1.2rem;">
-                                <i class="fa-solid fa-tags me-2 text-brand-pink"></i> Unidades CH detectadas: <span class="text-brand-black">${{ total_general_ch|cop }}</span>
-                            </span>
-                        </div>
-                        <div class="alert mt-3 rounded-3 p-3 text-center shadow-sm" style="background-color: #f8f9fa; color: #495057; border: 2px dashed #F9C8D3;">
-                            <span class="d-block mb-0 fw-bold" style="font-size: 1.2rem;">
-                                <i class="fa-solid fa-mobile-screen-button me-2 text-brand-blue"></i> Venta de Celulares: <span class="text-brand-black">${{ total_celulares|cop }}</span>
-                            </span>
+                            <h2 class="fw-bolder mb-1" style="color: #881337;">
+                                $ <span id="efectivo_esperado">0</span>
+                            </h2>
+                            <small class="text-muted d-block" style="font-size: 0.7rem;">(Base + Efectivo) &minus; Gastos &minus; CH &minus; Celulares</small>
                         </div>
                     </div>
                 </div>
 
                 <!-- Columna Derecha: Ingresos de Cajero -->
                 <div class="col-12 col-md-6">
-                    <div class="card card-custom p-4 h-100 border-0 shadow-sm">
-                        <h5 class="fw-bold text-brand-black mb-3"><i class="fa-solid fa-user-pen me-2"></i> Tu Ingreso Manual</h5>
-                        
-                        <div class="mb-3">
-                            <label for="base_inicial" class="form-label fw-semibold">Base Inicial (Efectivo inicio de caja) <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0 bg-white"><i class="fa-solid fa-sack-dollar text-muted"></i></span>
-                                <input type="number" step="1" min="0" id="base_inicial" name="base_inicial" class="form-control border-start-0" required>
+                    <div class="card card-custom p-4 h-100 border-0 shadow-sm rounded-4 bg-white d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
+                                <h5 class="fw-bold text-brand-black m-0">
+                                    <i class="fa-solid fa-user-pen text-brand-pink me-2"></i> Ingreso Manual del Cajero
+                                </h5>
+                                <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill small">Validación</span>
                             </div>
-                            <div class="form-text">Dinero en caja desde la apertura.</div>
+                            
+                            <div class="mb-3">
+                                <label for="base_inicial" class="form-label fw-bold text-dark small mb-1">
+                                    Base Inicial en Efectivo <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group shadow-none">
+                                    <span class="input-group-text bg-light border-0 fw-bold text-muted">$</span>
+                                    <input type="number" step="1" min="0" id="base_inicial" name="base_inicial" class="form-control border-0 bg-light fw-bold fs-6" placeholder="Ej: 100000" required>
+                                </div>
+                                <div class="form-text small text-muted">Monto con el que inició la caja al abrir el turno.</div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="gastos_del_dia" class="form-label fw-bold text-dark small mb-1">
+                                    Gastos Operativos del Día
+                                </label>
+                                <div class="input-group shadow-none">
+                                    <span class="input-group-text bg-light border-0 fw-bold text-danger">$-</span>
+                                    <input type="number" step="1" min="0" id="gastos_del_dia" name="gastos_del_dia" class="form-control border-0 bg-light fw-bold text-danger fs-6" value="{{ gastos_automaticos|int if gastos_automaticos else 0 }}" readonly>
+                                </div>
+                                <small class="form-text text-muted">Suma automática de los gastos registrados hoy.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="observaciones_gastos" class="form-label fw-bold text-dark small mb-1">
+                                    Observaciones o Novedades de Caja
+                                </label>
+                                <textarea id="observaciones_gastos" name="observaciones_gastos" rows="3" class="form-control bg-light border-0" placeholder="Anota cualquier descuadre, detalle de gasto o justificación relevante..."></textarea>
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="gastos_del_dia" class="form-label fw-semibold">Gastos del Día</label>
-                            <div class="input-group">
-                                <span class="input-group-text border-end-0 bg-white"><i class="fa-solid fa-money-bill-transfer text-danger"></i></span>
-                                <input type="number" step="1" min="0" id="gastos_del_dia" name="gastos_del_dia" class="form-control border-start-0 bg-light" value="{{ gastos_automaticos|int if gastos_automaticos else 0 }}" readonly>
-                            </div>
-                            <small class="form-text text-muted">Valor calculado automáticamente desde el módulo de Gastos Diarios de hoy.</small>
-                        </div>
-
-                        <div class="mb-4">
-                            <label for="observaciones_gastos" class="form-label fw-semibold">Observación u Detalle del Gasto</label>
-                            <textarea id="observaciones_gastos" name="observaciones_gastos" rows="2" class="form-control"></textarea>
+                        <div class="alert p-3 rounded-4 border-0 mb-0" style="background: #F8FAFC; border: 1px dashed #CBD5E1 !important;">
+                            <small class="text-muted d-block">
+                                <i class="fa-solid fa-circle-info text-primary me-1"></i>
+                                Al guardar este arqueo, el sistema congelará las transacciones del día para generar el reporte contable auditado.
+                            </small>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex justify-content-center mt-5">
-                <button type="submit" class="btn btn-lg rounded-pill px-5 fw-bold text-dark w-100 shadow-sm" style="background-color: #A3D8DE;">
-                    <i class="fa-solid fa-lock me-2"></i> Cerrar Caja y Guardar Arqueo
+            <!-- Botón de Envío -->
+            <div class="d-grid mt-4">
+                <button type="submit" class="btn btn-lg rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%); border: none; letter-spacing: 0.5px;">
+                    <i class="fa-solid fa-lock me-2"></i> Cerrar Caja y Guardar Arqueo del Día
                 </button>
             </div>
         </form>
@@ -154,7 +212,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     if(inputBaseInicial) {
         inputBaseInicial.addEventListener("input", calcularEsperado);
-        inputGastos.addEventListener("input", calcularEsperado);
+        if(inputGastos) inputGastos.addEventListener("input", calcularEsperado);
         calcularEsperado(); // Cálculo inicial
     }
 });

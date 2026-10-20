@@ -2,52 +2,147 @@
 
 {% block content %}
 <style>
-    /* Fondo limpio que mantiene la legibilidad */
+    /* Fondo ambiental premium con orbes de brillo en Rosa y Turquesa */
     body {
-        background-color: var(--brand-bg) !important;
-        background-image: linear-gradient(135deg, var(--brand-bg) 0%, #eef3f5 100%);
+        background-color: #FAFAFA !important;
+        background-image: 
+            radial-gradient(circle at 15% 20%, rgba(249, 200, 211, 0.45) 0%, transparent 45%),
+            radial-gradient(circle at 85% 80%, rgba(163, 216, 222, 0.40) 0%, transparent 45%),
+            radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.9) 0%, #F8FAFC 100%) !important;
+        background-attachment: fixed;
+        min-height: 100vh;
     }
 
-    /* Opcional: Ocultar la barra solo en login */
     .navbar-custom {
         display: none !important;
     }
+
+    .login-card {
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1.5px solid rgba(249, 200, 211, 0.8) !important;
+        border-radius: 28px;
+        box-shadow: 0 25px 50px -12px rgba(249, 200, 211, 0.35), 0 4px 16px rgba(0, 0, 0, 0.03);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .login-input-group {
+        border-radius: 50px;
+        background: #F8FAFC;
+        border: 1.5px solid #E2E8F0;
+        transition: all 0.25s ease;
+    }
+
+    .login-input-group:focus-within {
+        border-color: var(--brand-pink);
+        box-shadow: 0 0 0 4px rgba(249, 200, 211, 0.35);
+        background: #FFFFFF;
+    }
+
+    .login-input {
+        background: transparent !important;
+        border: none !important;
+        font-size: 0.95rem;
+    }
+
+    .login-input:focus {
+        box-shadow: none !important;
+    }
+
+    .btn-login-pink {
+        background: linear-gradient(135deg, #F9C8D3 0%, #F472B6 100%);
+        color: #1A1A1A;
+        font-weight: 800;
+        border: none;
+        border-radius: 50px;
+        padding: 12px 28px;
+        box-shadow: 0 10px 25px rgba(244, 114, 182, 0.35);
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        letter-spacing: 0.5px;
+    }
+
+    .btn-login-pink:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px rgba(244, 114, 182, 0.45);
+        background: linear-gradient(135deg, #FCE7F3 0%, #EC4899 100%);
+        color: #000000;
+    }
+
+    .logo-hero-container {
+        position: relative;
+        padding: 40px;
+        border-radius: 36px;
+        background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8) 0%, rgba(249, 200, 211, 0.15) 70%, transparent 100%);
+    }
+
+    @keyframes floatLogo {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .floating-logo {
+        animation: floatLogo 6s ease-in-out infinite;
+        filter: drop-shadow(0 20px 35px rgba(249, 200, 211, 0.4)) drop-shadow(0 4px 10px rgba(0, 0, 0, 0.05));
+    }
 </style>
 
-<div class="row align-items-center justify-content-evenly" style="min-height: 85vh;">
-    <!-- Columna Izquierda: Cuadro de Acceso Segregado -->
-    <div class="col-md-6 col-lg-5 mb-4">
-        <div class="card card-custom p-5 border-0 shadow-lg rounded-4" style="background-color: white; border-top: 5px solid var(--brand-blue) !important;">
-            <div class="text-center mb-5">
-                <h3 class="fw-bold text-brand-black">Acceso al Panel</h3>
-                <p class="text-muted">Introduce tus credenciales operativas</p>
+<div class="row align-items-center justify-content-center justify-content-lg-evenly min-vh-100 py-4">
+    <!-- Columna Izquierda: Formulario de Login -->
+    <div class="col-11 col-sm-9 col-md-7 col-lg-5 col-xl-4 mb-4 mb-lg-0">
+        <div class="card login-card p-4 p-sm-5">
+            <div class="text-center mb-4">
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(249, 200, 211, 0.45); border: 1px solid rgba(249, 200, 211, 0.8);">
+                    <i class="fa-solid fa-sparkles" style="color: #BE185D;"></i>
+                    <span class="fw-bold" style="color: #9F1239; font-size: 0.76rem; letter-spacing: 0.5px;">SISTEMA POS & CRM</span>
+                </div>
+                <h2 class="fw-bolder text-brand-black mb-1">Bienvenido</h2>
+                <p class="text-muted small">Ingresa tus credenciales para acceder al sistema</p>
             </div>
             
             <form method="POST" action="/auth/login">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold text-brand-black small mb-1">Correo Electrónico</label>
+                    <div class="input-group login-input-group px-3 py-1">
+                        <span class="input-group-text bg-transparent border-0 text-muted ps-0">
+                            <i class="fa-regular fa-envelope"></i>
+                        </span>
+                        <input type="email" class="form-control login-input ps-2" name="email" required autofocus placeholder="tu@cases.com">
+                    </div>
+                </div>
+                
                 <div class="mb-4">
-                    <label class="form-label fw-bold text-brand-black">Correo Electrónico</label>
-                    <input type="email" class="form-control form-control-lg bg-light border-0" name="email" required placeholder="tu@cases.com">
+                    <label class="form-label fw-bold text-brand-black small mb-1">Contraseña</label>
+                    <div class="input-group login-input-group px-3 py-1">
+                        <span class="input-group-text bg-transparent border-0 text-muted ps-0">
+                            <i class="fa-solid fa-lock"></i>
+                        </span>
+                        <input type="password" class="form-control login-input ps-2" name="password" required placeholder="••••••••">
+                    </div>
                 </div>
                 
-                <div class="mb-5">
-                    <label class="form-label fw-bold text-brand-black">Contraseña</label>
-                    <input type="password" class="form-control form-control-lg bg-light border-0" name="password" required placeholder="••••••••">
-                </div>
-                
-                <div class="d-grid">
-                    <button type="submit" class="btn btn-blue btn-lg rounded-pill shadow-sm">
-                        Ingresar <i class="fa-solid fa-arrow-right ms-2"></i>
+                <div class="d-grid mt-4">
+                    <button type="submit" class="btn btn-login-pink btn-lg shadow-sm">
+                        Ingresar al Sistema <i class="fa-solid fa-arrow-right ms-2"></i>
                     </button>
                 </div>
             </form>
+
+            <div class="text-center mt-4 pt-2 border-top border-light">
+                <small class="text-muted" style="font-size: 0.78rem;">
+                    cases.com &copy; 2026 &middot; Todos los derechos reservados
+                </small>
+            </div>
         </div>
     </div>
 
-    <!-- Columna Derecha: Logo Central y Limpio -->
-    <div class="col-md-6 col-lg-6 d-none d-md-flex justify-content-center align-items-center text-center">
-        <!-- Logo a la altura del usuario sin solapamiento -->
-        <img src="{{ url_for('static', filename='img/cases.png') }}" alt="Identidad Visual cases.com" class="img-fluid" style="max-height: 380px; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.1));">
+    <!-- Columna Derecha: Identidad Visual con Glow Rosado y Logo -->
+    <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center text-center">
+        <div class="logo-hero-container">
+            <img src="{{ url_for('static', filename='img/cases.png') }}" alt="Identidad Visual cases.com" class="img-fluid floating-logo" style="max-height: 400px;">
+        </div>
     </div>
 </div>
 {% endblock %}

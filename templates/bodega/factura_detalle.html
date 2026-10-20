@@ -70,56 +70,48 @@
         gap: 0.4rem;
     }
 
-    /* Tabla de Productos Estilizada */
+    /* Tabla de Productos Estilizada con Cuadrícula Visible y Rosado Tradicional Cases */
     .invoice-table {
-        border-collapse: separate;
-        border-spacing: 0;
+        border-collapse: collapse !important;
         width: 100%;
+        background-color: #FFFFFF;
+        border: 2px solid #F9C8D3;
     }
 
     .invoice-table thead tr th {
-        background: #1A1A1A;
-        color: #FFFFFF;
-        font-size: 0.72rem;
-        font-weight: 700;
+        background: linear-gradient(135deg, #F9C8D3 0%, #F472B6 100%) !important;
+        color: #881337 !important;
+        font-size: 0.74rem;
+        font-weight: 800;
         letter-spacing: 0.8px;
         text-transform: uppercase;
         padding: 0.85rem 1rem;
-        border: none;
-    }
-
-    .invoice-table thead tr th:first-child {
-        border-top-left-radius: 10px;
-        border-bottom-left-radius: 10px;
-    }
-
-    .invoice-table thead tr th:last-child {
-        border-top-right-radius: 10px;
-        border-bottom-right-radius: 10px;
+        border: 1px solid #F472B6 !important;
+        vertical-align: middle;
     }
 
     .invoice-table tbody tr td {
-        padding: 1rem;
+        padding: 0.85rem 1rem;
         vertical-align: middle;
-        border-bottom: 1px solid #F1F3F5;
+        border: 1px solid #CBD5E1 !important;
         font-size: 0.9rem;
     }
 
-    .invoice-table tbody tr:hover td {
-        background-color: #FAFBFC;
+    .invoice-table tbody tr:nth-child(even) td {
+        background-color: #FFF9FA;
     }
 
-    .invoice-table tbody tr:last-child td {
-        border-bottom: 2px solid #E9ECEF;
+    .invoice-table tbody tr:hover td {
+        background-color: #FFF1F5 !important;
     }
 
     /* Resumen Financiero */
     .invoice-totals-card {
         background: #FFFFFF;
-        border: 1px solid #E2E8F0;
+        border: 2px solid #F9C8D3;
         border-radius: 16px;
         padding: 1.25rem 1.5rem;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 4px 14px rgba(249, 200, 211, 0.18);
     }
 
 
@@ -169,6 +161,20 @@
         }
         .invoice-watermark {
             opacity: 0.035 !important;
+        }
+        .invoice-table {
+            border: 1.5px solid #CBD5E1 !important;
+            border-collapse: collapse !important;
+        }
+        .invoice-table thead tr th {
+            background-color: #F9C8D3 !important;
+            color: #881337 !important;
+            border: 1px solid #F472B6 !important;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        .invoice-table tbody tr td {
+            border: 1px solid #CBD5E1 !important;
         }
         .no-print {
             display: none !important;
@@ -371,7 +377,7 @@
         </div>
 
         <!-- ════════════ 3. TABLA DE PRODUCTOS DESPACHADOS ════════════ -->
-        <div class="table-responsive mb-4 page-break-avoid">
+        <div class="table-responsive mb-4 page-break-avoid rounded-4 border overflow-hidden shadow-2xs" style="border-color: #F9C8D3 !important;">
             <table class="invoice-table">
                 <thead>
                     <tr>
@@ -433,12 +439,14 @@
             
             <!-- Políticas / Notas Comerciales Cases -->
             <div class="col-md-6 col-lg-7">
-                <div class="p-3 rounded-4 bg-light border border-light-subtle h-100">
-                    <div class="d-flex align-items-center gap-2 mb-2 text-dark fw-bold" style="font-size: 0.84rem;">
-                        <i class="fa-solid fa-shield-halved text-success fa-lg"></i>
+                <div class="p-3 rounded-4 border h-100" style="background: #FFFDFE; border: 1.5px solid #F9C8D3 !important;">
+                    <div class="d-flex align-items-center gap-2 mb-2 fw-bold" style="font-size: 0.85rem; color: #881337;">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 24px; height: 24px; background: #F9C8D3; color: #881337;">
+                            <i class="fa-solid fa-shield-halved small"></i>
+                        </span>
                         <span>Garantía Oficial Cases.com & Términos</span>
                     </div>
-                    <ul class="text-muted small ps-3 mb-0" style="font-size: 0.75rem; line-height: 1.5;">
+                    <ul class="text-muted small ps-3 mb-0" style="font-size: 0.75rem; line-height: 1.55;">
                         <li>Verifique la cantidad física y estado de las referencias al momento de recibir el despacho.</li>
                         <li>Garantía sobre accesorios y cargadores cubre defectos de fábrica (no aplica por maltrato físico o humedad).</li>
                         <li>Para soportes o consultas comerciales, comuníquese directamente con su asesor asignado.</li>

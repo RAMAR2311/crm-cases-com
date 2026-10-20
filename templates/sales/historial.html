@@ -29,74 +29,112 @@
         {% endif %}
     </div>
 
-    <!-- UI: Resumen Financiero Dinámico (Tarjetas) -->
-    <div class="col-6 col-md-3 mb-3">
-        <div class="card card-custom h-100" style="border-left: 6px solid var(--brand-blue) !important;">
-            <div class="card-body py-3 ps-3">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</p>
-                <h4 class="fw-bolder m-0" style="color: var(--brand-blue);">${{ (total_efectivo)|cop }}</h4>
+    <!-- UI: Resumen Financiero Dinámico (Tarjetas Ampliadas con Total General) -->
+    {% set recaudo_total = total_general if total_general is defined else ((total_efectivo or 0) + (total_nequi or 0) + (total_bancolombia or 0) + (total_daviplata or 0) + (total_transferencia_legacy or 0)) %}
+    
+    <!-- 1. Tarjeta Destacada: TOTAL RECAUDADO -->
+    <div class="col-12 col-md-6 col-xl mb-3">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.45) 0%, #FFFFFF 70%); border: 1.5px solid rgba(244, 114, 182, 0.7) !important; box-shadow: 0 10px 25px rgba(244, 114, 182, 0.15) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total Recaudado</span>
+                <div style="background: #FCE7F3; color: #BE185D; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-sack-dollar fs-5"></i>
+                </div>
             </div>
+            <h3 class="fw-bolder m-0 mb-1" style="color: #9F1239;">${{ (recaudo_total)|cop }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-receipt me-1" style="color: #BE185D;"></i> {{ ventas|length }} ventas procesadas</small>
+        </div>
+    </div>
+
+    <!-- 2. Tarjeta: Efectivo -->
+    <div class="col-6 col-md-6 col-xl mb-3">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(16, 185, 129, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(16, 185, 129, 0.3) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Efectivo</span>
+                <div style="background: #D1FAE5; color: #059669; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-money-bills fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bolder m-0 mb-1" style="color: #047857;">${{ (total_efectivo)|cop }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;">Caja física</small>
         </div>
     </div>
     
-    <div class="col-6 col-md-3 mb-3">
-        <div class="card card-custom h-100" style="border-left: 6px solid #6f42c1 !important;">
-            <div class="card-body py-3 ps-3">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-mobile-button me-1"></i> Nequi</p>
-                <h4 class="fw-bolder m-0" style="color: #6f42c1;">${{ (total_nequi)|cop }}</h4>
+    <!-- 3. Tarjeta: Nequi -->
+    <div class="col-6 col-md-6 col-xl mb-3">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(111, 66, 193, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(111, 66, 193, 0.3) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Nequi</span>
+                <div style="background: #EDE9FE; color: #6D28D9; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-mobile-button fs-5"></i>
+                </div>
             </div>
+            <h3 class="fw-bolder m-0 mb-1" style="color: #5B21B6;">${{ (total_nequi)|cop }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;">Medio digital</small>
         </div>
     </div>
 
-    <div class="col-6 col-md-3 mb-3">
-        <div class="card card-custom h-100" style="border-left: 6px solid #fd7e14 !important;">
-            <div class="card-body py-3 ps-3">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-building-columns me-1"></i> Bancolombia</p>
-                <h4 class="fw-bolder m-0" style="color: #fd7e14;">${{ (total_bancolombia)|cop }}</h4>
+    <!-- 4. Tarjeta: Bancolombia -->
+    <div class="col-6 col-md-6 col-xl mb-3">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(245, 158, 11, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(245, 158, 11, 0.3) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Bancolombia</span>
+                <div style="background: #FEF3C7; color: #D97706; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-building-columns fs-5"></i>
+                </div>
             </div>
+            <h3 class="fw-bolder m-0 mb-1" style="color: #B45309;">${{ (total_bancolombia)|cop }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;">Transferencias</small>
         </div>
     </div>
 
-    <div class="col-6 col-md-3 mb-3">
-        <div class="card card-custom h-100" style="border-left: 6px solid #dc3545 !important;">
-            <div class="card-body py-3 ps-3">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-mobile-screen me-1"></i> Daviplata</p>
-                <h4 class="fw-bolder m-0" style="color: #dc3545;">${{ (total_daviplata)|cop }}</h4>
+    <!-- 5. Tarjeta: Daviplata -->
+    <div class="col-6 col-md-6 col-xl mb-3">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(220, 53, 69, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(220, 53, 69, 0.3) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Daviplata</span>
+                <div style="background: #FEE2E2; color: #DC2626; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-mobile-screen fs-5"></i>
+                </div>
             </div>
+            <h3 class="fw-bolder m-0 mb-1" style="color: #DC2626;">${{ (total_daviplata)|cop }}</h3>
+            <small class="text-muted" style="font-size: 0.75rem;">Medio digital</small>
         </div>
     </div>
 
     {% if total_transferencia_legacy > 0 %}
     <div class="col-12 mb-3">
-        <div class="card card-custom h-100" style="border-left: 6px solid var(--brand-pink) !important;">
-            <div class="card-body py-3 ps-3">
-                <p class="text-muted fw-bold text-uppercase mb-1" style="font-size: 0.75rem;"><i class="fa-solid fa-clock-rotate-left me-1"></i> Transf. Históricas</p>
-                <h4 class="fw-bolder m-0" style="color: var(--brand-pink);">${{ (total_transferencia_legacy)|cop }}</h4>
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.25) 0%, #FFFFFF 70%); border: 1px solid rgba(249, 200, 211, 0.6) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Transf. Históricas</span>
+                <div style="background: #FCE7F3; color: #BE185D; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-clock-rotate-left fs-6"></i>
+                </div>
             </div>
+            <h4 class="fw-bolder m-0" style="color: #BE185D;">${{ (total_transferencia_legacy)|cop }}</h4>
         </div>
     </div>
     {% endif %}
     
     <!-- UI: Filtro de Fechas Oculto (Collapsible Bootstrap) -->
     <div class="col-12 mt-2 mb-2 d-print-none">
-        <button class="btn btn-outline-dark btn-sm rounded-pill fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
+        <button class="btn btn-outline-dark btn-sm rounded-pill fw-bold shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#filtrosCollapse">
             <i class="fa-solid fa-filter me-1"></i> Ver más filtros
         </button>
         
         <div class="collapse mt-3" id="filtrosCollapse">
-            <div class="card card-custom p-4 bg-light">
+            <div class="card card-custom p-4 bg-light border-0 shadow-sm rounded-4">
                 <form method="GET" action="{{ url_for('sales_bp.historial') }}" class="row align-items-end g-3">
                     <div class="col-md-4">
                         <label class="form-label fw-bold text-brand-black small">Desde (Día)</label>
-                        <input type="date" name="fecha_inicio" class="form-control border-0 shadow-sm" value="{{ fecha_inicio or '' }}">
+                        <input type="date" name="fecha_inicio" class="form-control border-0 shadow-sm rounded-3" value="{{ fecha_inicio or '' }}">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold text-brand-black small">Hasta (Límite)</label>
-                        <input type="date" name="fecha_fin" class="form-control border-0 shadow-sm" value="{{ fecha_fin or '' }}">
+                        <input type="date" name="fecha_fin" class="form-control border-0 shadow-sm rounded-3" value="{{ fecha_fin or '' }}">
                     </div>
                     <div class="col-md-4">
-                        <!-- El botón manda la alerta GET en color predominante Turquesa -->
-                        <button type="submit" class="btn btn-blue w-100 rounded-3 shadow-sm fw-bold">
+                        <button type="submit" class="btn btn-blue w-100 rounded-pill shadow-sm fw-bold">
                             <i class="fa-solid fa-magnifying-glass me-2"></i>Aplicar Filtros
                         </button>
                         {% if fecha_inicio or fecha_fin %}
@@ -111,31 +149,35 @@
     </div>
 </div>
 
-<div class="card card-custom p-0 overflow-hidden">
+<div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
     <div class="table-responsive">
-        <table class="table table-hover table-striped table-custom mb-0">
+        <table class="table table-hover table-custom mb-0 align-middle">
             <thead class="bg-light">
                 <tr>
-                    <th width="120">N° TIPO</th>
+                    <th width="120" class="ps-4">N° TIPO</th>
                     <th>FECHA DE COBRO</th>
                     <th>VENDEDOR RESPONSABLE</th>
                     <th class="text-center">VÍA DE PAGO</th>
                     <th class="text-end">IMPORTE CERRADO</th>
-                    <th class="text-center" width="160">AUDITAR</th>
+                    <th class="text-center pe-4" width="180">AUDITAR</th>
                 </tr>
             </thead>
             <tbody>
                 {% for venta in ventas %}
                 <tr>
-                    <td class="fw-bold text-brand-black align-middle">Ticket #{{ "%05d"|format(venta.id) }}</td>
-                    <td class="align-middle text-muted"><i class="fa-regular fa-calendar text-brand-pink me-1"></i> {{ venta.fecha_venta.strftime('%Y-%m-%d a las %H:%M') }}</td>
-                    <td class="align-middle fw-semibold text-brand-black">
+                    <td class="ps-4">
+                        <span class="badge bg-light text-dark border px-2 py-1 rounded-pill font-monospace fw-bold" style="letter-spacing: 0.5px;">Ticket #{{ "%05d"|format(venta.id) }}</span>
+                    </td>
+                    <td class="text-muted small">
+                        <i class="fa-regular fa-calendar me-1" style="color: #BE185D;"></i> {{ venta.fecha_venta.strftime('%Y-%m-%d · %H:%M') }}
+                    </td>
+                    <td class="fw-semibold text-brand-black">
                         <i class="fa-solid fa-user-circle text-muted me-1"></i> {{ venta.vendedor.nombre }}
                     </td>
-                    <td class="text-center align-middle">
+                    <td class="text-center">
                         {% if venta.pagos|length > 1 %}
                             <!-- Pago Mixto: badge especial con tooltip de desglose -->
-                            <span class="badge bg-light text-dark border border-warning border-opacity-50 rounded-pill px-3 py-2" 
+                            <span class="badge bg-light text-dark border border-warning border-opacity-50 rounded-pill px-3 py-1 shadow-sm" 
                                   data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="left"
                                   title="{% for p in venta.pagos %}{{ p.metodo_pago|capitalize }}: ${{ (p.monto)|cop }}{% if not loop.last %}&lt;br&gt;{% endif %}{% endfor %}"
                                   style="cursor: help;">
@@ -144,35 +186,41 @@
                         {% elif venta.pagos|length == 1 %}
                             {% set metodo = venta.pagos[0].metodo_pago %}
                             {% if metodo == 'efectivo' %}
-                                <span class="badge bg-light text-success border border-success border-opacity-25 rounded-pill px-3 py-2"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</span>
+                                <span class="badge rounded-pill px-3 py-1" style="background: #D1FAE5; color: #047857; border: 1px solid rgba(16, 185, 129, 0.3);"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</span>
+                            {% elif metodo == 'nequi' %}
+                                <span class="badge rounded-pill px-3 py-1" style="background: #EDE9FE; color: #5B21B6; border: 1px solid rgba(111, 66, 193, 0.3);"><i class="fa-solid fa-mobile-button me-1"></i> Nequi</span>
+                            {% elif metodo == 'bancolombia' %}
+                                <span class="badge rounded-pill px-3 py-1" style="background: #FEF3C7; color: #B45309; border: 1px solid rgba(245, 158, 11, 0.3);"><i class="fa-solid fa-building-columns me-1"></i> Bancolombia</span>
+                            {% elif metodo == 'daviplata' %}
+                                <span class="badge rounded-pill px-3 py-1" style="background: #FEE2E2; color: #DC2626; border: 1px solid rgba(220, 53, 69, 0.3);"><i class="fa-solid fa-mobile-screen me-1"></i> Daviplata</span>
                             {% else %}
-                                <span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2"><i class="fa-solid fa-building-columns me-1"></i> {{ metodo|capitalize }}</span>
+                                <span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1"><i class="fa-solid fa-building-columns me-1"></i> {{ metodo|capitalize }}</span>
                             {% endif %}
                         {% else %}
                             {% if venta.metodo_pago == 'efectivo' %}
-                                <span class="badge bg-light text-success border border-success border-opacity-25 rounded-pill px-3 py-2"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</span>
+                                <span class="badge rounded-pill px-3 py-1" style="background: #D1FAE5; color: #047857; border: 1px solid rgba(16, 185, 129, 0.3);"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</span>
                             {% elif venta.metodo_pago == 'mixto' %}
-                                <span class="badge bg-light text-dark border border-warning border-opacity-50 rounded-pill px-3 py-2"><i class="fa-solid fa-arrows-split-up-and-left me-1" style="color: #fd7e14;"></i> Pago Mixto</span>
+                                <span class="badge bg-light text-dark border border-warning border-opacity-50 rounded-pill px-3 py-1"><i class="fa-solid fa-arrows-split-up-and-left me-1" style="color: #fd7e14;"></i> Pago Mixto</span>
                             {% else %}
-                                <span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill px-3 py-2"><i class="fa-solid fa-building-columns me-1"></i> {{ venta.metodo_pago|capitalize }}</span>
+                                <span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill px-3 py-1"><i class="fa-solid fa-building-columns me-1"></i> {{ venta.metodo_pago|capitalize }}</span>
                             {% endif %}
                         {% endif %}
                     </td>
-                    <td class="text-end align-middle fw-bolder text-brand-black fs-5">
+                    <td class="text-end fw-bolder text-brand-black fs-5">
                         ${{ (venta.monto_total)|cop }}
                     </td>
-                    <td class="text-center align-middle">
-                        <div class="d-flex flex-column gap-2">
-                            <!-- Botón Secundario Rosa Pastel -->
-                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank" class="btn btn-pink btn-sm rounded-pill px-3 fw-bold shadow-sm w-100">
-                                <i class="fa-solid fa-receipt me-1"></i> Ver Recibo
+                    <td class="text-center pe-4">
+                        <div class="d-flex align-items-center justify-content-center gap-2">
+                            <!-- Botón Ver Recibo en Rosa Pastel Sofisticado -->
+                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank" class="btn btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center" style="background-color: #FCE7F3; color: #BE185D; border: 1px solid rgba(190, 24, 93, 0.25);" title="Ver Recibo Digital">
+                                <i class="fa-solid fa-receipt me-1"></i> Recibo
                             </a>
                             
                             {% if current_user.rol == 'admin' %}
-                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST" onsubmit="return confirm('ATENCIÓN: ¿Está seguro de anular esta venta? Esta acción NO se puede deshacer y retornará el stock de los productos vendidos.');" class="m-0 p-0">
+                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST" onsubmit="return confirm('ATENCIÓN: ¿Está seguro de anular esta venta? Esta acción NO se puede deshacer y retornará el stock de los productos vendidos.');" class="m-0 p-0 d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="btn btn-danger btn-sm rounded-pill px-3 fw-bold shadow-sm w-100">
-                                    <i class="fa-solid fa-trash me-1"></i> Anular
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 shadow-sm" title="Anular venta">
+                                    <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
                             {% endif %}

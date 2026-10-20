@@ -255,21 +255,47 @@
            SIDEBAR OFFCANVAS PULIDO
            ══════════════════════════════════════════════════════════════ */
         .offcanvas {
-            border-top-right-radius: 20px;
-            border-bottom-right-radius: 20px;
+            border-top-right-radius: 24px;
+            border-bottom-right-radius: 24px;
+        }
+        .sidebar-section-header {
+            font-size: 0.68rem;
+            font-weight: 800;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: #94A3B8;
+            padding: 0.85rem 0.5rem 0.35rem 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        .sidebar-icon-badge {
+            width: 32px;
+            height: 32px;
+            border-radius: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.65rem;
+            font-size: 0.88rem;
+            flex-shrink: 0;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .offcanvas-body .nav-link {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            border-radius: var(--radius-sm);
-            margin-bottom: 2px;
+            border-radius: 12px;
+            margin-bottom: 3px;
             color: var(--brand-black);
             font-weight: 600;
+            padding: 0.5rem 0.65rem;
         }
         .offcanvas-body .nav-link:hover {
-            background-color: rgba(163, 216, 222, 0.2);
-            transform: translateX(4px);
-            color: var(--brand-black);
-            border-left: 4px solid var(--brand-pink) !important;
+            background-color: #FFF1F5;
+            transform: translateX(3px);
+            color: #BE185D !important;
+            border-left: 3px solid #E11D48 !important;
+        }
+        .offcanvas-body .nav-link:hover .sidebar-icon-badge {
+            transform: scale(1.1);
         }
         .offcanvas-header {
             border-bottom: 1px solid rgba(0, 0, 0, 0.06);
@@ -336,175 +362,412 @@
 
     {% if current_user.is_authenticated %}
     <!-- Offcanvas Menú Lateral (Sidebar) -->
-    <div class="offcanvas offcanvas-start border-0 shadow-lg" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="width: 300px;">
+    <div class="offcanvas offcanvas-start border-0 shadow-lg" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="width: 320px;">
         <div class="offcanvas-header p-3 border-bottom position-relative" style="background: linear-gradient(135deg, rgba(249, 200, 211, 0.45) 0%, rgba(163, 216, 222, 0.35) 100%);">
             <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 44px; height: 44px; border: 2px solid var(--brand-pink);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 46px; height: 46px; border: 2.5px solid var(--brand-pink);">
                     <i class="fa-solid fa-user text-brand-black fs-5"></i>
                 </div>
                 <div>
                     <h6 class="fw-bold text-brand-black mb-0" style="font-family: 'Outfit', sans-serif; font-size: 1.05rem;">{{ current_user.nombre or (current_user.rol | capitalize) }}</h6>
-                    <span class="badge badge-soft-pink px-2 py-0.5 rounded-pill small fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">{{ current_user.rol }}</span>
+                    <div class="d-flex align-items-center gap-2 mt-0.5">
+                        <span class="badge badge-soft-pink px-2 py-0.5 rounded-pill small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">{{ current_user.rol }}</span>
+                        <span class="text-muted" style="font-size: 0.7rem;"><i class="fa-solid fa-circle text-success me-1" style="font-size: 0.45rem;"></i>Activo</span>
+                    </div>
                 </div>
             </div>
             <button type="button" class="btn-close shadow-none p-2 rounded-circle bg-white bg-opacity-75" data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
-        <div class="offcanvas-body d-flex flex-column p-0">
-            <ul class="navbar-nav w-100 mb-auto px-3 py-3 gap-1">
+        <div class="offcanvas-body d-flex flex-column p-0" style="overflow-y: auto;">
+            <div class="w-100 px-3 py-2 flex-grow-1">
                 {% if current_user.rol == 'admin' %}
-                    <!-- Enlaces Únicos para el Administrador de la Tienda -->
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/admin/dashboard"><i class="fa-solid fa-chart-pie text-primary me-2" style="width:20px; text-align:center;"></i> Dashboard</a>
-                    </li>
-                    <!-- Módulo Inventario -->
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseInventario" role="button" aria-expanded="false" aria-controls="collapseInventario">
-                            <span><i class="fa-solid fa-box text-success me-2" style="width:20px; text-align:center;"></i> Módulo Inventario</span>
-                            <i class="fa-solid fa-chevron-down small text-muted"></i>
-                        </a>
-                        <div class="collapse" id="collapseInventario">
-                            <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2">
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="/inventory"><i class="fa-solid fa-box-open text-success me-2" style="width:20px; text-align:center;"></i> Inventario Tienda</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="/sales/catalogo"><i class="fa-solid fa-book-open text-brand-pink me-2" style="width:20px; text-align:center;"></i> Catálogo Físico</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                    <!-- Módulo Celulares Independiente (Agrupado) -->
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseCelulares" role="button" aria-expanded="false" aria-controls="collapseCelulares">
-                            <span><i class="fa-solid fa-mobile-screen-button text-brand-blue me-2" style="width:20px; text-align:center;"></i> Módulo Celulares</span>
-                            <i class="fa-solid fa-chevron-down small text-muted"></i>
-                        </a>
-                        <div class="collapse" id="collapseCelulares">
-                            <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2">
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="{{ url_for('celulares_bp.inventario') }}"><i class="fa-solid fa-mobile-screen-button text-brand-blue me-2" style="width:20px; text-align:center;"></i> Inventario Celulares</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="{{ url_for('celulares_bp.historial_ventas') }}"><i class="fa-solid fa-clock-rotate-left text-brand-pink me-2" style="width:20px; text-align:center;"></i> Historial Celulares</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="{{ url_for('celulares_bp.clientes') }}"><i class="fa-solid fa-users text-success me-2" style="width:20px; text-align:center;"></i> Clientes Celulares</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="{{ url_for('celulares_bp.arqueo_nuevo') }}"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:20px; text-align:center;"></i> Arqueo Celulares</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                    <!-- Módulo Caja -->
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold d-flex justify-content-between align-items-center" data-bs-toggle="collapse" href="#collapseCaja" role="button" aria-expanded="false" aria-controls="collapseCaja">
-                            <span><i class="fa-solid fa-cash-register text-warning me-2" style="width:20px; text-align:center;"></i> Módulo Caja</span>
-                            <i class="fa-solid fa-chevron-down small text-muted"></i>
-                        </a>
-                        <div class="collapse" id="collapseCaja">
-                            <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2">
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="/sales/nueva"><i class="fa-solid fa-cash-register text-warning me-2" style="width:20px; text-align:center;"></i> Caja Terminal</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold small" href="/sales/caja_visual"><i class="fa-solid fa-store text-brand-blue me-2" style="width:20px; text-align:center;"></i> Caja Rápida Visual</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/admin/vendedores"><i class="fa-solid fa-users text-info me-2" style="width:20px; text-align:center;"></i> Personal</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/gastos"><i class="fa-solid fa-money-bill-transfer text-danger me-2" style="width:20px; text-align:center;"></i> Gastos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold" href="/admin/maneos"><i class="fa-solid fa-handshake text-primary me-2" style="width:20px; text-align:center;"></i> Maneos</a>
-                    </li>
-                    <li class="nav-item mt-2">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold bg-light border shadow-sm" href="/arqueo/nuevo"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:20px; text-align:center;"></i> Arqueo de Caja</a>
-                    </li>
+                    <!-- SECCIÓN: PRINCIPAL -->
+                    <div class="sidebar-section-header">
+                        <i class="fa-solid fa-compass me-1.5 text-muted"></i> Navegación Principal
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/admin/dashboard">
+                                <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-chart-pie"></i></span>
+                                <span>Dashboard Principal</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/sales/historial">
+                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-clock-rotate-left"></i></span>
+                                <span>Historial Operaciones</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/sales/ventas_hoy">
+                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-calendar-day"></i></span>
+                                <span>Ventas del Día</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- SECCIÓN: CANALES DE VENTA & STOCK -->
+                    <div class="sidebar-section-header mt-2">
+                        <i class="fa-solid fa-store me-1.5 text-muted"></i> Puntos de Venta & Stock
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <!-- Módulo Caja -->
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseCaja" role="button" aria-expanded="false" aria-controls="collapseCaja">
+                                <div class="d-flex align-items-center">
+                                    <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-cash-register"></i></span>
+                                    <span>Módulo Caja</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down small text-muted"></i>
+                            </a>
+                            <div class="collapse" id="collapseCaja">
+                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #FCD34D !important;">
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="/sales/nueva"><i class="fa-solid fa-cash-register text-warning me-2" style="width:18px;"></i> Caja Terminal</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="/sales/caja_visual"><i class="fa-solid fa-store text-brand-blue me-2" style="width:18px;"></i> Caja Rápida Visual</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Módulo Inventario Tienda -->
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseInventario" role="button" aria-expanded="false" aria-controls="collapseInventario">
+                                <div class="d-flex align-items-center">
+                                    <span class="sidebar-icon-badge" style="background: #DCFCE7; color: #16A34A;"><i class="fa-solid fa-boxes-stacked"></i></span>
+                                    <span>Módulo Inventario</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down small text-muted"></i>
+                            </a>
+                            <div class="collapse" id="collapseInventario">
+                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #86EFAC !important;">
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="/inventory"><i class="fa-solid fa-box-open text-success me-2" style="width:18px;"></i> Inventario Tienda</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="/sales/catalogo"><i class="fa-solid fa-book-open text-brand-pink me-2" style="width:18px;"></i> Catálogo Físico</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Módulo Celulares -->
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseCelulares" role="button" aria-expanded="false" aria-controls="collapseCelulares">
+                                <div class="d-flex align-items-center">
+                                    <span class="sidebar-icon-badge" style="background: #E0F2FE; color: #0284C7;"><i class="fa-solid fa-mobile-screen-button"></i></span>
+                                    <span>Módulo Celulares</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down small text-muted"></i>
+                            </a>
+                            <div class="collapse" id="collapseCelulares">
+                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #7DD3FC !important;">
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.inventario') }}"><i class="fa-solid fa-mobile-screen-button text-brand-blue me-2" style="width:18px;"></i> Inventario Celulares</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.historial_ventas') }}"><i class="fa-solid fa-clock-rotate-left text-brand-pink me-2" style="width:18px;"></i> Historial Celulares</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.clientes') }}"><i class="fa-solid fa-users text-success me-2" style="width:18px;"></i> Clientes Celulares</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.arqueo_nuevo') }}"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:18px;"></i> Arqueo Celulares</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+
+                        <!-- Módulo Bodega Mayorista -->
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseBodega" role="button" aria-expanded="false" aria-controls="collapseBodega">
+                                <div class="d-flex align-items-center">
+                                    <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i class="fa-solid fa-truck-ramp-box"></i></span>
+                                    <span>Bodega Mayorista</span>
+                                </div>
+                                <i class="fa-solid fa-chevron-down small text-muted"></i>
+                            </a>
+                            <div class="collapse" id="collapseBodega">
+                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #FDA4AF !important;">
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.dashboard') }}"><i class="fa-solid fa-boxes-stacked text-brand-blue me-2" style="width:18px;"></i> Panel Bodega</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.facturas') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:18px;"></i> Facturas Realizadas</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.caja_rapida') }}"><i class="fa-solid fa-store text-success me-2" style="width:18px;"></i> Caja Rápida Bodega</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.clientes') }}"><i class="fa-solid fa-address-book text-muted me-2" style="width:18px;"></i> Directorio Clientes</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('bodega_bp.modulo_abonos') }}"><i class="fa-solid fa-money-bill-transfer text-success me-2" style="width:18px;"></i> Módulo Abonos</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                    </ul>
+
+                    <!-- SECCIÓN: GESTIÓN & CIERRES -->
+                    <div class="sidebar-section-header mt-2">
+                        <i class="fa-solid fa-sliders me-1.5 text-muted"></i> Administración & Cierres
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/admin/vendedores">
+                                <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i class="fa-solid fa-users"></i></span>
+                                <span>Personal / Equipo</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/gastos">
+                                <span class="sidebar-icon-badge" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                                <span>Gastos Operativos</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/admin/maneos">
+                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-handshake"></i></span>
+                                <span>Maneos</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
+                                <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i class="fa-solid fa-calculator"></i></span>
+                                <span>Arqueo de Caja</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/arqueo/reporte">
+                                <span class="sidebar-icon-badge" style="background: #F5F3FF; color: #7C3AED;"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                                <span>Reportes de Arqueo</span>
+                            </a>
+                        </li>
+                    </ul>
+
                 {% elif current_user.rol == 'vendedor' %}
-                    <!-- Vistas Estrictamente Operativas (Cajeros) -->
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/sales/catalogo"><i class="fa-solid fa-book-open text-muted me-2" style="width:20px; text-align:center;"></i> Catálogo Rápido</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/sales/nueva"><i class="fa-solid fa-cash-register text-brand-pink me-2" style="width:20px; text-align:center;"></i> Módulo de Caja</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/sales/caja_visual"><i class="fa-solid fa-store text-brand-blue me-2" style="width:20px; text-align:center;"></i> Caja Rápida Visual</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/sales/ventas_hoy"><i class="fa-solid fa-list-check me-2" style="color: var(--brand-blue); width:20px; text-align:center;"></i> Ventas del Día</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/admin/maneos"><i class="fa-solid fa-handshake text-muted me-2" style="width:20px; text-align:center;"></i> Maneos</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="/gastos"><i class="fa-solid fa-money-bill-transfer text-success me-2" style="width:20px; text-align:center;"></i> Gastos</a>
-                    </li>
-                    <li class="nav-item mt-2">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold bg-light border" href="/arqueo/nuevo"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:20px; text-align:center;"></i> Arqueo</a>
-                    </li>
-                    <li class="nav-item mt-2">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold bg-light border" href="{{ url_for('celulares_bp.arqueo_nuevo') }}"><i class="fa-solid fa-calculator text-brand-pink me-2" style="width:20px; text-align:center;"></i> Arqueo Celulares</a>
-                    </li>
+                    <!-- SECCIÓN: OPERACIONES DEL DÍA -->
+                    <div class="sidebar-section-header">
+                        <i class="fa-solid fa-cash-register me-1.5 text-muted"></i> Operaciones del Día
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/sales/caja_visual">
+                                <span class="sidebar-icon-badge" style="background: #E0F2FE; color: #0284C7;"><i class="fa-solid fa-store"></i></span>
+                                <span>Caja Rápida Visual</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/sales/nueva">
+                                <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-cash-register"></i></span>
+                                <span>Caja Terminal</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/sales/ventas_hoy">
+                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-calendar-day"></i></span>
+                                <span>Ventas del Día</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/sales/catalogo">
+                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-book-open"></i></span>
+                                <span>Catálogo Rápido</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- SECCIÓN: GESTIÓN & MOVIMIENTOS -->
+                    <div class="sidebar-section-header mt-2">
+                        <i class="fa-solid fa-coins me-1.5 text-muted"></i> Movimientos
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/gastos">
+                                <span class="sidebar-icon-badge" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                                <span>Registrar Gasto</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/admin/maneos">
+                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-handshake"></i></span>
+                                <span>Maneos</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- SECCIÓN: CIERRES DE TURNO -->
+                    <div class="sidebar-section-header mt-2">
+                        <i class="fa-solid fa-calculator me-1.5 text-muted"></i> Cierres de Turno
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
+                                <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i class="fa-solid fa-calculator"></i></span>
+                                <span>Arqueo de Caja</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('celulares_bp.arqueo_nuevo') }}">
+                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-mobile-screen"></i></span>
+                                <span>Arqueo Celulares</span>
+                            </a>
+                        </li>
+                    </ul>
+
                 {% elif current_user.rol == 'bodega' %}
-                    <!-- Vistas Exclusivas para el Encargado de Bodega -->
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.dashboard') }}"><i class="fa-solid fa-boxes-stacked text-brand-blue me-2" style="width:20px; text-align:center;"></i> Bodega</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.facturas') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:20px; text-align:center;"></i> Facturas Realizadas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('inventory_bp.index') }}"><i class="fa-solid fa-box text-brand-pink me-2" style="width:20px; text-align:center;"></i> Mi Inventario (Bodega)</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.clientes') }}"><i class="fa-solid fa-address-book text-muted me-2" style="width:20px; text-align:center;"></i> Directorio Clientes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nuevo_cliente') }}"><i class="fa-solid fa-user-plus text-muted me-2" style="width:20px; text-align:center;"></i> Registrar Cliente</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.caja_rapida') }}"><i class="fa-solid fa-store text-brand-pink me-2" style="width:20px; text-align:center;"></i> Caja Rápida (POS)</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-lines text-muted me-2" style="width:20px; text-align:center;"></i> Factura Manual</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold border-bottom" href="{{ url_for('bodega_bp.modulo_abonos') }}"><i class="fa-solid fa-money-bill-transfer text-success me-2" style="width:20px; text-align:center;"></i> Módulo Abonos</a>
-                    </li>
+                    <!-- SECCIÓN: BODEGA MAYORISTA -->
+                    <div class="sidebar-section-header">
+                        <i class="fa-solid fa-warehouse me-1.5 text-muted"></i> Operaciones Mayoristas
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.dashboard') }}">
+                                <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-boxes-stacked"></i></span>
+                                <span>Panel Bodega</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.caja_rapida') }}">
+                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-store"></i></span>
+                                <span>Caja Rápida (POS)</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.facturas') }}">
+                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-file-invoice"></i></span>
+                                <span>Facturas Realizadas</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nueva_factura') }}">
+                                <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-file-lines"></i></span>
+                                <span>Factura Manual</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- SECCIÓN: CLIENTES & CARTERA -->
+                    <div class="sidebar-section-header mt-2">
+                        <i class="fa-solid fa-users me-1.5 text-muted"></i> Clientes & Cartera
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.clientes') }}">
+                                <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i class="fa-solid fa-address-book"></i></span>
+                                <span>Directorio Clientes</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nuevo_cliente') }}">
+                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-user-plus"></i></span>
+                                <span>Registrar Cliente</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.modulo_abonos') }}">
+                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                                <span>Módulo de Abonos</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- SECCIÓN: INVENTARIO -->
+                    <div class="sidebar-section-header mt-2">
+                        <i class="fa-solid fa-box me-1.5 text-muted"></i> Inventario Central
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('inventory_bp.index') }}">
+                                <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i class="fa-solid fa-box-open"></i></span>
+                                <span>Mi Inventario (Bodega)</span>
+                            </a>
+                        </li>
+                    </ul>
+
                 {% elif current_user.rol == 'vendedor_bodega' %}
-                    <!-- Vistas para el Vendedor de Bodega (Sin Inventario) -->
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.dashboard') }}"><i class="fa-solid fa-house-chimney text-brand-blue me-2" style="width:20px; text-align:center;"></i> Mi Panel</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.facturas') }}"><i class="fa-solid fa-file-invoice text-brand-pink me-2" style="width:20px; text-align:center;"></i> Mis Facturas</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.clientes') }}"><i class="fa-solid fa-address-book text-muted me-2" style="width:20px; text-align:center;"></i> Mis Clientes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nuevo_cliente') }}"><i class="fa-solid fa-user-plus text-muted me-2" style="width:20px; text-align:center;"></i> Crear Cliente</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.caja_rapida') }}"><i class="fa-solid fa-store text-brand-pink me-2" style="width:20px; text-align:center;"></i> Caja Rápida (POS)</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-semibold border-bottom" href="{{ url_for('bodega_bp.nueva_factura') }}"><i class="fa-solid fa-file-lines text-muted me-2" style="width:20px; text-align:center;"></i> Factura Manual</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-brand-black rounded-3 px-3 py-2 fw-bold border-bottom" href="{{ url_for('bodega_bp.modulo_abonos') }}"><i class="fa-solid fa-money-bill-transfer text-success me-2" style="width:20px; text-align:center;"></i> Registrar Abono</a>
-                    </li>
+                    <!-- SECCIÓN: VENTAS & FACTURACIÓN -->
+                    <div class="sidebar-section-header">
+                        <i class="fa-solid fa-warehouse me-1.5 text-muted"></i> Mi Canal Bodega
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.dashboard') }}">
+                                <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-house-chimney"></i></span>
+                                <span>Mi Panel</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.caja_rapida') }}">
+                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-store"></i></span>
+                                <span>Caja Rápida (POS)</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.facturas') }}">
+                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-file-invoice"></i></span>
+                                <span>Mis Facturas</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nueva_factura') }}">
+                                <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-file-lines"></i></span>
+                                <span>Factura Manual</span>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <!-- SECCIÓN: CLIENTES & CARTERA -->
+                    <div class="sidebar-section-header mt-2">
+                        <i class="fa-solid fa-users me-1.5 text-muted"></i> Clientes & Cartera
+                    </div>
+                    <ul class="navbar-nav w-100 gap-1 mb-2">
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.clientes') }}">
+                                <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i class="fa-solid fa-address-book"></i></span>
+                                <span>Mis Clientes</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nuevo_cliente') }}">
+                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-user-plus"></i></span>
+                                <span>Crear Cliente</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.modulo_abonos') }}">
+                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-money-bill-transfer"></i></span>
+                                <span>Registrar Abono</span>
+                            </a>
+                        </li>
+                    </ul>
                 {% endif %}
-            </ul>
+            </div>
             
+            <!-- Tarjeta de Estado e Identidad Cases al pie del Sidebar -->
+            <div class="px-3 pt-2 pb-2 mt-auto">
+                <div class="p-3 rounded-4 border shadow-2xs" style="background: linear-gradient(135deg, #FFF1F5 0%, #FFFFFF 100%); border-color: #FBCFE8 !important;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 26px; height: 26px; background: #F9C8D3; color: #881337;">
+                            <i class="fa-solid fa-gem small"></i>
+                        </span>
+                        <span class="fw-bold text-brand-black small" style="font-family: 'Outfit', sans-serif;">cases.com POS</span>
+                        <span class="badge rounded-pill ms-auto" style="background: #DCFCE7; color: #16A34A; font-size: 0.65rem;">
+                            <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> En Línea
+                        </span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.72rem;">
+                        <span><i class="fa-solid fa-store me-1 text-brand-pink"></i> Sucursal Central</span>
+                        <span class="fw-semibold">v2.4 Pro</span>
+                    </div>
+                </div>
+            </div>
+
             <!-- Interfaz de Desconexión / Fin de Turno al final del sidebar -->
-            <div class="p-3 border-top mt-auto bg-light bg-opacity-50">
+            <div class="p-3 border-top bg-light bg-opacity-50">
                 <a class="btn btn-outline-danger w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center gap-2" href="{{ url_for('auth_bp.logout') }}">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir del Sistema
                 </a>

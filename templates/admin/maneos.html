@@ -1,51 +1,107 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="fw-bold text-brand-black m-0">Consignaciones y Maneos</h2>
-    <a href="{{ url_for('admin_bp.dashboard') if current_user.rol == 'admin' else url_for('sales_bp.procesar_venta') }}" class="btn btn-outline-secondary rounded-pill px-4">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+    <div>
+        <h2 class="fw-bolder text-brand-black m-0">
+            <i class="fa-solid fa-handshake-angle text-brand-blue me-2"></i>Consignaciones y Maneos
+        </h2>
+        <small class="text-muted">Control de préstamos de mercancía con tiendas y vecinos aliados</small>
+    </div>
+    <a href="{{ url_for('admin_bp.dashboard') if current_user.rol == 'admin' else url_for('sales_bp.procesar_venta') }}" class="btn btn-outline-secondary rounded-pill px-4 fw-bold shadow-sm">
         <i class="fa-solid fa-arrow-left me-1"></i> Volver al Menú
     </a>
 </div>
 
+<!-- UI: Resumen de Maneos (Tarjetas KPI) -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(245, 158, 11, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(245, 158, 11, 0.3) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Maneos Pendientes</span>
+                <div style="background: #FEF3C7; color: #D97706; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-clock-rotate-left fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bolder m-0" style="color: #B45309;">{{ total_pendientes or 0 }} <span class="fs-6 fw-semibold text-muted">activos</span></h3>
+            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-handshake me-1" style="color: #D97706;"></i> Préstamos esperando resolución</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(163, 216, 222, 0.25) 0%, #FFFFFF 70%); border: 1px solid rgba(163, 216, 222, 0.6) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Unidades en Calle</span>
+                <div style="background: #E0F2FE; color: #0284C7; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-boxes-packing fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bolder m-0 text-brand-black">{{ unidades_prestadas or 0 }} <span class="fs-6 fw-semibold text-muted">unidades</span></h3>
+            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-layer-group me-1 text-brand-blue"></i> Mercancía entregada a terceros</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.3) 0%, #FFFFFF 70%); border: 1px solid rgba(249, 200, 211, 0.8) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Locales Aliados</span>
+                <div style="background: #FCE7F3; color: #BE185D; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-store fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bolder m-0" style="color: #9F1239;">{{ locales_activos or 0 }} <span class="fs-6 fw-semibold text-muted">tiendas</span></h3>
+            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-map-pin me-1" style="color: #BE185D;"></i> Puntos con deudas abiertas</small>
+        </div>
+    </div>
+</div>
+
 <!-- Formulario para Nuevo Maneo -->
-<div class="card card-custom p-4 mb-4">
-    <h5 class="text-brand-black fw-bold mb-3"><i class="fa-solid fa-box-open text-brand-blue me-2"></i>Registrar Nuevo Maneo</h5>
+<div class="card card-custom p-4 mb-4 border-0 shadow-sm rounded-4" style="background: #FFFFFF; border: 1px solid rgba(249, 200, 211, 0.6) !important;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-brand-black fw-bold m-0"><i class="fa-solid fa-box-open text-brand-blue me-2"></i>Registrar Nuevo Maneo</h5>
+        <span class="badge rounded-pill px-3 py-1" style="background: rgba(249, 200, 211, 0.4); color: #BE185D; font-weight: 700; font-size: 0.75rem;"><i class="fa-solid fa-plus me-1"></i> PRÉSTAMO RÁPIDO</span>
+    </div>
     <form method="POST" action="{{ url_for('admin_bp.maneos_prestar') }}" id="formNuevoManeo">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
         <input type="hidden" name="variant_id" id="variant_id_hidden" value="">
         <div class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label class="form-label fw-bold text-brand-black">Producto a Prestar / Entregar (SKU)</label>
-                <input type="text" name="sku" id="maneo_sku_input" class="form-control bg-light border-0" autofocus placeholder="Escanea o digita el SKU..." required>
+                <label class="form-label fw-bold text-brand-black small mb-1">Producto a Prestar (SKU o Nombre)</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="fa-solid fa-barcode text-muted"></i></span>
+                    <input type="text" name="sku" id="maneo_sku_input" class="form-control bg-light border-0" autofocus placeholder="Escanea o digita el SKU..." required>
+                </div>
             </div>
             <!-- Selector de Subcategoría (aparece dinámicamente) -->
             <div class="col-md-3" id="variant_selector_col" style="display: none;">
-                <label class="form-label fw-bold text-brand-black"><i class="fa-solid fa-layer-group text-primary me-1"></i>Subcategoría</label>
+                <label class="form-label fw-bold text-brand-black small mb-1"><i class="fa-solid fa-layer-group text-primary me-1"></i>Subcategoría</label>
                 <select id="variant_selector" class="form-select bg-light border-0" onchange="onVariantChange()">
                     <option value="">— Producto general —</option>
                 </select>
                 <small class="text-muted" id="variant_stock_info"></small>
             </div>
-            <div class="col-md-2">
-                <label class="form-label fw-bold text-brand-black">Local Vecino / Persona</label>
-                <input type="text" name="local_vecino" class="form-control bg-light border-0" placeholder="Ej: Fundas Alex" required>
+            <div class="col-md-3">
+                <label class="form-label fw-bold text-brand-black small mb-1">Local Vecino / Persona</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i class="fa-solid fa-store text-muted"></i></span>
+                    <input type="text" name="local_vecino" class="form-control bg-light border-0" placeholder="Ej: Fundas Alex" required>
+                </div>
             </div>
-            <div class="col-md-1">
-                <label class="form-label fw-bold text-brand-black">Cantidad</label>
-                <input type="number" name="cantidad" class="form-control bg-light border-0" min="1" value="1" required>
-            </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-blue w-100 rounded-pill"><i class="fa-solid fa-paper-plane me-1"></i> Prestar</button>
+                <label class="form-label fw-bold text-brand-black small mb-1">Cantidad</label>
+                <input type="number" name="cantidad" class="form-control bg-light border-0 text-center fw-bold" min="1" value="1" required>
+            </div>
+            <div class="col-md-12 col-lg-auto ms-lg-auto">
+                <button type="submit" class="btn btn-blue px-4 rounded-pill fw-bold shadow-sm"><i class="fa-solid fa-paper-plane me-1"></i> Prestar Mercancía</button>
             </div>
         </div>
     </form>
 </div>
 
 <!-- Lista de Maneos -->
-<div class="card card-custom p-0 overflow-hidden">
+<div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
     <div class="table-responsive">
-        <table class="table table-hover table-custom mb-0">
+        <table class="table table-hover table-custom mb-0 align-middle">
             <thead class="bg-light">
                 <tr>
                     <th class="ps-4">FECHA PRÉSTAMO</th>
@@ -53,13 +109,13 @@
                     <th>PRODUCTO (SKU)</th>
                     <th class="text-center">CANTIDAD</th>
                     <th class="text-center">ESTADO</th>
-                    <th class="text-center">ACCIONES RÁPIDAS</th>
+                    <th class="text-center pe-4">ACCIONES RÁPIDAS</th>
                 </tr>
             </thead>
             <tbody>
                 {% for m in maneos %}
                 <tr>
-                    <td class="ps-4 text-muted"><small>{{ m.fecha_prestamo.strftime('%d/%m/%Y %H:%M') if m.fecha_prestamo else 'N/A' }}</small></td>
+                    <td class="ps-4 text-muted small"><i class="fa-regular fa-clock me-1 text-brand-blue"></i>{{ m.fecha_prestamo.strftime('%d/%m/%Y · %H:%M') if m.fecha_prestamo else 'N/A' }}</td>
                     <td class="fw-bold text-brand-black"><i class="fa-solid fa-store text-muted me-2"></i>{{ m.local_vecino }}</td>
                     <td>
                         <span class="text-brand-black fw-semibold">{{ m.producto.nombre if m.producto else 'Ítem no disponible' }}</span> <small class="text-muted">({{ m.producto.sku if m.producto else '—' }})</small>
@@ -67,23 +123,25 @@
                             <br><span class="badge bg-light text-primary border border-primary border-opacity-25 rounded-pill px-2 mt-1" style="font-size: 0.75rem;"><i class="fa-solid fa-layer-group me-1"></i>{{ m.variante.nombre_variante }}</span>
                         {% endif %}
                     </td>
-                    <td class="text-center fw-bold">{{ m.cantidad }} uds</td>
-                    <td class="text-center">
-                        {% if m.estado == 'PENDIENTE' %}
-                            <span class="badge bg-warning text-dark border border-warning rounded-pill px-3 py-2">Pendiente</span>
-                        {% elif m.estado == 'FACTURADO' %}
-                            <span class="badge bg-success rounded-pill px-3 py-2">Facturado</span>
-                            {% if m.fecha_resolucion %}<br><small class="text-muted d-block mt-1">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>{% endif %}
-                        {% elif m.estado == 'DEVUELTO' %}
-                            <span class="badge bg-secondary rounded-pill px-3 py-2">Devuelto</span>
-                            {% if m.fecha_resolucion %}<br><small class="text-muted d-block mt-1">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>{% endif %}
-                        {% endif %}
+                    <td class="text-center fw-bold">
+                        <span class="badge bg-light text-dark border px-3 py-1 rounded-pill font-monospace fs-6">{{ m.cantidad }} uds</span>
                     </td>
                     <td class="text-center">
                         {% if m.estado == 'PENDIENTE' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #FEF3C7; color: #B45309; border: 1px solid rgba(245, 158, 11, 0.3);"><i class="fa-solid fa-clock me-1"></i> Pendiente</span>
+                        {% elif m.estado == 'FACTURADO' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #D1FAE5; color: #047857; border: 1px solid rgba(16, 185, 129, 0.3);"><i class="fa-solid fa-check me-1"></i> Facturado</span>
+                            {% if m.fecha_resolucion %}<br><small class="text-muted d-block mt-1" style="font-size: 0.72rem;">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>{% endif %}
+                        {% elif m.estado == 'DEVUELTO' %}
+                            <span class="badge rounded-pill px-3 py-2" style="background: #F1F5F9; color: #475569; border: 1px solid rgba(148, 163, 184, 0.3);"><i class="fa-solid fa-rotate-left me-1"></i> Devuelto</span>
+                            {% if m.fecha_resolucion %}<br><small class="text-muted d-block mt-1" style="font-size: 0.72rem;">{{ m.fecha_resolucion.strftime('%d/%m/%Y %H:%M') }}</small>{% endif %}
+                        {% endif %}
+                    </td>
+                    <td class="text-center pe-4">
+                        {% if m.estado == 'PENDIENTE' %}
                             <div class="d-flex justify-content-center gap-2">
                                 <!-- Botón Facturar -->
-                                <button type="button" class="btn btn-sm btn-success rounded-pill" data-bs-toggle="modal" data-bs-target="#facturarModal{{ m.id }}" title="Facturar Venta">
+                                <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold text-white shadow-sm" style="background: #10B981; border: none;" data-bs-toggle="modal" data-bs-target="#facturarModal{{ m.id }}" title="Facturar Venta">
                                     <i class="fa-solid fa-cash-register me-1"></i> Cobrar
                                 </button>
                                 <!-- Modal Facturar -->
@@ -142,8 +200,8 @@
                                 </div>
                                 
                                 <!-- Botón Devolver -->
-                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill" data-bs-toggle="modal" data-bs-target="#devolverModal{{ m.id }}" title="Devolver a Inventario">
-                                    <i class="fa-solid fa-rotate-left"></i> Devolver
+                                <button type="button" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#devolverModal{{ m.id }}" title="Devolver a Inventario">
+                                    <i class="fa-solid fa-rotate-left me-1"></i> Devolver
                                 </button>
                                 <!-- Modal Devolver -->
                                 <div class="modal fade text-start" id="devolverModal{{ m.id }}" tabindex="-1" aria-hidden="true">

@@ -349,9 +349,12 @@ def historial():
             elif v.metodo_pago == 'transferencia':
                 total_transferencia_legacy += v.monto_total
 
+    total_general = total_efectivo + total_nequi + total_bancolombia + total_daviplata + total_transferencia_legacy
+
     # Envío al Engine de HTML
     return render_template('sales/historial.html', 
                            ventas=ventas, 
+                           total_general=total_general,
                            total_efectivo=total_efectivo,
                            total_nequi=total_nequi,
                            total_bancolombia=total_bancolombia,

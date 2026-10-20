@@ -128,6 +128,56 @@
     }
 </style>
 
+<!-- Barra de Filtro de Período para el Dashboard -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm bg-white rounded-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="text-muted fw-bold text-uppercase small"><i class="fa-solid fa-filter text-brand-blue me-1"></i> Período:</span>
+            <div class="d-flex flex-wrap gap-1">
+                <a href="{{ url_for('admin_bp.dashboard', periodo='este_mes') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if periodo == 'este_mes' or not periodo %}btn-blue shadow-sm{% else %}btn-light text-muted{% endif %}">
+                    📅 Este Mes
+                </a>
+                <a href="{{ url_for('admin_bp.dashboard', periodo='quincena_actual') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if periodo == 'quincena_actual' %}btn-blue shadow-sm{% else %}btn-light text-muted{% endif %}">
+                    ⚡ Quincena Actual
+                </a>
+                <a href="{{ url_for('admin_bp.dashboard', periodo='quincena_anterior') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if periodo == 'quincena_anterior' %}btn-blue shadow-sm{% else %}btn-light text-muted{% endif %}">
+                    ⏪ Quincena Anterior
+                </a>
+                <a href="{{ url_for('admin_bp.dashboard', periodo='hoy') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if periodo == 'hoy' %}btn-blue shadow-sm{% else %}btn-light text-muted{% endif %}">
+                    ☀️ Hoy
+                </a>
+                <a href="{{ url_for('admin_bp.dashboard', periodo='todo') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if periodo == 'todo' %}btn-blue shadow-sm{% else %}btn-light text-muted{% endif %}">
+                    🌐 Todo
+                </a>
+            </div>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#customDateCollapse">
+                <i class="fa-regular fa-calendar-days me-1"></i> Fechas personalizadas
+            </button>
+        </div>
+    </div>
+    
+    <div class="collapse {% if periodo == 'personalizado' %}show{% endif %} mt-3 pt-3 border-top" id="customDateCollapse">
+        <form method="GET" action="{{ url_for('admin_bp.dashboard') }}" class="row g-2 align-items-end">
+            <input type="hidden" name="periodo" value="personalizado">
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted mb-1">Fecha Inicial:</label>
+                <input type="date" name="fecha_inicio" value="{{ fecha_inicio or '' }}" class="form-control form-control-sm rounded-3" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold text-muted mb-1">Fecha Final:</label>
+                <input type="date" name="fecha_fin" value="{{ fecha_fin or '' }}" class="form-control form-control-sm rounded-3" required>
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-sm btn-dark rounded-pill px-4 fw-bold w-100">
+                    <i class="fa-solid fa-magnifying-glass me-1"></i> Filtrar Fechas
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Layout de Tarjetas (Fila de 4 Elementos) -->
 <div class="row g-3 mb-4">
     <!-- 1. Tarjeta: Ingresos Totales -->
@@ -137,9 +187,9 @@
                 <div class="kpi-icon-box" style="background: rgba(163, 216, 222, 0.3); color: #0E6B7A;">
                     <i class="fa-solid fa-sack-dollar fs-4"></i>
                 </div>
-                <span class="badge badge-soft-blue px-3 py-1 rounded-pill">Quincena Actual</span>
+                <span class="badge badge-soft-blue px-3 py-1 rounded-pill">{{ periodo_label or 'Quincena Actual' }}</span>
             </div>
-            <h6 class="text-muted fw-bold small text-uppercase mb-1" style="letter-spacing: 0.5px;">Ingresos (Quincena)</h6>
+            <h6 class="text-muted fw-bold small text-uppercase mb-1" style="letter-spacing: 0.5px;">Ingresos Ventas</h6>
             <h2 class="kpi-metric-number text-brand-black mb-1">${{ (total_ventas or 0)|cop }}</h2>
             <p class="text-muted small mb-0"><i class="fa-solid fa-receipt text-brand-blue me-1"></i> {{ conteo_ventas or 0 }} ventas realizadas</p>
             <div class="mt-auto pt-4">
@@ -183,7 +233,7 @@
             <h2 class="kpi-metric-number text-danger mb-1">{{ productos_bajo_stock or 0 }} <span class="fs-5 fw-semibold text-danger">productos</span></h2>
             <p class="text-muted small mb-0">Tienen existencias limitadas (&le; 10 unidades).</p>
             <div class="mt-auto pt-4">
-                <a href="/inventory/" class="btn btn-outline-danger w-100 rounded-pill fw-bold shadow-sm py-2">
+                <a href="{{ url_for('inventory_bp.index', filtro='bajo_stock') }}" class="btn btn-outline-danger w-100 rounded-pill fw-bold shadow-sm py-2">
                     <i class="fa-solid fa-eye me-2"></i> Revisar Urgencias
                 </a>
             </div>

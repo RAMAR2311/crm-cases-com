@@ -1,9 +1,18 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
     <h2 class="fw-bold text-brand-black m-0">Inventario Central</h2>
-    <div class="d-flex gap-2">
+    <div class="d-flex flex-wrap gap-2">
+        {% if filtro == 'bajo_stock' %}
+            <a href="{{ url_for('inventory_bp.index') }}" class="btn btn-outline-dark rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fa-solid fa-list me-1"></i> Ver Todo el Catálogo
+            </a>
+        {% else %}
+            <a href="{{ url_for('inventory_bp.index', filtro='bajo_stock') }}" class="btn btn-outline-danger rounded-pill px-3 fw-bold shadow-sm">
+                <i class="fa-solid fa-triangle-exclamation me-1"></i> Alertas de Stock
+            </a>
+        {% endif %}
         <button type="button" class="btn btn-outline-success rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#importarModal">
             <i class="fa-solid fa-file-excel me-1"></i> Importar Masivo
         </button>
@@ -13,10 +22,71 @@
     </div>
 </div>
 
+<!-- UI: Resumen de Inventario (Tarjetas KPI) -->
+<div class="row g-3 mb-4">
+    <!-- 1. Cantidad de Productos -->
+    <div class="col-12 col-md-4">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(163, 216, 222, 0.25) 0%, #FFFFFF 70%); border: 1px solid rgba(163, 216, 222, 0.6) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Existencias Físicas</span>
+                <div style="background: #E0F2FE; color: #0284C7; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-boxes-stacked fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bolder m-0 text-brand-black">{{ total_unidades_fisicas or 0 }} <span class="fs-6 fw-semibold text-muted">unidades</span></h3>
+            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-barcode me-1 text-brand-blue"></i> {{ total_productos or 0 }} referencias en catálogo</small>
+        </div>
+    </div>
 
+    <!-- 2. Valor a Costo (Inversión) -->
+    <div class="col-12 col-md-4">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.3) 0%, #FFFFFF 70%); border: 1px solid rgba(249, 200, 211, 0.8) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Inversión Total (Costo)</span>
+                <div style="background: #FCE7F3; color: #BE185D; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-hand-holding-dollar fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bolder m-0" style="color: #9F1239;">${{ (valor_costo or 0)|cop }}</h3>
+            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-vault me-1" style="color: #BE185D;"></i> Capital invertido en bodega</small>
+        </div>
+    </div>
+
+    <!-- 3. Valor de Venta (Proyección) -->
+    <div class="col-12 col-md-4">
+        <div class="card card-custom h-100 p-3 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(16, 185, 129, 0.12) 0%, #FFFFFF 70%); border: 1px solid rgba(16, 185, 129, 0.3) !important;">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.72rem; letter-spacing: 0.5px;">Valor de Venta (Sugerido)</span>
+                <div style="background: #D1FAE5; color: #059669; width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-sack-dollar fs-5"></i>
+                </div>
+            </div>
+            <h3 class="fw-bolder m-0" style="color: #047857;">${{ (valor_sugerido or 0)|cop }}</h3>
+            <small class="text-muted mt-1 d-block"><i class="fa-solid fa-chart-line me-1 text-success"></i> Proyección bruta de catálogo</small>
+        </div>
+    </div>
+</div>
+
+{% if filtro == 'bajo_stock' %}
+<!-- Banner Informativo de Filtro de Stock Bajo -->
+<div class="alert border-0 shadow-sm rounded-4 p-3 mb-4 d-flex justify-content-between align-items-center" style="background: radial-gradient(120% 120% at 100% 0%, rgba(254, 226, 226, 0.8) 0%, #FFFFFF 70%); border-left: 5px solid #DC2626 !important;">
+    <div class="d-flex align-items-center gap-3">
+        <div style="background: #FEE2E2; color: #DC2626; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+            <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+        </div>
+        <div>
+            <h6 class="fw-bold text-danger mb-0">Filtrando por Alertas de Stock Bajo (&le; 10 unidades)</h6>
+            <small class="text-muted">Mostrando productos o subcategorías con inventario crítico. Las variantes afectadas están destacadas.</small>
+        </div>
+    </div>
+    <a href="{{ url_for('inventory_bp.index') }}" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold shadow-sm">
+        <i class="fa-solid fa-xmark me-1"></i> Quitar Filtro
+    </a>
+</div>
+{% endif %}
 
 <!-- Buscador Rápido de Inventario -->
-<div class="card card-custom p-3 mb-4 border-0 shadow-sm bg-white">
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm bg-white rounded-4">
     <div class="row align-items-center">
         <div class="col-md-8 col-lg-6 position-relative">
             <div class="input-group input-group-lg shadow-sm rounded-pill border">
@@ -40,15 +110,15 @@
     </div>
 </div>
 
-<div class="card card-custom p-0 overflow-hidden">
+<div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
     <div class="table-responsive">
-        <table class="table table-hover table-custom mb-0">
+        <table class="table table-hover table-custom mb-0 align-middle">
             <thead class="bg-light">
                 <tr>
                     <th width="120" class="ps-4">SKU</th>
                     <th>PRODUCTO</th>
-                    <th width="150" class="text-center">STOCK</th>
-                    <th width="150" class="text-end">PRECIO COSTO</th>
+                    <th width="160" class="text-center">STOCK</th>
+                    <th width="170" class="text-end">PRECIO COSTO</th>
                     <th width="150" class="text-end">PRECIO MÍNIMO</th>
                     <th width="150" class="text-end pe-4">PRECIO SUGERIDO</th>
                     <th width="220" class="text-center">ACCIONES</th>
@@ -57,7 +127,7 @@
             <tbody>
                 {% for p in productos %}
                 <tr>
-                    <td class="text-muted text-nowrap">
+                    <td class="text-muted text-nowrap ps-4">
                         {% if p.variantes %}
                             <button class="btn btn-sm btn-light border me-1 rounded-circle shadow-sm p-1" style="width: 28px; height: 28px;" type="button" data-bs-toggle="collapse" data-bs-target="#collapseVariantes{{ p.id }}" aria-expanded="false" title="Ver Subcategorías">
                                 <i class="fa-solid fa-chevron-down small"></i>
@@ -65,28 +135,49 @@
                         {% endif %}
                         <small><strong>{{ p.sku }}</strong></small>
                     </td>
-                    <td class="fw-semibold text-brand-black">{{ p.nombre }}</td>
                     <td>
-                        <!-- Regla Estricta: Badge rojo si el stock <= 3 -->
-                        {% if (p.total_stock or 0) <= 3 %}
-                            <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock or 0 }} (Stock Bajo)</span>
-                        {% else %}
-                            <!-- Badge en Rosa Pastel para stock normal -->
-                            <span class="badge bg-brand-pink text-dark rounded-pill px-3 py-2 border">{{ p.total_stock or 0 }} unidades</span>
+                        <span class="fw-semibold text-brand-black">{{ p.nombre }}</span>
+                        {% if p.subcategorias_bajo_stock and p.subcategorias_bajo_stock is iterable and p.subcategorias_bajo_stock|length > 0 %}
+                            <div>
+                                <span class="badge rounded-pill px-2 py-1 text-danger border border-danger border-opacity-25 mt-1" style="background: #FEE2E2; font-size: 0.72rem;">
+                                    <i class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.subcategorias_bajo_stock|length }} subcategoría{{ 's' if p.subcategorias_bajo_stock|length > 1 else '' }} con stock bajo (&le; 10)
+                                </span>
+                            </div>
                         {% endif %}
                     </td>
-                    <td class="text-end fw-bold" style="color: var(--brand-pink);">
+                    <td class="text-center">
+                        {% if (p.total_stock or 0) <= 3 %}
+                            <span class="badge bg-danger rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock or 0 }} (Crítico)</span>
+                        {% elif (p.total_stock or 0) <= 10 %}
+                            <span class="badge bg-warning text-dark border border-warning rounded-pill px-3 py-2"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock or 0 }} (Bajo)</span>
+                        {% else %}
+                            <!-- Badge en Rosa Pastel Suave con Contraste Óptimo -->
+                            <span class="badge rounded-pill px-3 py-2 border" style="background: rgba(249, 200, 211, 0.45); color: #831843; border-color: rgba(249, 200, 211, 0.8) !important;">{{ p.total_stock or 0 }} unidades</span>
+                        {% endif %}
+                    </td>
+                    <!-- PRECIO COSTO: Destacado en tono Rosa de Alta Legibilidad -->
+                    <td class="text-end">
                         {% if p.rango_costos %}
                             {% if p.rango_costos is number %}
-                                ${{ (p.rango_costos)|cop }}
+                                <span class="badge rounded-pill px-2 py-1" style="background: #FCE7F3; color: #BE185D; font-size: 0.88rem; font-weight: 700; border: 1px solid rgba(190, 24, 93, 0.2);">
+                                    ${{ (p.rango_costos)|cop }}
+                                </span>
                             {% else %}
-                                <div class="small text-muted fw-normal" style="line-height:1;">Desde</div>
-                                ${{ (p.rango_costos[0])|cop }}
-                                <div class="small text-muted fw-normal mt-1" style="line-height:1;">hasta</div>
-                                ${{ (p.rango_costos[1])|cop }}
+                                <div class="d-inline-flex flex-column align-items-end">
+                                    <small class="text-muted" style="font-size: 0.7rem; line-height: 1;">Desde</small>
+                                    <span class="badge rounded-pill px-2 py-1 my-1" style="background: #FCE7F3; color: #BE185D; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(190, 24, 93, 0.2);">
+                                        ${{ (p.rango_costos[0])|cop }}
+                                    </span>
+                                    <small class="text-muted" style="font-size: 0.7rem; line-height: 1;">hasta</small>
+                                    <span class="badge rounded-pill px-2 py-1 mt-1" style="background: #FCE7F3; color: #BE185D; font-size: 0.82rem; font-weight: 700; border: 1px solid rgba(190, 24, 93, 0.2);">
+                                        ${{ (p.rango_costos[1])|cop }}
+                                    </span>
+                                </div>
                             {% endif %}
                         {% else %}
-                            ${{ (p.precio_costo)|cop }}
+                            <span class="badge rounded-pill px-2 py-1" style="background: #FCE7F3; color: #BE185D; font-size: 0.88rem; font-weight: 700; border: 1px solid rgba(190, 24, 93, 0.2);">
+                                ${{ (p.precio_costo)|cop }}
+                            </span>
                         {% endif %}
                     </td>
                     <td class="text-end text-muted fw-bold">
@@ -136,10 +227,10 @@
                     </td>
                 </tr>
                 {% if p.variantes %}
-                <tr class="collapse bg-light" id="collapseVariantes{{ p.id }}">
+                <tr class="collapse bg-light {% if filtro == 'bajo_stock' and p.subcategorias_bajo_stock and p.subcategorias_bajo_stock is iterable and p.subcategorias_bajo_stock|length > 0 %}show{% endif %}" id="collapseVariantes{{ p.id }}">
                     <td colspan="7" class="p-0 border-bottom border-dark border-opacity-10 shadow-inner">
                         <div class="p-3 bg-white" style="border-left: 4px solid var(--brand-pink); border-radius: 0 0 8px 8px;">
-                            <table class="table table-sm table-borderless mb-0">
+                            <table class="table table-sm table-borderless mb-0 align-middle">
                                 <thead class="text-muted" style="font-size: 0.8rem; border-bottom: 1px solid #eee;">
                                     <tr>
                                         <th class="ps-3"><i class="fa-solid fa-arrow-turn-down me-2 text-black-50"></i>Subcategoría (Variante)</th>
@@ -152,15 +243,26 @@
                                 <tbody>
                                     {% for v in p.variantes %}
                                     <tr class="align-middle">
-                                        <td class="ps-4 fw-semibold text-brand-black" style="font-size: 0.95rem;">{{ v.nombre_variante }}</td>
-                                        <td class="text-center">
-                                            {% if (v.cantidad_stock or 0) <= 3 %}
-                                                <span class="badge bg-danger rounded-pill">{{ v.cantidad_stock or 0 }}</span>
-                                            {% else %}
-                                                <span class="badge bg-secondary rounded-pill text-white">{{ v.cantidad_stock or 0 }}</span>
+                                        <td class="ps-4 fw-semibold text-brand-black" style="font-size: 0.95rem;">
+                                            {{ v.nombre_variante }}
+                                            {% if (v.cantidad_stock or 0) <= 10 %}
+                                                <span class="badge rounded-pill text-danger bg-danger bg-opacity-10 border border-danger border-opacity-25 ms-2" style="font-size: 0.7rem;">Stock Bajo</span>
                                             {% endif %}
                                         </td>
-                                        <td class="text-end text-muted">${{ (v.precio_costo or p.precio_costo or 0)|cop }}</td>
+                                        <td class="text-center">
+                                            {% if (v.cantidad_stock or 0) <= 3 %}
+                                                <span class="badge bg-danger rounded-pill px-2 py-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ v.cantidad_stock or 0 }} (Crítico)</span>
+                                            {% elif (v.cantidad_stock or 0) <= 10 %}
+                                                <span class="badge bg-warning text-dark border border-warning rounded-pill px-2 py-1"><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ v.cantidad_stock or 0 }} (Bajo)</span>
+                                            {% else %}
+                                                <span class="badge rounded-pill px-2 py-1" style="background: #E2E8F0; color: #334155;">{{ v.cantidad_stock or 0 }} uds</span>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-end">
+                                            <span class="badge rounded-pill px-2 py-1" style="background: #FCE7F3; color: #BE185D; font-weight: 700; border: 1px solid rgba(190, 24, 93, 0.2);">
+                                                ${{ (v.precio_costo or p.precio_costo or 0)|cop }}
+                                            </span>
+                                        </td>
                                         <td class="text-end fw-bold text-success">${{ ((v.precio_costo or p.precio_costo or 0) * (v.cantidad_stock or 0))|cop }}</td>
                                         <td class="text-end text-muted">${{ (v.precio_sugerido or p.precio_sugerido or 0)|cop }}</td>
                                     </tr>
@@ -193,7 +295,7 @@
         <!-- Anterior -->
         <li class="page-item {% if not paginacion.has_prev %}disabled{% endif %}">
             <a class="page-link rounded-pill px-3 shadow-sm"
-               href="{% if paginacion.has_prev %}{{ url_for('inventory_bp.index', page=paginacion.prev_num) }}{% else %}#{% endif %}"
+               href="{% if paginacion.has_prev %}{{ url_for('inventory_bp.index', page=paginacion.prev_num, filtro=filtro if filtro else None) }}{% else %}#{% endif %}"
                aria-label="Anterior">
                 <i class="fa-solid fa-chevron-left"></i>
             </a>
@@ -204,7 +306,7 @@
             {% if p_num %}
                 <li class="page-item {% if p_num == paginacion.page %}active{% endif %}">
                     <a class="page-link rounded-pill px-3 shadow-sm"
-                       href="{{ url_for('inventory_bp.index', page=p_num) }}">{{ p_num }}</a>
+                       href="{{ url_for('inventory_bp.index', page=p_num, filtro=filtro if filtro else None) }}">{{ p_num }}</a>
                 </li>
             {% else %}
                 <li class="page-item disabled">
@@ -216,7 +318,7 @@
         <!-- Siguiente -->
         <li class="page-item {% if not paginacion.has_next %}disabled{% endif %}">
             <a class="page-link rounded-pill px-3 shadow-sm"
-               href="{% if paginacion.has_next %}{{ url_for('inventory_bp.index', page=paginacion.next_num) }}{% else %}#{% endif %}"
+               href="{% if paginacion.has_next %}{{ url_for('inventory_bp.index', page=paginacion.next_num, filtro=filtro if filtro else None) }}{% else %}#{% endif %}"
                aria-label="Siguiente">
                 <i class="fa-solid fa-chevron-right"></i>
             </a>
