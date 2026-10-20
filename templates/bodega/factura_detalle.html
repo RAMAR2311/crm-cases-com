@@ -168,6 +168,12 @@
             border: 1.5px solid #F9C8D3 !important;
             background: #FFFFFF !important;
         }
+        .invoice-desktop-table {
+            display: block !important;
+        }
+        .invoice-mobile-list {
+            display: none !important;
+        }
         .invoice-table {
             border: 2px solid #F9C8D3 !important;
             border-collapse: collapse !important;
@@ -188,6 +194,20 @@
         .page-break-avoid {
             break-inside: avoid;
             page-break-inside: avoid;
+        }
+    }
+
+    /* Adaptabilidad Móvil para enlaces de WhatsApp */
+    @media (max-width: 767.98px) {
+        .invoice-card {
+            border-radius: 16px;
+        }
+        .invoice-content-layer {
+            padding: 1.15rem 0.95rem !important;
+        }
+        .invoice-info-card {
+            padding: 1rem !important;
+            margin-bottom: 0.5rem;
         }
     }
 </style>
@@ -386,16 +406,76 @@
 
         </div>
 
-        <!-- ════════════ 3. TABLA DE PRODUCTOS DESPACHADOS ════════════ -->
-        <div class="table-responsive mb-4 page-break-avoid rounded-4 border overflow-hidden shadow-2xs" style="border-color: #F9C8D3 !important;">
+        <!-- ════════════ 3. PRODUCTOS DESPACHADOS (RESPONSIVE MÓVIL Y ESCRITORIO) ════════════ -->
+
+        <!-- VISTA MÓVIL: Tarjetas 100% legibles para WhatsApp y pantallas pequeñas -->
+        <div class="invoice-mobile-list d-md-none mb-4 page-break-avoid">
+            <div class="d-flex align-items-center justify-content-between mb-2 px-1">
+                <span class="text-uppercase fw-bold small" style="font-size: 0.74rem; letter-spacing: 0.6px; color: #881337;">
+                    <i class="fa-solid fa-boxes-stacked me-1"></i> Detalle de Referencias ({{ f.detalles|length }})
+                </span>
+            </div>
+            
+            {% for d in f.detalles %}
+            <div class="p-3 mb-2 rounded-4 border bg-white shadow-2xs" style="border: 1.5px solid #F9C8D3 !important;">
+                <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                    <div class="flex-grow-1">
+                        <div class="fw-bold text-brand-black" style="font-size: 0.95rem; line-height: 1.35;">
+                            <span class="fw-extrabold me-1" style="color: #BE185D;">#{{ loop.index }}</span>
+                            {{ (d.producto.nombre if d.producto else 'Item sin asignar') }}
+                        </div>
+                        
+                        <div class="d-flex flex-wrap align-items-center gap-1.5 mt-1.5">
+                            {% if d.variante %}
+                                <span class="badge rounded-pill bg-light text-dark border px-2 py-0.5" style="font-size: 0.7rem;">
+                                    <i class="fa-solid fa-tag text-brand-pink me-1"></i> {{ d.variante.nombre_variante }}
+                                </span>
+                            {% endif %}
+                            <span class="badge bg-light text-muted font-monospace border px-2 py-0.5" style="font-size: 0.68rem;">
+                                SKU: {{ (d.producto.sku if d.producto else 'N/A') }}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-end flex-shrink-0">
+                        <span class="text-muted d-block" style="font-size: 0.68rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px;">Subtotal</span>
+                        <span class="fs-6 fw-bolder font-monospace" style="color: #881337;">
+                            ${{ ((d.cantidad or 0) * (d.precio_venta or 0))|cop }}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-between align-items-center pt-2 mt-1 border-top border-light-subtle small text-muted" style="font-size: 0.8rem;">
+                    <div>
+                        <span>Cantidad:</span>
+                        <span class="badge bg-white text-dark border px-2.5 py-1 fw-bold font-monospace ms-1 shadow-2xs" style="font-size: 0.82rem;">
+                            {{ d.cantidad or 0 }} unids
+                        </span>
+                    </div>
+                    <div>
+                        <span>Precio Unit:</span>
+                        <strong class="text-dark font-monospace ms-1">${{ (d.precio_venta or 0)|cop }}</strong>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="p-4 text-center rounded-4 border bg-white text-muted">
+                <i class="fa-solid fa-box-open fa-2x mb-2 d-block text-secondary opacity-50"></i>
+                No hay productos unitarios desglosados en esta factura.
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- VISTA ESCRITORIO / IMPRESIÓN: Cuadrícula completa en Tabla -->
+        <div class="invoice-desktop-table d-none d-md-block table-responsive mb-4 page-break-avoid rounded-4 border overflow-hidden shadow-2xs" style="border-color: #F9C8D3 !important; border-width: 2px !important;">
             <table class="invoice-table">
                 <thead>
                     <tr>
                         <th class="text-center" style="width: 48px;">#</th>
                         <th>PRODUCTO / REFERENCIA</th>
-                        <th class="text-center" style="width: 110px;">CANTIDAD</th>
-                        <th class="text-end" style="width: 150px;">PRECIO UNIT.</th>
-                        <th class="text-end" style="width: 160px;">SUBTOTAL</th>
+                        <th class="text-center" style="width: 100px;">CANTIDAD</th>
+                        <th class="text-end" style="width: 130px;">PRECIO UNIT.</th>
+                        <th class="text-end" style="width: 140px;">SUBTOTAL</th>
                     </tr>
                 </thead>
                 <tbody>
