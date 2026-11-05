@@ -392,3 +392,36 @@ class ServerPayment(db.Model):
     def __init__(self, **kwargs):
         super(ServerPayment, self).__init__(**kwargs)
 
+class ZenicDataAgreementAudit(db.Model):
+    """
+    Módulo Legal de Tratamiento de Datos, Custodia Técnica (SIC / Ley 1581 de 2012)
+    y Autorización Audiovisual de Redes Sociales de ZENIC S.A.S.
+    Certificación de integridad y no repudio según Ley 527 de 1999.
+    """
+    __tablename__ = 'zenic_data_agreements_audit'
+
+    id = db.Column(db.Integer, primary_key=True)
+    client_id = db.Column(db.Integer, nullable=False, default=1, index=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    business_name = db.Column(db.String(255), nullable=False)
+    business_nit = db.Column(db.String(50), nullable=False, index=True)
+    legal_representative = db.Column(db.String(255), nullable=False)
+    legal_rep_id = db.Column(db.String(100), nullable=False) # C.C. y lugar de expedición
+    business_city = db.Column(db.String(150), nullable=False, default='Bogotá D.C., Colombia')
+    business_email = db.Column(db.String(150), nullable=False)
+    accepted_terms = db.Column(db.SmallInteger, nullable=False, default=1)
+    accepted_dpa = db.Column(db.SmallInteger, nullable=False, default=1)
+    accepted_media_release = db.Column(db.SmallInteger, nullable=False, default=1) # Autorización audiovisual y redes
+    terms_version = db.Column(db.String(20), nullable=False, default='v2026.1')
+    document_sha256 = db.Column(db.String(64), nullable=False) # Hash criptográfico Ley 527 de 1999
+    ip_address = db.Column(db.String(45), nullable=True)
+    user_agent = db.Column(db.Text, nullable=True)
+    signature_data = db.Column(db.Text, nullable=False) # Base64 del trazo manuscrito digital
+    timestamp_utc5 = db.Column(db.DateTime, default=obtener_hora_bogota, nullable=False)
+
+    usuario = db.relationship('User', backref='acuerdos_legales_firmados', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(ZenicDataAgreementAudit, self).__init__(**kwargs)
+
+

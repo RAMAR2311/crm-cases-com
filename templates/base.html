@@ -501,6 +501,19 @@
                                 <span>Arqueo de Caja</span>
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center justify-content-between" href="{{ url_for('legal_bp.acuerdo_datos') }}">
+                                <div class="d-flex align-items-center">
+                                    <span class="sidebar-icon-badge" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-file-shield"></i></span>
+                                    <span>Custodia Datos & SIC</span>
+                                </div>
+                                {% if acuerdo_sic_firmado %}
+                                    <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-0" style="font-size: 0.65rem;">Firmado</span>
+                                {% else %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-2 py-0" style="font-size: 0.65rem;">Pendiente</span>
+                                {% endif %}
+                            </a>
+                        </li>
                     </ul>
 
                 {% elif current_user.rol == 'vendedor' %}
@@ -920,6 +933,116 @@
         </div>
         {% endif %}
 
+        <!-- MODAL GATEKEEPER BLOQUEANTE: ACUERDO SIC / LEY 1581 Y AUTORIZACIÓN AUDIOVISUAL (ZENIC S.A.S.) -->
+        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado %}
+        <div class="modal fade" id="modalGatekeeperLegal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalGatekeeperLegalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                    <div class="modal-header border-0 p-4 pb-2" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white;">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 48px; height: 48px; background: rgba(249, 200, 211, 0.2); color: #F9C8D3;">
+                                <i class="fa-solid fa-file-signature fs-4"></i>
+                            </span>
+                            <div>
+                                <h5 class="modal-title fw-bold m-0 text-white" id="modalGatekeeperLegalLabel">Formalización Legal Obligatoria</h5>
+                                <small style="color: #94A3B8;">Custodia de Datos (SIC / Ley 1581) &bull; ZENIC S.A.S.</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form id="formFirmaLegal" method="POST" action="{{ url_for('legal_bp.firmar_acuerdo') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="signature_data" id="gatekeeper_signature_data">
+
+                        <div class="modal-body p-4">
+                            <div class="alert alert-light border rounded-3 small text-secondary mb-3 d-flex gap-2">
+                                <i class="fa-solid fa-shield-halved text-brand-pink fs-5 mt-1"></i>
+                                <div>
+                                    Para dar cumplimiento a la <strong>Ley 1581 de 2012</strong> y directrices de la <strong>Superintendencia de Industria y Comercio (SIC)</strong>, es necesario formalizar el instrumento de custodia técnica de la base de datos y la autorización de difusión comercial audiovisual de <strong>ZENIC S.A.S.</strong>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">Nombre Comercial / Razón Social <span class="text-danger">*</span></label>
+                                    <input type="text" name="business_name" class="form-control form-control-sm rounded-3 bg-light" value="cases.com" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">NIT o Identificación Tributaria <span class="text-danger">*</span></label>
+                                    <input type="text" name="business_nit" class="form-control form-control-sm rounded-3 bg-light" value="901.888.777-1" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">Nombre Representante Legal / Propietario <span class="text-danger">*</span></label>
+                                    <input type="text" name="legal_representative" class="form-control form-control-sm rounded-3 bg-light" value="{{ current_user.nombre }}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label small fw-bold text-dark mb-1">C.C. y Lugar de Expedición <span class="text-danger">*</span></label>
+                                    <input type="text" id="legal_rep_id_input" name="legal_rep_id" class="form-control form-control-sm rounded-3 bg-light" placeholder="Ej: 1.020.304.050 de Bogotá" required>
+                                </div>
+                            </div>
+
+                            <!-- 3 Casillas Obligatorias -->
+                            <div class="p-3 rounded-3 bg-light border mb-3">
+                                <h6 class="fw-bold small text-dark mb-2"><i class="fa-solid fa-list-check me-1 text-primary"></i> Cláusulas Vinculantes de Aceptación:</h6>
+                                
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input check-legal-req" type="checkbox" name="accepted_terms" id="chk_terms" value="1" required>
+                                    <label class="form-check-label small text-secondary" for="chk_terms">
+                                        <strong>1. Custodia Técnica e Indemnidad (SIC):</strong> Acepto la distribución de roles (Responsable vs Encargado), garantizo la licitud de las bases de datos y exonero a ZENIC S.A.S. de sanciones por ausencia de autorizaciones a mis clientes.
+                                    </label>
+                                </div>
+
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input check-legal-req" type="checkbox" name="accepted_dpa" id="chk_dpa" value="1" required>
+                                    <label class="form-check-label small text-secondary" for="chk_dpa">
+                                        <strong>2. No Comercialización y Supresión (30 días):</strong> Reconozco que ZENIC S.A.S. no vende mis datos, no maneja cláusula de permanencia mínima y conserva 30 días de custodia preventiva antes de borrado definitivo.
+                                    </label>
+                                </div>
+
+                                <div class="form-check">
+                                    <input class="form-check-input check-legal-req" type="checkbox" name="accepted_media_release" id="chk_media" value="1" required>
+                                    <label class="form-check-label small text-secondary" for="chk_media">
+                                        <strong>3. Autorización Audiovisual y Redes Sociales:</strong> Autorizo a ZENIC S.A.S. a utilizar la imagen comercial, logotipo corporativo y capturas o testimonios del comercio para difusión comercial en sus redes sociales y portafolio institucional.
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Canvas de Rúbrica / Firma Manuscrita Digital -->
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <label class="form-label small fw-bold text-dark m-0">
+                                        <i class="fa-solid fa-pen-nib text-brand-pink me-1"></i> Rúbrica Manuscrita Digital (Ley 527 de 1999) <span class="text-danger">*</span>
+                                    </label>
+                                    <button type="button" id="btnClearSignature" class="btn btn-link btn-sm text-decoration-none text-danger p-0 small">
+                                        <i class="fa-solid fa-eraser me-1"></i> Borrar Firma
+                                    </button>
+                                </div>
+                                <div class="border rounded-3 bg-white text-center position-relative overflow-hidden" style="border: 2px dashed #94A3B8 !important; touch-action: none;">
+                                    <canvas id="signatureCanvas" width="700" height="150" style="width: 100%; height: 140px; cursor: crosshair; display: block;"></canvas>
+                                    <span id="canvasPlaceholder" class="position-absolute top-50 start-50 translate-middle text-muted small pointer-events-none opacity-50">
+                                        Dibuja tu firma aquí con el mouse o tu dedo...
+                                    </span>
+                                </div>
+                                <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">
+                                    Al firmar, se generará una estampa de auditoría criptográfica con Hash SHA-256 inmutable, tu dirección IP y marca temporal oficial colombiana UTC-5.
+                                </small>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
+                            <a href="{{ url_for('legal_bp.acuerdo_datos') }}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                <i class="fa-solid fa-book-open me-1"></i> Leer Contrato Completo
+                            </a>
+                            <button type="submit" id="btnSubmitLegal" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" disabled>
+                                <i class="fa-solid fa-check-double me-1"></i> Estampar Firma y Desbloquear
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         <!-- Renderizado de Flash Messages de Flask -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -980,6 +1103,103 @@
             if (document.visibilityState === 'visible') refrescarSesion();
         });
         window.addEventListener('focus', refrescarSesion);
+        {% endif %}
+
+        // LÓGICA DEL GATEKEEPER LEGAL Y CANVAS DE FIRMA DIGITAL
+        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado %}
+        document.addEventListener('DOMContentLoaded', function() {
+            const modalEl = document.getElementById('modalGatekeeperLegal');
+            if (modalEl) {
+                const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
+                modal.show();
+
+                const canvas = document.getElementById('signatureCanvas');
+                const ctx = canvas ? canvas.getContext('2d') : null;
+                const btnClear = document.getElementById('btnClearSignature');
+                const btnSubmit = document.getElementById('btnSubmitLegal');
+                const placeholder = document.getElementById('canvasPlaceholder');
+                const signatureInput = document.getElementById('gatekeeper_signature_data');
+                const legalRepInput = document.getElementById('legal_rep_id_input');
+                const checkboxes = document.querySelectorAll('.check-legal-req');
+
+                let isDrawing = false;
+                let hasSignature = false;
+
+                if (canvas && ctx) {
+                    // Ajuste de resolución nítida
+                    ctx.strokeStyle = '#0F172A';
+                    ctx.lineWidth = 2.5;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+
+                    function getPos(e) {
+                        const rect = canvas.getBoundingClientRect();
+                        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                        return {
+                            x: (clientX - rect.left) * (canvas.width / rect.width),
+                            y: (clientY - rect.top) * (canvas.height / rect.height)
+                        };
+                    }
+
+                    function startDraw(e) {
+                        isDrawing = true;
+                        const pos = getPos(e);
+                        ctx.beginPath();
+                        ctx.moveTo(pos.x, pos.y);
+                        if (placeholder) placeholder.style.display = 'none';
+                    }
+
+                    function draw(e) {
+                        if (!isDrawing) return;
+                        e.preventDefault();
+                        const pos = getPos(e);
+                        ctx.lineTo(pos.x, pos.y);
+                        ctx.stroke();
+                        hasSignature = true;
+                        validarFormulario();
+                    }
+
+                    function endDraw() {
+                        if (isDrawing) {
+                            isDrawing = false;
+                            signatureInput.value = canvas.toDataURL('image/png');
+                            validarFormulario();
+                        }
+                    }
+
+                    canvas.addEventListener('mousedown', startDraw);
+                    canvas.addEventListener('mousemove', draw);
+                    window.addEventListener('mouseup', endDraw);
+
+                    canvas.addEventListener('touchstart', startDraw, { passive: false });
+                    canvas.addEventListener('touchmove', draw, { passive: false });
+                    window.addEventListener('touchend', endDraw);
+
+                    if (btnClear) {
+                        btnClear.addEventListener('click', function() {
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            signatureInput.value = '';
+                            hasSignature = false;
+                            if (placeholder) placeholder.style.display = 'block';
+                            validarFormulario();
+                        });
+                    }
+                }
+
+                function validarFormulario() {
+                    const allChecked = Array.from(checkboxes).every(c => c.checked);
+                    const hasId = legalRepInput && legalRepInput.value.trim().length >= 4;
+                    const isValid = allChecked && hasId && hasSignature;
+                    if (btnSubmit) {
+                        btnSubmit.disabled = !isValid;
+                    }
+                }
+
+                checkboxes.forEach(c => c.addEventListener('change', validarFormulario));
+                if (legalRepInput) legalRepInput.addEventListener('input', validarFormulario);
+            }
+        });
         {% endif %}
     </script>
 </body>

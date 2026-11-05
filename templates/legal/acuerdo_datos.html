@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+
+{% block title %}Acuerdo de Custodia Técnica de Datos y Autorización Audiovisual - ZENIC S.A.S.{% endblock %}
+
+{% block content %}
+<style>
+    /* Estilos contractuales y de impresión formal */
+    .legal-sheet {
+        background: #FFFFFF;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        border: 1px solid #E2E8F0;
+        padding: 3rem 3.5rem;
+        color: #1E293B;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        line-height: 1.7;
+    }
+
+    .contract-clause {
+        margin-bottom: 2rem;
+        text-align: justify;
+    }
+
+    .contract-clause h5 {
+        color: #0F172A;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin-bottom: 0.6rem;
+        border-left: 3px solid #E11D48;
+        padding-left: 0.75rem;
+    }
+
+    .contract-clause p {
+        font-size: 0.92rem;
+        color: #334155;
+        margin-bottom: 0.6rem;
+    }
+
+    .signature-box {
+        background: #F8FAFC;
+        border: 1.5px dashed #CBD5E1;
+        border-radius: 14px;
+        padding: 1.5rem;
+        min-height: 220px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .signature-box.signed {
+        border-style: solid;
+        border-color: #10B981;
+        background: #F0FDF4;
+    }
+
+    .stamp-badge {
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 0.75rem;
+        background: #0F172A;
+        color: #38BDF8;
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        word-break: break-all;
+    }
+
+    @media print {
+        body {
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            font-size: 10pt;
+        }
+        nav, header, footer, .sidebar, .sidebar-wrapper, .d-print-none, .btn, .alert {
+            display: none !important;
+        }
+        .main-content, .container-fluid, .row {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100% !important;
+        }
+        .legal-sheet {
+            box-shadow: none !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+        }
+        .signature-box {
+            border: 1px solid #000 !important;
+            background: transparent !important;
+        }
+        .stamp-badge {
+            background: transparent !important;
+            color: #000 !important;
+            border: 1px dashed #000 !important;
+        }
+    }
+</style>
+
+<div class="row justify-content-center">
+    <!-- Barra superior de acciones (solo pantalla) -->
+    <div class="col-12 col-xl-10 d-print-none mb-4">
+        <div class="card border-0 shadow-sm rounded-4 p-3 bg-white d-flex flex-row justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-3">
+                <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 44px; height: 44px; background: rgba(225, 29, 72, 0.12); color: #E11D48;">
+                    <i class="fa-solid fa-file-contract fs-4"></i>
+                </span>
+                <div>
+                    <h5 class="fw-bold text-dark m-0">Instrumento Jurídico de Custodia Técnica y Redes Sociales</h5>
+                    <small class="text-muted">Ley 1581 de 2012, Decretos Reglamentarios (SIC) & Ley 527 de 1999</small>
+                </div>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                {% if acuerdo %}
+                <span class="badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill fw-bold">
+                    <i class="fa-solid fa-shield-check me-1"></i> Estado: Firmado y Certificado
+                </span>
+                {% else %}
+                <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-2 rounded-pill fw-bold">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> Pendiente de Formalización
+                </span>
+                {% endif %}
+                <button onclick="window.print()" class="btn btn-outline-dark rounded-pill px-3 fw-bold">
+                    <i class="fa-solid fa-print me-1"></i> Imprimir / Guardar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hoja Contractual -->
+    <div class="col-12 col-xl-10">
+        <div class="legal-sheet">
+            <!-- Encabezado Institucional -->
+            <div class="d-flex justify-content-between align-items-start border-bottom pb-4 mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="d-flex align-items-center justify-content-center rounded-4 shadow-sm" style="width: 58px; height: 58px; background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: #F9C8D3;">
+                        <i class="fa-solid fa-shield-halved fs-2"></i>
+                    </div>
+                    <div>
+                        <h3 class="fw-bolder mb-0 text-dark" style="letter-spacing: -0.5px;">ZENIC S.A.S.</h3>
+                        <small class="text-muted fw-semibold">Arquitectura de Software &bull; Soluciones Tecnológicas Empresariales</small><br>
+                        <small class="text-muted">NIT: {{ zenic.nit }} &bull; Domicilio: {{ zenic.domicilio }}</small>
+                    </div>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-light text-dark border px-3 py-2 rounded-3 small fw-bold">
+                        VERSIÓN OFICIAL: {{ zenic.version }}
+                    </span>
+                    <p class="text-muted small mt-1 mb-0">Régimen Legal Colombiano (SIC)</p>
+                </div>
+            </div>
+
+            <!-- Título Principal del Acuerdo -->
+            <div class="text-center my-4 pb-3">
+                <h4 class="fw-extrabold text-uppercase text-dark mb-2" style="letter-spacing: 0.5px;">
+                    CONTRATO DE TRANSMISIÓN DE DATOS PERSONALES, CUSTODIA TÉCNICA DE INFRAESTRUCTURA Y AUTORIZACIÓN AUDIOVISUAL
+                </h4>
+                <p class="text-muted small mb-0">
+                    Celebrado entre el <strong>RESPONSABLE DEL TRATAMIENTO</strong> (Comercio / Usuario) y <strong>ZENIC S.A.S.</strong> (ENLACE TÉCNICO Y ENCARGADO DEL TRATAMIENTO)
+                </p>
+            </div>
+
+            <!-- Preámbulo de Comparecencia -->
+            <div class="bg-light p-3 rounded-3 mb-4 text-secondary small" style="border-left: 4px solid #0EA5E9;">
+                Entre los suscritos a saber: Por una parte, <strong>ZENIC S.A.S.</strong>, sociedad comercial legalmente constituida bajo las leyes de la República de Colombia, identificada con NIT <strong>{{ zenic.nit }}</strong>, con domicilio principal en la ciudad de {{ zenic.domicilio }}, representada legalmente por <strong>{{ zenic.representante }}</strong>, identificado con C.C. <strong>{{ zenic.identificacion_rep }}</strong>, quien en adelante y para los efectos del presente instrumento se denominará <strong>EL ENCARGADO</strong>; y por la otra parte, <strong>{{ acuerdo.business_name if acuerdo else 'EL COMERCIO SUSCRIPTO' }}</strong>, identificado con NIT <strong>{{ acuerdo.business_nit if acuerdo else 'NIT DEL COMERCIO' }}</strong>, representado legalmente por <strong>{{ acuerdo.legal_representative if acuerdo else 'REPRESENTANTE LEGAL' }}</strong>, quien en adelante se denominará <strong>EL RESPONSABLE</strong>, hemos convenido celebrar el presente Contrato de Transmisión de Datos Personales, Custodia Técnica y Licencia Audiovisual, previas las siguientes consideraciones y cláusulas:
+            </div>
+
+            <!-- Cláusulas Contractuales -->
+            <div class="contract-clause">
+                <h5>PRIMERA. DISTRIBUCIÓN DE ROLES Y OBJETO (LEY 1581 DE 2012 Y DECRETO 1377 DE 2013).</h5>
+                <p>
+                    Las partes reconocen expresamente que, a la luz del Régimen General de Protección de Datos Personales de la República de Colombia y las directrices vinculantes de la <strong>Superintendencia de Industria y Comercio (SIC)</strong>:
+                </p>
+                <p>
+                    <strong>1.1. EL RESPONSABLE:</strong> Conserva de forma privativa la titularidad, gobierno, fines y legitimidad de las bases de datos transaccionales, inventarios, datos de clientes, empleados y proveedores procesados mediante el sistema. EL RESPONSABLE certifica contar con la autorización previa, expresa e informada de cada titular cuyos datos sean almacenados en el aplicativo.
+                </p>
+                <p>
+                    <strong>1.2. EL ENCARGADO (ZENIC S.A.S.):</strong> Actúa única y exclusivamente como <em>Encargado del Tratamiento</em> y custodio técnico de la infraestructura informática, limitándose a ejecutar operaciones de cómputo, indexación, respaldo y disponibilidad conforme a las instrucciones directas de EL RESPONSABLE derivadas del uso del aplicativo.
+                </p>
+            </div>
+
+            <div class="contract-clause">
+                <h5>SEGUNDA. SALVAGUARDAS TÉCNICAS, CONFIDENCIALIDAD Y NO COMERCIALIZACIÓN.</h5>
+                <p>
+                    ZENIC S.A.S. asume la obligación estricta y vinculante de mantener bajo estricta reserva toda la información procesada. En virtud de esta cláusula, <strong>ZENIC S.A.S. no vende, no comercializa, no transfiere ni cede bajo ninguna modalidad los datos personales ni las transacciones comerciales de EL RESPONSABLE</strong> a favor de terceras partes, centrales de riesgo o firmas publicitarias.
+                </p>
+                <p>
+                    La arquitectura técnica implementada cuenta con mecanismos de aislamiento de datos, cifrado en reposo y en tránsito (HTTPS/TLS) y mitigación de accesos concurrentes no autorizados, conforme al Estándar Nacional de Seguridad de la Información.
+                </p>
+            </div>
+
+            <div class="contract-clause">
+                <h5>TERCERA. AUSENCIA DE CLÁUSULAS DE PERMANENCIA Y SUPRESIÓN CERTIFICADA DE DATOS.</h5>
+                <p>
+                    El presente servicio de licenciamiento y soporte opera bajo el principio de libertad contractual y ausencia de cláusula de permanencia mínima. En el evento en que EL RESPONSABLE decida prescindir voluntariamente de los servicios de ZENIC S.A.S. o suspenda su suscripción:
+                </p>
+                <p>
+                    <strong>3.1. Derecho a la Portabilidad:</strong> EL RESPONSABLE podrá solicitar y exportar en formatos legibles (CSV, SQL o Excel) la totalidad de sus catálogos, registros de venta y cierres de arqueo.
+                </p>
+                <p>
+                    <strong>3.2. Custodia Transitoria de Gracia:</strong> ZENIC S.A.S. preservará una copia inactiva de resguardo durante un período de gracia perentorio de treinta (30) días calendario para prevenir pérdidas irreparables por caídas accidentales de facturación de hosting.
+                </p>
+                <p>
+                    <strong>3.3. Supresión Segura y Definitiva:</strong> Vencido dicho plazo sin requerimiento de continuidad o mediando solicitud expresa de supresión de conformidad con el artículo 15 de la Ley 1581 de 2012, ZENIC S.A.S. procederá a ejecutar el borrado seguro e irrecuperable de las bases de datos de sus servidores de producción y copias espejo.
+                </p>
+            </div>
+
+            <div class="contract-clause">
+                <h5>CUARTA. LICITUD DE LAS BASES DE DATOS Y DEBER DE INDEMNIDAD.</h5>
+                <p>
+                    EL RESPONSABLE garantiza que los datos personales acopiados e introducidos en el software han sido recaudados atendiendo los lineamientos del Principio de Legalidad y Libertad. En consecuencia, EL RESPONSABLE mantendrá plenamente indemne a ZENIC S.A.S., a sus accionistas, administradores y colaboradores frente a cualquier queja, sanción pecuniaria, investigación administrativa o requerimiento iniciado por la Superintendencia de Industria y Comercio (Delegatura de Protección de Datos) derivado de la ausencia de autorización de los titulares por parte de EL RESPONSABLE.
+                </p>
+            </div>
+
+            <div class="contract-clause">
+                <h5>QUINTA. VALIDEZ, EQUIVALENCIA FUNCIONAL Y NO REPUDIO (LEY 527 DE 1999).</h5>
+                <p>
+                    Las partes acuerdan someter la formalización del presente instrumento a las previsiones de la Ley 527 de 1999 (Ley de Comercio Electrónico y Mensajes de Datos) y el Decreto 2364 de 2012. La rúbrica electrónica manuscrita plasmada por EL RESPONSABLE sobre la interfaz digital, asociada al registro criptográfico SHA-256 generado sobre el contenido del documento, la dirección IP de origen, la marca temporal UTC-5 (hora oficial legal) y los encabezados de red del usuario firmante, constituye prueba fehaciente de consentimiento, equivalencia funcional de firma manuscrita y no repudio ante autoridades judiciales y administrativas.
+                </p>
+            </div>
+
+            <div class="contract-clause">
+                <h5>SEXTA. AUTORIZACIÓN PARA USO DE MARCA, REGISTRO AUDIOVISUAL Y DIFUSIÓN EN REDES SOCIALES.</h5>
+                <p>
+                    Mediante la suscripción del presente acápite, EL RESPONSABLE autoriza a <strong>ZENIC S.A.S.</strong> de manera libre, voluntaria, informada e inequívoca, para:
+                </p>
+                <p>
+                    <strong>6.1.</strong> Efectuar tomas fotográficas, grabaciones en video, entrevistas y capturas de interfaz o testimonios relativos a la implementación, funcionamiento y modernización tecnológica del comercio.
+                </p>
+                <p>
+                    <strong>6.2.</strong> Utilizar, editar, publicar, reproducir y difundir la imagen comercial, logotipo corporativo, denominación comercial y material audiovisual derivado a través de los canales institucionales de ZENIC S.A.S. (sitio web corporativo, Instagram, TikTok, LinkedIn, YouTube, Facebook y piezas comerciales o de portafolio de clientes).
+                </p>
+                <p>
+                    <strong>6.3.</strong> La presente autorización es de carácter no exclusivo, opera a título de reconocimiento y alianza comercial sin contraprestación pecuniaria, y preserva en todo momento el prestigio y buen nombre de EL RESPONSABLE, sin exhibir datos financieros de utilidades netas o contraseñas confidenciales del cliente.
+                </p>
+            </div>
+
+            <!-- Estampa Probatoria y Bloque de Firmas -->
+            <div class="mt-5 pt-4 border-top">
+                <div class="row g-4">
+                    <!-- Firma EL RESPONSABLE -->
+                    <div class="col-12 col-md-6">
+                        <div class="signature-box {{ 'signed' if acuerdo else '' }}">
+                            <div>
+                                <small class="text-uppercase fw-bold text-muted d-block mb-2">Por EL RESPONSABLE (El Comercio):</small>
+                                {% if acuerdo and acuerdo.signature_data %}
+                                <div class="text-center py-2 bg-white rounded-3 border mb-3">
+                                    <img src="{{ acuerdo.signature_data }}" alt="Firma Electrónica Responsable" style="max-height: 90px; max-width: 100%; object-fit: contain;">
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4 text-muted fst-italic">
+                                    [Pendiente de firma digital por el Administrador]
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="small">
+                                <hr class="my-2">
+                                <p class="mb-0 fw-bold text-dark">{{ acuerdo.legal_representative if acuerdo else 'Firma Representante Legal' }}</p>
+                                <p class="mb-0 text-muted">C.C. {{ acuerdo.legal_rep_id if acuerdo else 'Documento Identidad' }}</p>
+                                <p class="mb-0 text-muted">{{ acuerdo.business_name if acuerdo else 'Razón Social' }} &bull; NIT: {{ acuerdo.business_nit if acuerdo else '' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Firma EL ENCARGADO (ZENIC S.A.S.) -->
+                    <div class="col-12 col-md-6">
+                        <div class="signature-box signed">
+                            <div>
+                                <small class="text-uppercase fw-bold text-muted d-block mb-2">Por EL ENCARGADO (ZENIC S.A.S.):</small>
+                                <div class="text-center py-2 bg-white rounded-3 border mb-3 d-flex flex-column align-items-center justify-content-center" style="height: 90px;">
+                                    <span class="text-success fw-bold" style="font-size: 0.85rem;">
+                                        <i class="fa-solid fa-certificate me-1"></i> FIRMADO DIGITALMENTE POR ZENIC S.A.S.
+                                    </span>
+                                    <small class="text-muted" style="font-size: 0.72rem;">Certificado de Custodia Técnica e Infraestructura Cloud</small>
+                                    <span class="badge bg-light text-dark border px-2 py-0 mt-1" style="font-size: 0.65rem;">SERIAL: ZEN-{{ zenic.nit }}-AUTH</span>
+                                </div>
+                            </div>
+                            <div class="small">
+                                <hr class="my-2">
+                                <p class="mb-0 fw-bold text-dark">{{ zenic.representante }}</p>
+                                <p class="mb-0 text-muted">C.C. {{ zenic.identificacion_rep }}</p>
+                                <p class="mb-0 text-muted">{{ zenic.razon_social }} &bull; NIT: {{ zenic.nit }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Estampa Técnica Criptográfica (Auditoría Forense) -->
+                {% if acuerdo %}
+                <div class="mt-4 p-3 rounded-3 bg-light border">
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <span class="fw-bold small text-dark">
+                            <i class="fa-solid fa-fingerprint text-brand-pink me-1"></i> METADATOS Y CERTIFICADO DE AUDITORÍA DIGITAL (LEY 527/1999)
+                        </span>
+                        <span class="badge bg-success px-2 py-1 rounded-pill" style="font-size: 0.7rem;">HASH ÍNTEGRO Y NO MODIFICABLE</span>
+                    </div>
+                    <div class="stamp-badge mb-2">
+                        SHA-256: {{ acuerdo.document_sha256 }}
+                    </div>
+                    <div class="row g-2 text-muted" style="font-size: 0.78rem;">
+                        <div class="col-sm-6">
+                            <strong>Fecha y Hora de Estampa:</strong> {{ acuerdo.timestamp_utc5.strftime('%Y-%m-%d %H:%M:%S') }} (UTC-5 Colombia)
+                        </div>
+                        <div class="col-sm-6">
+                            <strong>Dirección IP Certificada:</strong> {{ acuerdo.ip_address }}
+                        </div>
+                        <div class="col-12 text-truncate" title="{{ acuerdo.user_agent }}">
+                            <strong>Agente de Navegación:</strong> {{ acuerdo.user_agent }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

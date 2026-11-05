@@ -135,6 +135,10 @@ def create_app():
     from routes.celulares import celulares_bp
     app.register_blueprint(celulares_bp, url_prefix='/celulares')
 
+    # Registro de Blueprint Legal (SIC, Ley 1581 de 2012 y Autorización Audiovisual)
+    from routes.legal import legal_bp
+    app.register_blueprint(legal_bp, url_prefix='/legal')
+
     @app.template_filter('cop')
     def cop_filter(value):
         if value is None:
@@ -260,6 +264,26 @@ def create_app():
             except Exception:
                 pass
             return {'pago_servidor': None, 'server_payment_info': None}
+
+    @app.context_processor
+    def inject_legal_agreement():
+        """Inyecta el estado de formalización del Acuerdo Legal SIC / Zenic S.A.S."""
+        try:
+            from models import ZenicDataAgreementAudit
+            acuerdo = ZenicDataAgreementAudit.query.order_by(ZenicDataAgreementAudit.id.desc()).first()
+            return {
+                'acuerdo_sic_firmado': (acuerdo is not None),
+                'acuerdo_sic_data': acuerdo
+            }
+        except Exception:
+            try:
+                db.session.rollback()
+            except Exception:
+                pass
+            return {
+                'acuerdo_sic_firmado': False,
+                'acuerdo_sic_data': None
+            }
 
     @app.route('/servidor/confirmar-pago', methods=['GET', 'POST'])
     @csrf.exempt
