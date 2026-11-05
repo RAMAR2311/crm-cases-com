@@ -934,7 +934,7 @@
         {% endif %}
 
         <!-- MODAL GATEKEEPER BLOQUEANTE: ACUERDO SIC / LEY 1581 Y AUTORIZACIÓN AUDIOVISUAL (ZENIC S.A.S.) -->
-        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado %}
+        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and request.endpoint != 'legal_bp.acuerdo_datos' %}
         <div class="modal fade" id="modalGatekeeperLegal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalGatekeeperLegalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
@@ -1030,8 +1030,8 @@
                         </div>
 
                         <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
-                            <a href="{{ url_for('legal_bp.acuerdo_datos') }}" target="_blank" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
-                                <i class="fa-solid fa-book-open me-1"></i> Leer Contrato Completo
+                            <a href="{{ url_for('legal_bp.acuerdo_datos') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                                <i class="fa-solid fa-book-open me-1"></i> Leer Términos y Condiciones
                             </a>
                             <button type="submit" id="btnSubmitLegal" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" disabled>
                                 <i class="fa-solid fa-check-double me-1"></i> Estampar Firma y Desbloquear
@@ -1106,7 +1106,7 @@
         {% endif %}
 
         // LÓGICA DEL GATEKEEPER LEGAL Y CANVAS DE FIRMA DIGITAL
-        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado %}
+        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and request.endpoint != 'legal_bp.acuerdo_datos' %}
         document.addEventListener('DOMContentLoaded', function() {
             const modalEl = document.getElementById('modalGatekeeperLegal');
             if (modalEl) {
