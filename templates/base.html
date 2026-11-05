@@ -1091,8 +1091,12 @@
             }
         }
 
+    </script>
+
+    <!-- Scripts de Sesión y Gatekeeper Legal -->
+    {% if current_user.is_authenticated %}
+    <script>
         // Keep-Alive de sesión para evitar que expire si la caja o PWA queda abierta mucho tiempo
-        {% if current_user.is_authenticated %}
         const refrescarSesion = () => {
             fetch('/auth/ping', { method: 'GET', credentials: 'same-origin' }).catch(() => {});
         };
@@ -1103,10 +1107,12 @@
             if (document.visibilityState === 'visible') refrescarSesion();
         });
         window.addEventListener('focus', refrescarSesion);
-        {% endif %}
+    </script>
+    {% endif %}
 
+    {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and request.endpoint != 'legal_bp.acuerdo_datos' %}
+    <script>
         // LÓGICA DEL GATEKEEPER LEGAL Y CANVAS DE FIRMA DIGITAL
-        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and request.endpoint != 'legal_bp.acuerdo_datos' %}
         document.addEventListener('DOMContentLoaded', function() {
             const modalEl = document.getElementById('modalGatekeeperLegal');
             if (modalEl) {
@@ -1126,7 +1132,6 @@
                 let hasSignature = false;
 
                 if (canvas && ctx) {
-                    // Ajuste de resolución nítida
                     ctx.strokeStyle = '#0F172A';
                     ctx.lineWidth = 2.5;
                     ctx.lineCap = 'round';
@@ -1218,7 +1223,6 @@
                     }
                 }
 
-                // Validación estricta en el evento submit antes de enviar
                 const formEl = document.getElementById('formFirmaLegal');
                 if (formEl) {
                     formEl.addEventListener('submit', function(e) {
@@ -1243,7 +1247,6 @@
                     });
                 }
 
-                // Sincronización en tiempo real de los 4 inputs hacia el enlace "Leer Términos y Condiciones"
                 const inputBusinessName = document.getElementById('business_name_input');
                 const inputBusinessNit = document.getElementById('business_nit_input');
                 const inputLegalRep = document.getElementById('legal_representative_input');
@@ -1270,7 +1273,8 @@
                 validarFormulario();
             }
         });
-        {% endif %}
+    </script>
+    {% endif %}
     </script>
 </body>
 </html>
