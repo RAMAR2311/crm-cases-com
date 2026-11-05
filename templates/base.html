@@ -965,15 +965,15 @@
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-dark mb-1">Nombre Comercial / Razón Social <span class="text-danger">*</span></label>
-                                    <input type="text" name="business_name" class="form-control form-control-sm rounded-3 bg-light" value="cases.com" required>
+                                    <input type="text" id="business_name_input" name="business_name" class="form-control form-control-sm rounded-3 bg-light" value="cases.com" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-dark mb-1">NIT o Identificación Tributaria <span class="text-danger">*</span></label>
-                                    <input type="text" name="business_nit" class="form-control form-control-sm rounded-3 bg-light" value="901.888.777-1" required>
+                                    <input type="text" id="business_nit_input" name="business_nit" class="form-control form-control-sm rounded-3 bg-light" value="901.888.777-1" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-dark mb-1">Nombre Representante Legal / Propietario <span class="text-danger">*</span></label>
-                                    <input type="text" name="legal_representative" class="form-control form-control-sm rounded-3 bg-light" value="{{ current_user.nombre }}" required>
+                                    <input type="text" id="legal_representative_input" name="legal_representative" class="form-control form-control-sm rounded-3 bg-light" value="{{ current_user.nombre }}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label small fw-bold text-dark mb-1">C.C. y Lugar de Expedición <span class="text-danger">*</span></label>
@@ -1030,7 +1030,7 @@
                         </div>
 
                         <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
-                            <a href="{{ url_for('legal_bp.acuerdo_datos') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                            <a id="btnLeerTerminosCondiciones" href="{{ url_for('legal_bp.acuerdo_datos') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                                 <i class="fa-solid fa-book-open me-1"></i> Leer Términos y Condiciones
                             </a>
                             <button type="submit" id="btnSubmitLegal" class="btn btn-secondary rounded-pill px-4 fw-bold shadow-sm" style="background-color: #94A3B8; border-color: #94A3B8; opacity: 0.65; cursor: not-allowed;" disabled>
@@ -1243,8 +1243,30 @@
                     });
                 }
 
+                // Sincronización en tiempo real de los 4 inputs hacia el enlace "Leer Términos y Condiciones"
+                const inputBusinessName = document.getElementById('business_name_input');
+                const inputBusinessNit = document.getElementById('business_nit_input');
+                const inputLegalRep = document.getElementById('legal_representative_input');
+                const btnLeerTerminos = document.getElementById('btnLeerTerminosCondiciones');
+
+                function actualizarUrlTerminos() {
+                    if (!btnLeerTerminos) return;
+                    const params = new URLSearchParams({
+                        business_name: inputBusinessName ? inputBusinessName.value : '',
+                        business_nit: inputBusinessNit ? inputBusinessNit.value : '',
+                        legal_representative: inputLegalRep ? inputLegalRep.value : '',
+                        legal_rep_id: legalRepInput ? legalRepInput.value : ''
+                    });
+                    btnLeerTerminos.href = `/legal/acuerdo-datos?${params.toString()}`;
+                }
+
+                if (inputBusinessName) inputBusinessName.addEventListener('input', () => { actualizarUrlTerminos(); validarFormulario(); });
+                if (inputBusinessNit) inputBusinessNit.addEventListener('input', () => { actualizarUrlTerminos(); validarFormulario(); });
+                if (inputLegalRep) inputLegalRep.addEventListener('input', () => { actualizarUrlTerminos(); validarFormulario(); });
+                if (legalRepInput) legalRepInput.addEventListener('input', () => { actualizarUrlTerminos(); validarFormulario(); });
+                actualizarUrlTerminos();
+
                 checkboxes.forEach(c => c.addEventListener('change', validarFormulario));
-                if (legalRepInput) legalRepInput.addEventListener('input', validarFormulario);
                 validarFormulario();
             }
         });

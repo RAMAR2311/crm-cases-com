@@ -163,7 +163,7 @@
 
             <!-- Preámbulo de Comparecencia -->
             <div class="bg-light p-3 rounded-3 mb-4 text-secondary small" style="border-left: 4px solid #0EA5E9;">
-                Entre los suscritos a saber: Por una parte, <strong>ZENIC S.A.S.</strong>, sociedad comercial legalmente constituida bajo las leyes de la República de Colombia, identificada con NIT <strong>{{ zenic.nit }}</strong>, con domicilio principal en la ciudad de {{ zenic.domicilio }}, representada legalmente por <strong>{{ zenic.representante }}</strong>, identificado con C.C. <strong>{{ zenic.identificacion_rep }}</strong>, quien en adelante y para los efectos del presente instrumento se denominará <strong>EL ENCARGADO</strong>; y por la otra parte, <strong>{{ acuerdo.business_name if acuerdo else 'EL COMERCIO SUSCRIPTO' }}</strong>, identificado con NIT <strong>{{ acuerdo.business_nit if acuerdo else 'NIT DEL COMERCIO' }}</strong>, representado legalmente por <strong>{{ acuerdo.legal_representative if acuerdo else 'REPRESENTANTE LEGAL' }}</strong>, quien en adelante se denominará <strong>EL RESPONSABLE</strong>, hemos convenido celebrar el presente Contrato de Transmisión de Datos Personales, Custodia Técnica y Licencia Audiovisual, previas las siguientes consideraciones y cláusulas:
+                Entre los suscritos a saber: Por una parte, <strong>ZENIC S.A.S.</strong>, sociedad comercial legalmente constituida bajo las leyes de la República de Colombia, identificada con NIT <strong>{{ zenic.nit }}</strong>, con domicilio principal en la ciudad de {{ zenic.domicilio }}, representada legalmente por <strong>{{ zenic.representante }}</strong>, identificado con C.C. <strong>{{ zenic.identificacion_rep }}</strong>, quien en adelante y para los efectos del presente instrumento se denominará <strong>EL ENCARGADO</strong>; y por la otra parte, <strong>{{ nombre_comercial }}</strong> (EL COMERCIO SUSCRIPTOR), identificado con NIT <strong>{{ nit_comercio }}</strong>, representado legalmente por <strong>{{ representante_legal }}</strong>, identificado(a) con C.C. <strong>{{ cc_representante if cc_representante else '[Por diligenciar en formulario]' }}</strong>, quien en adelante se denominará <strong>EL RESPONSABLE</strong>, hemos convenido celebrar el presente Contrato de Transmisión de Datos Personales, Custodia Técnica y Licencia Audiovisual, previas las siguientes consideraciones y cláusulas:
             </div>
 
             <!-- Cláusulas Contractuales -->
@@ -232,44 +232,20 @@
                     <strong>6.2.</strong> Utilizar, editar, publicar, reproducir y difundir la imagen comercial, logotipo corporativo, denominación comercial y material audiovisual derivado a través de los canales institucionales de ZENIC S.A.S. (sitio web corporativo, Instagram, TikTok, LinkedIn, YouTube, Facebook y piezas comerciales o de portafolio de clientes).
                 </p>
                 <p>
-                    <strong>6.3.</strong> La presente autorización es de carácter no exclusivo, opera a título de reconocimiento y alianza comercial sin contraprestación pecuniaria, y preserva en todo momento el prestigio y buen nombre de EL RESPONSABLE, sin exhibir datos financieros de utilidades netas o contraseñas confidenciales del cliente.
+                    <strong>6.3. La presente autorización es de carácter no exclusivo, opera como condición comercial de alianza tecnológica y reconocimiento de marca pactada dentro de la modalidad del servicio provisto sin contraprestación pecuniaria adicional, y preserva en todo momento el prestigio y buen nombre de EL RESPONSABLE, sin exhibir datos financieros de utilidades netas o contraseñas confidenciales del cliente.</strong>
                 </p>
             </div>
 
-            <!-- Estampa Probatoria y Bloque de Firmas -->
+            <!-- Estampa Probatoria y Bloque de Firmas Dual -->
             <div class="mt-5 pt-4 border-top">
                 <div class="row g-4">
-                    <!-- Firma EL RESPONSABLE -->
-                    <div class="col-12 col-md-6">
-                        <div class="signature-box {{ 'signed' if acuerdo else '' }}">
-                            <div>
-                                <small class="text-uppercase fw-bold text-muted d-block mb-2">Por EL RESPONSABLE (El Comercio):</small>
-                                {% if acuerdo and acuerdo.signature_data %}
-                                <div class="text-center py-2 bg-white rounded-3 border mb-3">
-                                    <img src="{{ acuerdo.signature_data }}" alt="Firma Electrónica Responsable" style="max-height: 90px; max-width: 100%; object-fit: contain;">
-                                </div>
-                                {% else %}
-                                <div class="text-center py-4 text-muted fst-italic">
-                                    [Pendiente de firma digital por el Administrador]
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="small">
-                                <hr class="my-2">
-                                <p class="mb-0 fw-bold text-dark">{{ acuerdo.legal_representative if acuerdo else 'Firma Representante Legal' }}</p>
-                                <p class="mb-0 text-muted">C.C. {{ acuerdo.legal_rep_id if acuerdo else 'Documento Identidad' }}</p>
-                                <p class="mb-0 text-muted">{{ acuerdo.business_name if acuerdo else 'Razón Social' }} &bull; NIT: {{ acuerdo.business_nit if acuerdo else '' }}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Firma EL ENCARGADO (ZENIC S.A.S.) -->
+                    <!-- Columna Izquierda (Por EL ENCARGADO - ZENIC S.A.S.) -->
                     <div class="col-12 col-md-6">
                         <div class="signature-box signed">
                             <div>
                                 <small class="text-uppercase fw-bold text-muted d-block mb-2">Por EL ENCARGADO (ZENIC S.A.S.):</small>
-                                <div class="text-center py-2 bg-white rounded-3 border mb-3 d-flex flex-column align-items-center justify-content-center" style="height: 90px;">
-                                    <span class="text-success fw-bold" style="font-size: 0.85rem;">
+                                <div class="text-center py-2 bg-white rounded-3 border mb-3 d-flex flex-column align-items-center justify-content-center" style="height: 100px;">
+                                    <span class="text-success fw-bold" style="font-size: 0.88rem;">
                                         <i class="fa-solid fa-certificate me-1"></i> FIRMADO DIGITALMENTE POR ZENIC S.A.S.
                                     </span>
                                     <small class="text-muted" style="font-size: 0.72rem;">Certificado de Custodia Técnica e Infraestructura Cloud</small>
@@ -278,35 +254,66 @@
                             </div>
                             <div class="small">
                                 <hr class="my-2">
-                                <p class="mb-0 fw-bold text-dark">{{ zenic.representante }}</p>
-                                <p class="mb-0 text-muted">C.C. {{ zenic.identificacion_rep }}</p>
-                                <p class="mb-0 text-muted">{{ zenic.razon_social }} &bull; NIT: {{ zenic.nit }}</p>
+                                <p class="mb-0 fw-bold text-dark fs-6">{{ zenic.razon_social }}</p>
+                                <p class="mb-0 text-muted"><strong>NIT:</strong> {{ zenic.nit }}</p>
+                                <p class="mb-0 text-dark fw-semibold">{{ zenic.representante }}</p>
+                                <p class="mb-0 text-muted"><strong>C.C.</strong> {{ zenic.identificacion_rep }}</p>
+                                <p class="mb-0 text-secondary">Representante Legal</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Columna Derecha (Por EL RESPONSABLE - El Comercio) -->
+                    <div class="col-12 col-md-6">
+                        <div class="signature-box {{ 'signed' if acuerdo else '' }}">
+                            <div>
+                                <small class="text-uppercase fw-bold text-muted d-block mb-2">Por EL RESPONSABLE (El Comercio):</small>
+                                {% if acuerdo and acuerdo.signature_data %}
+                                <div class="text-center py-2 bg-white rounded-3 border mb-3 d-flex align-items-center justify-content-center" style="height: 100px;">
+                                    <img src="{{ acuerdo.signature_data }}" alt="Rúbrica Manuscrita Digital" style="max-height: 90px; max-width: 100%; object-fit: contain;">
+                                </div>
+                                {% else %}
+                                <div class="text-center py-4 text-muted fst-italic bg-white rounded-3 border mb-3 d-flex align-items-center justify-content-center" style="height: 100px;">
+                                    [Rúbrica Manuscrita Digital en espera de formalización]
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="small">
+                                <hr class="my-2">
+                                <p class="mb-0 fw-bold text-dark fs-6">{{ nombre_comercial }}</p>
+                                <p class="mb-0 text-muted"><strong>NIT:</strong> {{ nit_comercio }}</p>
+                                <p class="mb-0 text-dark fw-semibold">{{ representante_legal }}</p>
+                                <p class="mb-0 text-muted"><strong>C.C. y Expedición:</strong> {{ cc_representante if cc_representante else '[Por diligenciar]' }}</p>
+                                <p class="mb-0 text-secondary">Representante Legal / Propietario</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Estampa Técnica Criptográfica (Auditoría Forense) -->
+                <!-- Estampa Técnica Criptográfica de Auditoría (Ley 527 de 1999) -->
                 {% if acuerdo %}
                 <div class="mt-4 p-3 rounded-3 bg-light border">
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <span class="fw-bold small text-dark">
-                            <i class="fa-solid fa-fingerprint text-brand-pink me-1"></i> METADATOS Y CERTIFICADO DE AUDITORÍA DIGITAL (LEY 527/1999)
+                            <i class="fa-solid fa-fingerprint text-brand-pink me-1"></i> CERTIFICADO DE AUDITORÍA Y EQUIVALENCIA FUNCIONAL (LEY 527 DE 1999 / DECRETO 2364 DE 2012)
                         </span>
-                        <span class="badge bg-success px-2 py-1 rounded-pill" style="font-size: 0.7rem;">HASH ÍNTEGRO Y NO MODIFICABLE</span>
+                        <span class="badge bg-success px-2 py-1 rounded-pill" style="font-size: 0.7rem;">HASH ÍNTEGRO Y NO REPUDIABLE</span>
                     </div>
                     <div class="stamp-badge mb-2">
-                        SHA-256: {{ acuerdo.document_sha256 }}
+                        ID / Hash Criptográfico (SHA-256): {{ acuerdo.document_sha256 }}
                     </div>
                     <div class="row g-2 text-muted" style="font-size: 0.78rem;">
                         <div class="col-sm-6">
-                            <strong>Fecha y Hora de Estampa:</strong> {{ acuerdo.timestamp_utc5.strftime('%Y-%m-%d %H:%M:%S') }} (UTC-5 Colombia)
+                            <strong>Fecha y Hora Oficial de Firma:</strong> {{ acuerdo.timestamp_utc5.strftime('%Y-%m-%d %H:%M:%S') }} (America/Bogota UTC-5)
                         </div>
                         <div class="col-sm-6">
-                            <strong>Dirección IP Certificada:</strong> {{ acuerdo.ip_address }}
+                            <strong>Dirección IP de Origen:</strong> {{ acuerdo.ip_address }}
                         </div>
                         <div class="col-12 text-truncate" title="{{ acuerdo.user_agent }}">
-                            <strong>Agente de Navegación:</strong> {{ acuerdo.user_agent }}
+                            <strong>Agente de Usuario (User-Agent):</strong> {{ acuerdo.user_agent }}
+                        </div>
+                        <div class="col-12 text-success fw-semibold mt-1">
+                            <i class="fa-solid fa-square-check me-1"></i> <strong>Estado de Aceptación:</strong> Cláusula 1 (Custodia Técnica SIC) [ACEPTADA] &bull; Cláusula 2 (No Comercialización/Supresión) [ACEPTADA] &bull; Cláusula 6 (Autorización Audiovisual Redes) [ACEPTADA]
                         </div>
                     </div>
                 </div>

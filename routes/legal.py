@@ -37,10 +37,21 @@ def acuerdo_datos():
     Apta para visualización web y exportación física / PDF de alta resolución.
     """
     acuerdo = ZenicDataAgreementAudit.query.order_by(ZenicDataAgreementAudit.id.desc()).first()
+    
+    # Parámetros preliminares (si aún no está firmado, permite previsualizar datos del comercio)
+    nombre_comercial = request.args.get('business_name') or (acuerdo.business_name if acuerdo else 'cases.com')
+    nit_comercio = request.args.get('business_nit') or (acuerdo.business_nit if acuerdo else '901.888.777-1')
+    representante_legal = request.args.get('legal_representative') or (acuerdo.legal_representative if acuerdo else current_user.nombre)
+    cc_representante = request.args.get('legal_rep_id') or (acuerdo.legal_rep_id if acuerdo else '')
+
     return render_template(
         'legal/acuerdo_datos.html',
         zenic=ZENIC_CORP_DATA,
         acuerdo=acuerdo,
+        nombre_comercial=nombre_comercial,
+        nit_comercio=nit_comercio,
+        representante_legal=representante_legal,
+        cc_representante=cc_representante,
         ahora=obtener_hora_bogota()
     )
 
