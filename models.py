@@ -424,4 +424,11 @@ class ZenicDataAgreementAudit(db.Model):
     def __init__(self, **kwargs):
         super(ZenicDataAgreementAudit, self).__init__(**kwargs)
 
+    @classmethod
+    def __declare_last__(cls):
+        from sqlalchemy import event
+        @event.listens_for(cls, 'before_delete')
+        def impedir_eliminacion_acuerdo(mapper, connection, target):
+            raise ValueError("PROTECCIÓN LEGAL (Ley 527 de 1999): Los registros de acuerdos y consentimientos firmados son inmutables y no pueden ser eliminados.")
+
 

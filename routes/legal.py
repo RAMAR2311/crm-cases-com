@@ -51,6 +51,15 @@ def firmar_acuerdo():
     """
     Endpoint seguro para estampar firma electrónica y auditoría jurídica inmutable (Ley 527 de 1999).
     """
+    # INMUTABILIDAD LEGAL: Si ya existe un acuerdo firmado, queda blindado de forma permanente.
+    acuerdo_existente = ZenicDataAgreementAudit.query.order_by(ZenicDataAgreementAudit.id.desc()).first()
+    if acuerdo_existente:
+        msg = f"Este acuerdo ya fue formalizado y firmado válidamente el {acuerdo_existente.timestamp_utc5.strftime('%Y-%m-%d %H:%M:%S')}. Por disposición de la Ley 527 de 1999 y Ley 1581 de 2012, el documento es inmutable y no puede ser alterado ni firmado nuevamente."
+        if request.is_json:
+            return jsonify({'success': False, 'error': msg, 'already_signed': True}), 400
+        flash(msg, 'warning')
+        return redirect(url_for('legal_bp.acuerdo_datos'))
+
     try:
         # Soporta payload JSON o Formulario
         if request.is_json:
@@ -175,3 +184,4 @@ def estado_acuerdo():
         'firmado': False,
         'version': ZENIC_CORP_DATA['version']
     })
+
