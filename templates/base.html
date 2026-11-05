@@ -1033,8 +1033,8 @@
                             <a href="{{ url_for('legal_bp.acuerdo_datos') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                                 <i class="fa-solid fa-book-open me-1"></i> Leer Términos y Condiciones
                             </a>
-                            <button type="submit" id="btnSubmitLegal" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" disabled>
-                                <i class="fa-solid fa-check-double me-1"></i> Estampar Firma y Desbloquear
+                            <button type="submit" id="btnSubmitLegal" class="btn btn-secondary rounded-pill px-4 fw-bold shadow-sm" style="background-color: #94A3B8; border-color: #94A3B8; opacity: 0.65; cursor: not-allowed;" disabled>
+                                <i class="fa-solid fa-lock me-1"></i> Acepta las 3 casillas para firmar
                             </button>
                         </div>
                     </form>
@@ -1188,16 +1188,64 @@
                 }
 
                 function validarFormulario() {
-                    const allChecked = Array.from(checkboxes).every(c => c.checked);
+                    const allChecked = checkboxes.length === 3 && Array.from(checkboxes).every(c => c.checked);
                     const hasId = legalRepInput && legalRepInput.value.trim().length >= 4;
                     const isValid = allChecked && hasId && hasSignature;
+
                     if (btnSubmit) {
                         btnSubmit.disabled = !isValid;
+                        if (isValid) {
+                            btnSubmit.className = 'btn btn-primary rounded-pill px-4 fw-bold shadow-sm';
+                            btnSubmit.style.backgroundColor = '';
+                            btnSubmit.style.borderColor = '';
+                            btnSubmit.style.opacity = '1';
+                            btnSubmit.style.cursor = 'pointer';
+                            btnSubmit.innerHTML = '<i class="fa-solid fa-check-double me-1"></i> Estampar Firma y Desbloquear';
+                        } else {
+                            btnSubmit.className = 'btn btn-secondary rounded-pill px-4 fw-bold shadow-sm';
+                            btnSubmit.style.backgroundColor = '#94A3B8';
+                            btnSubmit.style.borderColor = '#94A3B8';
+                            btnSubmit.style.opacity = '0.65';
+                            btnSubmit.style.cursor = 'not-allowed';
+                            if (!allChecked) {
+                                btnSubmit.innerHTML = '<i class="fa-solid fa-square-check me-1"></i> Marca las 3 casillas';
+                            } else if (!hasId) {
+                                btnSubmit.innerHTML = '<i class="fa-solid fa-id-card me-1"></i> Ingresa C.C. Representante';
+                            } else if (!hasSignature) {
+                                btnSubmit.innerHTML = '<i class="fa-solid fa-pen-nib me-1"></i> Dibuja tu firma en el recuadro';
+                            }
+                        }
                     }
+                }
+
+                // Validación estricta en el evento submit antes de enviar
+                const formEl = document.getElementById('formFirmaLegal');
+                if (formEl) {
+                    formEl.addEventListener('submit', function(e) {
+                        const allChecked = checkboxes.length === 3 && Array.from(checkboxes).every(c => c.checked);
+                        const hasId = legalRepInput && legalRepInput.value.trim().length >= 4;
+                        if (!allChecked) {
+                            e.preventDefault();
+                            alert('⚠️ Es requisito legal obligatorio marcar las 3 casillas de aceptación de términos para poder firmar.');
+                            return false;
+                        }
+                        if (!hasId) {
+                            e.preventDefault();
+                            alert('⚠️ Debes ingresar la Cédula y lugar de expedición del Representante Legal.');
+                            legalRepInput.focus();
+                            return false;
+                        }
+                        if (!hasSignature || !signatureInput.value) {
+                            e.preventDefault();
+                            alert('⚠️ Debes dibujar tu firma en el recuadro antes de continuar.');
+                            return false;
+                        }
+                    });
                 }
 
                 checkboxes.forEach(c => c.addEventListener('change', validarFormulario));
                 if (legalRepInput) legalRepInput.addEventListener('input', validarFormulario);
+                validarFormulario();
             }
         });
         {% endif %}
