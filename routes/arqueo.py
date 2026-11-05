@@ -141,6 +141,11 @@ def nuevo():
     ).all()
     gastos_externos = Decimal(str(sum(g.monto for g in gastos_externos_registros))) if gastos_externos_registros else Decimal('0.00')
 
+    # Lista de gastos del día para desplegar en detalle
+    gastos_del_dia_lista = Expense.query.filter(
+        db.func.date(Expense.fecha_gasto) == fecha_seleccionada
+    ).order_by(Expense.fecha_gasto.asc()).all()
+
     # Verificar si ya existe un arqueo GLOBAL para esa fecha (unificado para todos los usuarios)
     arqueo_existente = ArqueoCaja.query.filter_by(fecha_arqueo=fecha_seleccionada, tipo_arqueo='general').first()
 
@@ -191,6 +196,8 @@ def nuevo():
         arqueo_existente=arqueo_existente,
         gastos_automaticos=gastos_automaticos,
         gastos_externos=gastos_externos,
+        gastos_del_dia_lista=gastos_del_dia_lista,
+        ventas_del_dia=ventas_del_dia,
         total_general_ch=procesar_unidades_ch(ventas_del_dia)[1],
         total_celulares=Decimal('0.00')
     )

@@ -647,6 +647,15 @@
                 body: JSON.stringify(payload)
             });
 
+            // Si la sesión expiró o devolvió redirección a login / 401
+            if (response.status === 401 || (response.redirected && response.url.includes('/auth/login'))) {
+                alert('⚠️ Tu sesión ha expirado por inactividad. Se abrirá la página para volver a iniciar sesión sin perder tu venta actual.');
+                window.open('/auth/login', '_blank');
+                this.disabled = false;
+                this.innerHTML = '<i class="fa-solid fa-credit-card me-2"></i> Procesar Cobro';
+                return;
+            }
+
             const data = await response.json();
 
             if (response.ok) {

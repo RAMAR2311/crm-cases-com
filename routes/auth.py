@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 from flask_login import login_user, logout_user, login_required
 from models import User
 from werkzeug.security import check_password_hash
@@ -16,7 +16,8 @@ def login():
         
         # Validar contraseña cifrada
         if user and check_password_hash(user.password_hash, password):
-            login_user(user) # Iniciar sesión del lado del servidor persistente
+            session.permanent = True  # Mantiene la cookie activa a largo plazo
+            login_user(user, remember=True) # Iniciar sesión del lado del servidor persistente con remember me
             flash('¡Sesión iniciada con éxito!', 'success')
             
             # Redirección inteligente basada en ROL o hacia la raíz para delegar el control
@@ -34,3 +35,7 @@ def logout():
     logout_user() # Rompe la sesión
     flash('¡Has cerrado tu sesión de manera segura!', 'success')
     return redirect(url_for('auth_bp.login'))
+
+@auth_bp.route('/ping')
+def ping():
+    return {'status': 'ok'}

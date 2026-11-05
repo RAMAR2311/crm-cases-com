@@ -45,6 +45,7 @@ def get_database_uri():
 from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 from flask import request
+from datetime import timedelta
 
 load_dotenv(override=True)
 
@@ -72,6 +73,17 @@ def create_app():
     # Configuración mediante variables de entorno (con fallback a PostgreSQL local o SQLite)
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-key-super-secreta')
     app.config['SQLALCHEMY_DATABASE_URI'] = get_database_uri()
+    
+    # Sesión persistente para evitar expiración por inactividad en PWA y navegadores
+    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=365)
+    app.config['SESSION_PROTECTION'] = 'basic' # Evita invalidar la sesión abruptamente por cambios de IP/User-Agent en redes móviles
+    app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=365)
+    app.config['REMEMBER_COOKIE_REFRESH_EACH_REQUEST'] = True
+    app.config['WTF_CSRF_TIME_LIMIT'] = None  # No expirar los tokens CSRF por tiempo de inactividad
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,
+        'pool_recycle': 300
+    }
     
     # Parámetros del servidor/hosting
     app.config['VALOR_MENSUALIDAD_SERVIDOR'] = os.environ.get('VALOR_MENSUALIDAD_SERVIDOR', '100.000')

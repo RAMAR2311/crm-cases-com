@@ -967,6 +967,20 @@
                 input.value = '';
             }
         }
+
+        // Keep-Alive de sesión para evitar que expire si la caja o PWA queda abierta mucho tiempo
+        {% if current_user.is_authenticated %}
+        const refrescarSesion = () => {
+            fetch('/auth/ping', { method: 'GET', credentials: 'same-origin' }).catch(() => {});
+        };
+        // Intervalo periódico cada 10 minutos
+        setInterval(refrescarSesion, 10 * 60 * 1000);
+        // Si el cajero vuelve tras suspender o cambiar de app/pestaña en el celular/PC
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') refrescarSesion();
+        });
+        window.addEventListener('focus', refrescarSesion);
+        {% endif %}
     </script>
 </body>
 </html>

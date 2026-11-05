@@ -235,7 +235,15 @@
                                     {% for detalle in v.detalles %}
                                     <li>
                                         <strong>{{ detalle.cantidad_vendida }}x</strong> 
-                                        {{ detalle.producto.nombre if detalle.producto else 'Producto' }}
+                                        {% if detalle.nombre_manual %}
+                                            <span class="badge bg-warning bg-opacity-25 text-dark border border-warning px-2 py-0 me-1" style="font-size: 0.72rem;">Externo</span>
+                                            {{ detalle.nombre_manual }}
+                                            {% if detalle.precio_costo_manual %}
+                                                <small class="text-muted">(Costo: ${{ (detalle.precio_costo_manual)|cop }})</small>
+                                            {% endif %}
+                                        {% else %}
+                                            {{ detalle.producto.nombre if detalle.producto else 'Producto' }}
+                                        {% endif %}
                                         {% if detalle.variante %}
                                             <span class="text-muted">({{ detalle.variante.nombre_variante }})</span>
                                         {% endif %}
@@ -252,6 +260,69 @@
                         </tr>
                         {% endfor %}
                     </tbody>
+                </table>
+            </div>
+
+            <!-- TABLA DE GASTOS DETALLADOS -->
+            <h5 class="fw-bold text-brand-black mb-3 border-bottom pb-2">
+                <i class="fa-solid fa-receipt text-danger me-2"></i> Detalle de Gastos del Período
+            </h5>
+            <div class="table-responsive mb-5">
+                <table class="table table-bordered table-sm fw-semibold mb-0 table-hover align-middle">
+                    <thead class="table-light text-center text-uppercase" style="font-size: 0.78rem;">
+                        <tr>
+                            <th width="10%">ID</th>
+                            <th width="14%">Fecha / Hora</th>
+                            <th width="16%">Tipo de Gasto</th>
+                            <th width="18%">Categoría</th>
+                            <th width="14%">Método Pago</th>
+                            <th>Descripción / Detalle</th>
+                            <th width="14%" class="text-end text-danger">Monto</th>
+                        </tr>
+                    </thead>
+                    <tbody style="font-size: 0.85rem;">
+                        {% for g in gastos_periodo %}
+                        <tr>
+                            <td class="text-center text-secondary fw-bold">#{{ "%04d"|format(g.id) if g.id is number else g.id }}</td>
+                            <td class="text-center text-muted">{{ g.fecha_gasto.strftime('%Y-%m-%d %H:%M') if g.fecha_gasto else '-' }}</td>
+                            <td class="text-center">
+                                <span class="badge {% if g.tipo_gasto == 'Gasto Diario' %}bg-warning bg-opacity-25 text-dark border border-warning{% else %}bg-secondary bg-opacity-25 text-secondary border{% endif %} rounded-pill px-2 py-1">
+                                    {{ g.tipo_gasto }}
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                {% if g.categoria == 'Pago Prod. Externo' %}
+                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-2 py-1">
+                                        <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Prod. Externo
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark border rounded-pill px-2 py-1">
+                                        {{ g.categoria or 'General' }}
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 text-uppercase" style="font-size: 0.75rem;">
+                                    {{ g.metodo_pago or 'Efectivo' }}
+                                </span>
+                            </td>
+                            <td>{{ g.descripcion or '-' }}</td>
+                            <td class="text-end text-danger fw-bolder fs-6">$-{{ (g.monto)|cop }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted p-4">No se registraron gastos en este período.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                    {% if gastos_periodo %}
+                    <tfoot class="table-light">
+                        <tr>
+                            <td colspan="6" class="text-end fw-bold text-uppercase">TOTAL GASTOS:</td>
+                            <td class="text-end fw-bolder text-danger fs-5">$-{{ (resumen.total_gastos)|cop }}</td>
+                        </tr>
+                    </tfoot>
+                    {% endif %}
                 </table>
             </div>
 
