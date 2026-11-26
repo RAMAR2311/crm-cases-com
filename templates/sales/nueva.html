@@ -1,241 +1,422 @@
 {% extends "base.html" %}
 
 {% block content %}
-<!-- Título de Pantalla Renombrado (Requerimento) -->
-<div class="d-flex align-items-center mb-4">
-    <h2 class="fw-bold text-brand-black m-0"><i class="fa-solid fa-cash-register me-2" style="color: var(--brand-pink);"></i>Caja Central</h2>
-</div>
-
-<div class="row">
-    <!-- UI Escáner y Carrito -->
-    <div class="col-lg-8 mb-4">
-        
-        <!-- Panel de Escaneo -->
-        <div class="card card-custom p-4 mb-4">
-            <label class="form-label fw-bold text-brand-black">Buscar o Escanear Código</label>
-            <div class="d-flex gap-2">
-                <div class="input-group input-group-lg shadow-sm border-0 rounded-3 overflow-hidden flex-grow-1">
-                    <span class="input-group-text bg-white border-0"><i class="fa-solid fa-barcode text-muted"></i></span>
-                    <input type="text" class="form-control border-0" id="sku_input" placeholder="Ingresa SKU exacto..." autofocus>
-                    <!-- Botón Secundario Rosa Pastel -->
-                    <button class="btn btn-pink px-4" type="button" id="btn_add_product">
-                        <i class="fa-solid fa-check ms-1"></i> Agregar
-                    </button>
-                </div>
-                <button class="btn btn-outline-primary rounded-3 px-3 shadow-sm" type="button" data-bs-toggle="modal" data-bs-target="#modalProductoManual" title="Agregar producto de otro local">
-                    <i class="fa-solid fa-plus me-1"></i><i class="fa-solid fa-handshake"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Tabla Carrito de Compras -->
-        <div class="card card-custom p-0 overflow-hidden">
-            <div class="table-responsive">
-                <table class="table table-custom mb-0 align-middle">
-                    <thead class="bg-light">
-                        <tr>
-                            <th>Producto Seleccionado</th>
-                            <th class="text-center" width="130">Cantidad</th>
-                            <th class="text-end" width="160">Precio U.</th>
-                            <th class="text-end" width="120">Subtotal</th>
-                            <th class="text-center" width="70"></th>
-                        </tr>
-                    </thead>
-                    <tbody id="cart_body">
-                        <!-- ESPACIO RESERVADO PARA INYECCIÓN JS DINÁMICA -->
-                        <tr>
-                            <td colspan="5" class="text-center py-5 text-muted" id="empty_cart_msg">
-                                <!-- Icono Rosa Pastel -->
-                                <i class="fa-solid fa-cart-arrow-down fs-2 mb-2 d-block text-brand-pink opacity-50"></i>
-                                La venta está vacía actualmente.
-                            </td>
-                        </tr>
-                        <!-- Fin items JS -->
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Panel Vertical Cobro Total -->
-    <div class="col-lg-4">
-        <div class="card card-custom p-4 position-sticky" style="top: 100px;">
-            <h4 class="fw-bold text-brand-black mb-4 pb-3 border-bottom">Balance</h4>
-            
-            <div class="d-flex justify-content-between mb-3">
-                <span class="text-muted fw-bold">Unidades Totales:</span>
-                <span class="fw-bold fs-5" id="total_items">0</span>
-            </div>
-            
-            <!-- Gran Total en Tarjeta Rosa Elegante -->
-            <div class="p-3 rounded-4 mb-3 text-center shadow-sm" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border: 1.5px solid #FECDD3;">
-                <span class="text-uppercase fw-bold small d-block mb-1" style="color: #9F1239; font-size: 0.75rem; letter-spacing: 0.5px;">Total a Cobrar</span>
-                <span class="fw-bolder fs-1 lh-1" id="total_amount" style="color: #881337;">$0</span>
-            </div>
-
-            {% if current_user.rol == 'admin' %}
-            <!-- Selector de Fecha de Venta (colapsable) exclusivo para Admin -->
-            <div class="mb-3">
-                <div class="d-flex align-items-center justify-content-between">
-                    <small class="text-muted fw-semibold"><i class="fa-regular fa-calendar me-1"></i> Fecha de Venta:</small>
-                    <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" id="btn_toggle_fecha" onclick="toggleFechaVenta()">
-                        <span id="fecha_display_label" class="badge bg-light text-dark border rounded-pill px-3 py-1" style="font-size: 0.8rem; cursor: pointer;">
-                            📅 Hoy
-                        </span>
-                    </button>
-                </div>
-                <div id="fecha_venta_container" style="display: none; margin-top: 8px;">
-                    <input type="date" id="fecha_venta_input" class="form-control form-control-sm bg-light border-0 shadow-sm rounded-pill px-3" value="">
-                    <small class="form-text text-muted"><i class="fa-solid fa-circle-info text-primary me-1"></i>Cambia la fecha para registrar ventas de días anteriores.</small>
-                </div>
-            </div>
-            {% endif %}
-
-            <!-- Toggle: Pago Único vs Pago Dividido -->
-            <div class="mb-3">
-                <div class="d-flex align-items-center gap-3 mb-2">
-                    <label class="form-label fw-bold text-brand-black small text-uppercase m-0">Método de Pago</label>
-                    <div class="form-check form-switch ms-auto">
-                        <input class="form-check-input" type="checkbox" id="toggle_pago_mixto" style="cursor: pointer; width: 2.8rem; height: 1.4rem;">
-                        <label class="form-check-label fw-bold small text-muted" for="toggle_pago_mixto" style="cursor: pointer;">Dividir Pago</label>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modo 1: Pago Único (Botones Seleccionables, NO Desplegable) -->
-            <div id="pago_unico_section">
-                <!-- Input oculto para mantener compatibilidad 100% con Backend y validaciones -->
-                <input type="hidden" id="metodo-pago" value="efectivo">
-
-                <!-- Grilla de Métodos Seleccionables -->
-                <div class="row g-2 mb-3" id="metodos_pago_grid">
-                    <div class="col-6">
-                        <div class="payment-method-card active p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="efectivo">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #DCFCE7; color: #16A34A;">
-                                <i class="fa-solid fa-money-bill-wave"></i>
-                            </span>
-                            <div class="flex-grow-1 overflow-hidden">
-                                <div class="fw-bold small text-truncate payment-title">Efectivo</div>
-                                <div class="text-muted" style="font-size: 0.68rem;">En caja</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="payment-method-card p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="nequi">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #F3E8FF; color: #7E22CE;">
-                                <i class="fa-solid fa-mobile-screen"></i>
-                            </span>
-                            <div class="flex-grow-1 overflow-hidden">
-                                <div class="fw-bold small text-truncate payment-title">Nequi</div>
-                                <div class="text-muted" style="font-size: 0.68rem;">QR / Transferencia</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="payment-method-card p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="bancolombia">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #FEF9C3; color: #A16207;">
-                                <i class="fa-solid fa-building-columns"></i>
-                            </span>
-                            <div class="flex-grow-1 overflow-hidden">
-                                <div class="fw-bold small text-truncate payment-title">Bancolombia</div>
-                                <div class="text-muted" style="font-size: 0.68rem;">Transferencia</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="payment-method-card p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="daviplata">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #FFE4E6; color: #E11D48;">
-                                <i class="fa-solid fa-wallet"></i>
-                            </span>
-                            <div class="flex-grow-1 overflow-hidden">
-                                <div class="fw-bold small text-truncate payment-title">Daviplata</div>
-                                <div class="text-muted" style="font-size: 0.68rem;">Transferencia</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Calculadora de Cambio / Vueltas (Visible solo en Efectivo) -->
-                <div id="cambio_efectivo_container" class="p-3 rounded-4 mb-3 shadow-sm" style="background: #FFF5F7; border: 1.5px dashed #F472B6;">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="fw-bold text-uppercase d-flex align-items-center gap-1" style="color: #9F1239; font-size: 0.72rem;">
-                            <i class="fa-solid fa-calculator text-brand-pink"></i> Calculadora de Vueltas
-                        </small>
-                    </div>
-                    <div class="input-group input-group-sm mb-2 shadow-none">
-                        <span class="input-group-text bg-white border fw-bold text-muted">Paga con: $</span>
-                        <input type="number" id="paga_con_input" class="form-control fw-bold border bg-white fs-6" placeholder="Monto recibido" onkeyup="calcularCambioEfectivo()" onchange="calcularCambioEfectivo()">
-                        <button type="button" class="btn btn-outline-secondary border" onclick="limpiarPagaCon()" title="Limpiar"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <!-- Botones Rápidos de Billetes -->
-                    <div class="d-flex flex-wrap gap-1 mb-2">
-                        <button type="button" class="btn-quick-bill" onclick="setPagaCon('exacto')">Exacto</button>
-                        <button type="button" class="btn-quick-bill" onclick="setPagaCon(20000)">$20k</button>
-                        <button type="button" class="btn-quick-bill" onclick="setPagaCon(50000)">$50k</button>
-                        <button type="button" class="btn-quick-bill" onclick="setPagaCon(100000)">$100k</button>
-                    </div>
-                    <!-- Mensaje / Resultado de Vueltas -->
-                    <div id="cambio_resultado_box">
-                        <div class="small text-muted py-1" style="font-size: 0.75rem;">
-                            <i class="fa-solid fa-circle-info me-1 text-brand-pink"></i> Ingresa cuánto entrega el cliente para calcular el cambio.
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modo 2: Pago Dividido/Mixto (oculto por defecto) -->
-            <div id="pago_mixto_section" style="display: none;">
-                <!-- Indicador visual del saldo restante -->
-                <div class="alert border-0 shadow-sm py-2 px-3 mb-3 rounded-3" id="saldo_restante_alert" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <small class="fw-bold text-muted text-uppercase"><i class="fa-solid fa-scale-balanced me-1"></i> Saldo por cubrir:</small>
-                        <span class="fw-bolder fs-5" id="saldo_restante" style="color: var(--brand-blue);">$0</span>
-                    </div>
-                    <!-- Barra de progreso visual -->
-                    <div class="progress mt-2" style="height: 6px; border-radius: 10px;">
-                        <div class="progress-bar" id="barra_progreso_pago" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #F472B6, #E11D48); border-radius: 10px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
-                </div>
-
-                <!-- Lista dinámica de pagos parciales -->
-                <div id="pagos_list" class="d-flex flex-column gap-2 mb-3">
-                    <!-- Se inyecta dinámicamente -->
-                </div>
-
-                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill fw-bold w-100" id="btn_agregar_pago">
-                    <i class="fa-solid fa-plus me-1"></i> Agregar otro método de pago
-                </button>
-            </div>
-
-            <!-- Switch de Imprimir Factura / Ticket -->
-            <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 mb-3 mt-2 shadow-sm" style="background: #FFF1F5; border: 1.5px dashed #FDA4AF;">
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-print fs-5" style="color: #BE185D;"></i>
-                    <div>
-                        <div class="fw-bold text-dark small" style="line-height: 1.1;">Imprimir Factura / Ticket</div>
-                        <small class="text-muted" style="font-size: 0.7rem;">Abrir tirilla al finalizar venta</small>
-                    </div>
-                </div>
-                <div class="form-check form-switch m-0">
-                    <input class="form-check-input" type="checkbox" id="toggle_auto_print" checked style="cursor: pointer; width: 2.8rem; height: 1.4rem;">
-                </div>
-            </div>
-
-            <!-- Botón de Cobro Masivo con Estilo Rosa Elegante -->
-            <div class="d-grid gap-2 mt-4">
-                <button type="button" class="btn btn-lg rounded-pill py-3 fw-bold text-white text-uppercase shadow-sm" id="btn_process_sale" style="background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%); border: none; letter-spacing: 0.5px;">
-                    <i class="fa-solid fa-credit-card me-2"></i> Procesar Cobro
-                </button>
-                <button type="button" class="btn btn-light mt-1 fw-bold text-muted rounded-pill py-2" id="btn_clear_cart">
-                    Limpiar Venta
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Estilos para animaciones del pago mixto -->
 <style>
+    /* ══════════════════════════════════════════════════════════════════════════
+       REDISEÑO VISUAL PREMIUM - CAJA CENTRAL (CASES.COM POS)
+       ══════════════════════════════════════════════════════════════════════════ */
+    .pos-wrapper {
+        max-width: 1440px;
+        margin: 0 auto;
+    }
+
+    /* Cabecera Superior de la Caja */
+    .pos-header-banner {
+        background: radial-gradient(120% 140% at 0% 0%, rgba(249, 200, 211, 0.35) 0%, rgba(163, 216, 222, 0.22) 55%, #FFFFFF 100%);
+        border: 1px solid rgba(249, 200, 211, 0.75);
+        border-radius: 22px;
+        padding: 1.15rem 1.5rem;
+        box-shadow: 0 10px 28px -6px rgba(249, 200, 211, 0.28), 0 2px 6px rgba(0, 0, 0, 0.02);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .pos-header-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #FFF1F5 0%, #FFE4E6 100%);
+        border: 1.5px solid #FECDD3;
+        color: #E11D48;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        box-shadow: 0 4px 14px rgba(225, 29, 72, 0.14);
+        flex-shrink: 0;
+    }
+
+    .pos-live-pill {
+        background: #FFFFFF;
+        border: 1px solid #E2E8F0;
+        border-radius: 50px;
+        padding: 0.4rem 0.95rem;
+        font-size: 0.78rem;
+        font-weight: 700;
+        color: #334155;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: #10B981;
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Panel de Escaneo / Buscador */
+    .pos-scanner-card {
+        background: #FFFFFF;
+        border: 1px solid rgba(249, 200, 211, 0.75);
+        border-radius: 22px;
+        padding: 1.35rem 1.5rem;
+        box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(249, 200, 211, 0.15);
+        transition: all 0.25s ease;
+    }
+
+    .scanner-input-shell {
+        background: #F8FAFC;
+        border: 2px solid #E2E8F0;
+        border-radius: 16px;
+        padding: 0.35rem 0.45rem 0.35rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.65rem;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .scanner-input-shell:focus-within {
+        background: #FFFFFF;
+        border-color: #F472B6;
+        box-shadow: 0 0 0 4px rgba(244, 114, 182, 0.15);
+    }
+
+    .scanner-barcode-badge {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        background: #FFF1F5;
+        color: #E11D48;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .scanner-input-shell input {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        font-size: 1.02rem;
+        font-weight: 600;
+        color: var(--brand-black);
+        padding: 0.5rem 0.25rem;
+    }
+
+    .scanner-input-shell input::placeholder {
+        color: #94A3B8;
+        font-weight: 500;
+    }
+
+    .btn-scanner-add {
+        background: linear-gradient(135deg, #F9C8D3 0%, #F497B6 100%);
+        color: #1A1A1A;
+        font-weight: 800;
+        border: 1px solid rgba(225, 29, 72, 0.12);
+        border-radius: 12px;
+        padding: 0.68rem 1.4rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(244, 151, 182, 0.35);
+        white-space: nowrap;
+    }
+
+    .btn-scanner-add:hover {
+        background: linear-gradient(135deg, #F497B6 0%, #EC749D 100%);
+        color: #1A1A1A;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(244, 151, 182, 0.5);
+    }
+
+    .btn-manual-partner {
+        background: #F0F9FA;
+        color: #0E6B7A;
+        border: 1.5px solid #A3D8DE;
+        border-radius: 16px;
+        padding: 0.65rem 1.15rem;
+        font-weight: 700;
+        font-size: 0.88rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.2s ease;
+        white-space: nowrap;
+        box-shadow: 0 4px 10px rgba(163, 216, 222, 0.2);
+    }
+
+    .btn-manual-partner:hover {
+        background: #A3D8DE;
+        color: #083B44;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(163, 216, 222, 0.4);
+    }
+
+    /* Tarjeta del Carrito de Compras */
+    .pos-cart-card {
+        background: #FFFFFF;
+        border: 1px solid var(--brand-border);
+        border-radius: 22px;
+        box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+    }
+
+    .pos-cart-header {
+        background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFD 100%);
+        border-bottom: 1px solid #EEF2F6;
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .pos-table thead th {
+        background: #F8FAFC;
+        color: #64748B;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.7px;
+        padding: 0.9rem 1.25rem;
+        border-bottom: 2px solid #FCE7F3;
+    }
+
+    .pos-table tbody tr {
+        transition: all 0.15s ease;
+    }
+
+    .pos-table tbody tr:hover {
+        background-color: #FFF9FB !important;
+    }
+
+    .pos-table tbody td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #F1F5F9;
+    }
+
+    /* Estado Vacío del Carrito */
+    .empty-cart-showcase {
+        padding: 3.8rem 1.5rem;
+        text-align: center;
+    }
+
+    .empty-cart-circle {
+        width: 78px;
+        height: 78px;
+        border-radius: 24px;
+        margin: 0 auto 1.1rem auto;
+        background: radial-gradient(circle, #FFF1F5 0%, #FCE7F3 100%);
+        border: 1.5px dashed #F9A8D4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #E11D48;
+        font-size: 1.85rem;
+        box-shadow: 0 8px 20px rgba(244, 114, 182, 0.15);
+    }
+
+    /* Controles de Cantidad Stepper */
+    .qty-stepper {
+        display: inline-flex;
+        align-items: center;
+        background: #F8FAFC;
+        border: 1.5px solid #E2E8F0;
+        border-radius: 12px;
+        padding: 2px;
+    }
+
+    .qty-stepper-btn {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: #FFFFFF;
+        color: #334155;
+        border-radius: 9px;
+        font-weight: 800;
+        font-size: 0.85rem;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .qty-stepper-btn:hover {
+        background: #FCE7F3;
+        color: #BE185D;
+    }
+
+    .qty-stepper input {
+        width: 44px;
+        border: none !important;
+        background: transparent !important;
+        text-align: center;
+        font-weight: 800;
+        font-size: 0.92rem;
+        color: var(--brand-black);
+        box-shadow: none !important;
+        padding: 0;
+        -moz-appearance: textfield;
+    }
+
+    .qty-stepper input::-webkit-outer-spin-button,
+    .qty-stepper input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    /* Panel Lateral de Balance y Cobro */
+    .pos-checkout-card {
+        background: #FFFFFF;
+        border: 1px solid rgba(249, 200, 211, 0.8);
+        border-radius: 24px;
+        padding: 1.5rem;
+        box-shadow: 0 16px 38px -10px rgba(225, 29, 72, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Caja Principal del Total a Cobrar */
+    .total-hero-box {
+        background: radial-gradient(130% 130% at 100% 0%, #FFE4E6 0%, #FFF1F5 55%, #FFF8FA 100%);
+        border: 1.5px solid #FDA4AF;
+        border-radius: 20px;
+        padding: 1.25rem 1.25rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 20px -6px rgba(225, 29, 72, 0.12);
+    }
+
+    .total-hero-box::after {
+        content: '';
+        position: absolute;
+        right: -25px;
+        bottom: -25px;
+        width: 95px;
+        height: 95px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(244, 63, 94, 0.12) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .total-hero-label {
+        color: #9F1239;
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.9px;
+    }
+
+    .total-hero-amount {
+        font-family: 'Outfit', sans-serif;
+        font-size: 2.55rem;
+        font-weight: 800;
+        color: #881337;
+        letter-spacing: -1px;
+        line-height: 1.05;
+    }
+
+    /* Tarjetas de Método de Pago */
+    .payment-method-card {
+        background: #FFFFFF;
+        border: 1.5px solid #E2E8F0;
+        border-radius: 15px !important;
+        padding: 0.65rem 0.75rem !important;
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        cursor: pointer;
+        user-select: none;
+        position: relative;
+    }
+
+    .payment-method-card:hover {
+        border-color: #F472B6;
+        background: #FFF9FB;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(244, 114, 182, 0.12);
+    }
+
+    .payment-method-card.active {
+        border: 2px solid #E11D48 !important;
+        background: linear-gradient(135deg, #FFF1F5 0%, #FFE4E9 100%) !important;
+        box-shadow: 0 6px 16px rgba(225, 29, 72, 0.16) !important;
+    }
+
+    .payment-method-card.active::after {
+        content: '\f058';
+        font-family: 'Font Awesome 6 Free';
+        font-weight: 900;
+        position: absolute;
+        top: 6px;
+        right: 8px;
+        font-size: 0.78rem;
+        color: #E11D48;
+    }
+
+    .payment-method-card.active .payment-title {
+        color: #9F1239 !important;
+        font-weight: 800 !important;
+    }
+
+    /* Calculadora de Vueltas */
+    .vueltas-box {
+        background: linear-gradient(180deg, #FFF8FA 0%, #FFF1F5 100%);
+        border: 1.5px dashed #F472B6;
+        border-radius: 18px;
+        padding: 0.95rem 1rem;
+    }
+
+    .btn-quick-bill {
+        border: 1px solid #FBCFE8;
+        background: #FFFFFF;
+        font-size: 0.74rem;
+        font-weight: 800;
+        color: #9F1239;
+        padding: 4px 11px;
+        border-radius: 50px;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .btn-quick-bill:hover {
+        background: #E11D48;
+        border-color: #E11D48;
+        color: #FFFFFF;
+        transform: translateY(-1px);
+    }
+
+    /* Botón Principal de Cobro */
+    .btn-checkout-primary {
+        background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%);
+        border: none;
+        border-radius: 16px;
+        padding: 0.95rem 1.25rem;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1.05rem;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        color: #FFFFFF;
+        box-shadow: 0 10px 22px -4px rgba(225, 29, 72, 0.45);
+        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .btn-checkout-primary:hover {
+        background: linear-gradient(135deg, #BE185D 0%, #9F1239 100%);
+        color: #FFFFFF;
+        transform: translateY(-2px);
+        box-shadow: 0 14px 26px -4px rgba(225, 29, 72, 0.55);
+    }
+
+    .btn-checkout-primary:active {
+        transform: translateY(0);
+    }
+
+    /* Animaciones Pago Mixto */
     #pago_mixto_section .pago-item {
         animation: slideDown 0.25s ease-out;
     }
@@ -244,60 +425,342 @@
         to { opacity: 1; transform: translateY(0); }
     }
     .form-check-input:checked {
-        background-color: var(--brand-blue) !important;
-        border-color: var(--brand-blue) !important;
+        background-color: #E11D48 !important;
+        border-color: #E11D48 !important;
     }
     #saldo_restante_alert.saldo-cubierto {
-        background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%) !important;
+        background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%) !important;
+        border: 1px solid #A7F3D0 !important;
     }
     #saldo_restante_alert.saldo-excedido {
-        background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%) !important;
+        background: linear-gradient(135deg, #FEF2F2 0%, #FEE2E2 100%) !important;
+        border: 1px solid #FECACA !important;
     }
 </style>
+
+<div class="pos-wrapper">
+    <!-- Banner Superior de Caja Central -->
+    <div class="pos-header-banner mb-4 d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-3">
+            <div class="pos-header-icon">
+                <i class="fa-solid fa-cash-register"></i>
+            </div>
+            <div>
+                <div class="d-flex align-items-center gap-2">
+                    <h2 class="fw-extrabold text-brand-black m-0" style="font-size: 1.65rem; letter-spacing: -0.5px;">Caja Central</h2>
+                    <span class="badge badge-soft-pink rounded-pill px-2 py-1" style="font-size: 0.7rem;">POS Directo</span>
+                </div>
+                <p class="text-muted small mb-0">Escanea códigos SKU / IMEI o agrega productos externos en tiempo real.</p>
+            </div>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <span class="pos-live-pill">
+                <span class="pulse-dot"></span> Terminal Activa
+            </span>
+            <a href="{{ url_for('sales_bp.ventas_hoy') }}" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1.5 fw-bold text-dark shadow-xs" style="font-size: 0.78rem;">
+                <i class="fa-solid fa-receipt text-brand-pink me-1"></i> Ventas de Hoy
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Columna Izquierda: Escáner y Carrito -->
+        <div class="col-lg-8">
+            <!-- Panel de Escaneo -->
+            <div class="pos-scanner-card mb-4">
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label for="sku_input" class="form-label fw-bold text-brand-black mb-0 d-flex align-items-center gap-2" style="font-size: 0.92rem;">
+                        <i class="fa-solid fa-barcode" style="color: #E11D48;"></i> Buscar o Escanear Código
+                    </label>
+                    <span class="text-muted" style="font-size: 0.74rem;">
+                        <kbd class="bg-light text-dark border px-2 py-0.5 rounded-2 fw-bold">Enter ↵</kbd> para agregar rápido
+                    </span>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row gap-2 align-items-stretch">
+                    <div class="scanner-input-shell flex-grow-1">
+                        <div class="scanner-barcode-badge">
+                            <i class="fa-solid fa-qrcode"></i>
+                        </div>
+                        <input type="text" class="form-control" id="sku_input" placeholder="Ingresa SKU exacto o escanea código de barras..." autofocus>
+                        <button class="btn btn-scanner-add" type="button" id="btn_add_product">
+                            <i class="fa-solid fa-plus"></i> Agregar
+                        </button>
+                    </div>
+
+                    <button class="btn btn-manual-partner" type="button" data-bs-toggle="modal" data-bs-target="#modalProductoManual" title="Agregar producto prestado de otro local">
+                        <i class="fa-solid fa-handshake fs-6"></i>
+                        <span>Externo</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla Carrito de Compras -->
+            <div class="pos-cart-card">
+                <div class="pos-cart-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="rounded-3 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #FFF1F5; color: #E11D48;">
+                            <i class="fa-solid fa-bag-shopping"></i>
+                        </span>
+                        <h6 class="fw-bold text-brand-black mb-0" style="font-family: 'Outfit', sans-serif; font-size: 1rem;">Detalle de Productos en Venta</h6>
+                    </div>
+                    <span class="badge bg-light text-secondary border rounded-pill px-3 py-1 fw-bold" style="font-size: 0.74rem;">
+                        <i class="fa-solid fa-shield-halved text-success me-1"></i> Stock validado
+                    </span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table pos-table mb-0 align-middle">
+                        <thead>
+                            <tr>
+                                <th>Producto Seleccionado</th>
+                                <th class="text-center" width="145">Cantidad</th>
+                                <th class="text-end" width="185">Precio Unitario</th>
+                                <th class="text-end" width="130">Subtotal</th>
+                                <th class="text-center" width="90">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart_body">
+                            <tr>
+                                <td colspan="5" class="p-0 border-0" id="empty_cart_msg">
+                                    <div class="empty-cart-showcase">
+                                        <div class="empty-cart-circle">
+                                            <i class="fa-solid fa-cart-plus"></i>
+                                        </div>
+                                        <h6 class="fw-bold text-brand-black mb-1" style="font-family: 'Outfit', sans-serif;">La venta está vacía actualmente</h6>
+                                        <p class="text-muted small mb-0">Escanea un código SKU arriba o usa el botón <strong>Externo</strong> para comenzar a facturar.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Derecha: Balance y Facturación -->
+        <div class="col-lg-4">
+            <div class="pos-checkout-card position-sticky" style="top: 95px;">
+                <!-- Encabezado de Balance -->
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="rounded-3 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #F0F9FA; color: #0E6B7A;">
+                            <i class="fa-solid fa-receipt"></i>
+                        </span>
+                        <h5 class="fw-bold text-brand-black m-0" style="font-family: 'Outfit', sans-serif;">Resumen de Cobro</h5>
+                    </div>
+                    <div class="d-flex align-items-center gap-1 bg-light border rounded-pill px-2.5 py-1" style="padding: 3px 11px;">
+                        <span class="text-muted fw-bold" style="font-size: 0.72rem;">Ítems:</span>
+                        <span class="fw-extrabold text-brand-black" id="total_items" style="font-size: 0.88rem;">0</span>
+                    </div>
+                </div>
+
+                <!-- Hero Card Total a Cobrar -->
+                <div class="total-hero-box mb-3 text-center">
+                    <span class="total-hero-label d-block mb-1">Total a Cobrar</span>
+                    <div class="total-hero-amount" id="total_amount">$0</div>
+                </div>
+
+                {% if current_user.rol == 'admin' %}
+                <!-- Selector de Fecha de Venta (colapsable) exclusivo para Admin -->
+                <div class="mb-3 p-2 px-3 rounded-3 bg-light border border-light-subtle">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <small class="text-muted fw-bold" style="font-size: 0.76rem;"><i class="fa-regular fa-calendar-check me-1 text-danger"></i> Fecha de Venta:</small>
+                        <button type="button" class="btn btn-sm btn-link text-decoration-none p-0" id="btn_toggle_fecha" onclick="toggleFechaVenta()">
+                            <span id="fecha_display_label" class="badge bg-white text-dark border rounded-pill px-3 py-1 shadow-xs" style="font-size: 0.76rem; cursor: pointer;">
+                                📅 Hoy
+                            </span>
+                        </button>
+                    </div>
+                    <div id="fecha_venta_container" style="display: none; margin-top: 8px;">
+                        <input type="date" id="fecha_venta_input" class="form-control form-control-sm bg-white border shadow-xs rounded-pill px-3" value="">
+                        <small class="form-text text-muted d-block mt-1" style="font-size: 0.7rem;"><i class="fa-solid fa-circle-info text-primary me-1"></i>Permite registrar ventas de días anteriores.</small>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Toggle: Pago Único vs Pago Dividido -->
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <label class="form-label fw-extrabold text-brand-black small text-uppercase m-0" style="font-size: 0.74rem; letter-spacing: 0.5px;">Método de Pago</label>
+                    <div class="form-check form-switch m-0 d-flex align-items-center gap-2">
+                        <input class="form-check-input m-0" type="checkbox" id="toggle_pago_mixto" style="cursor: pointer; width: 2.45rem; height: 1.25rem;">
+                        <label class="form-check-label fw-bold small text-muted" for="toggle_pago_mixto" style="cursor: pointer; font-size: 0.76rem;">Dividir Pago</label>
+                    </div>
+                </div>
+
+                <!-- Modo 1: Pago Único -->
+                <div id="pago_unico_section">
+                    <input type="hidden" id="metodo-pago" value="efectivo">
+
+                    <!-- Grilla de Métodos Seleccionables -->
+                    <div class="row g-2 mb-3" id="metodos_pago_grid">
+                        <div class="col-6">
+                            <div class="payment-method-card active d-flex align-items-center gap-2 h-100" data-method="efectivo">
+                                <span class="payment-icon-badge rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #DCFCE7; color: #16A34A;">
+                                    <i class="fa-solid fa-money-bill-wave"></i>
+                                </span>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="fw-bold small text-truncate payment-title" style="font-size: 0.82rem;">Efectivo</div>
+                                    <div class="text-muted" style="font-size: 0.67rem;">En caja</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="payment-method-card d-flex align-items-center gap-2 h-100" data-method="nequi">
+                                <span class="payment-icon-badge rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #F3E8FF; color: #7E22CE;">
+                                    <i class="fa-solid fa-mobile-screen"></i>
+                                </span>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="fw-bold small text-truncate payment-title" style="font-size: 0.82rem;">Nequi</div>
+                                    <div class="text-muted" style="font-size: 0.67rem;">QR / Transf.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="payment-method-card d-flex align-items-center gap-2 h-100" data-method="bancolombia">
+                                <span class="payment-icon-badge rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #FEF9C3; color: #A16207;">
+                                    <i class="fa-solid fa-building-columns"></i>
+                                </span>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="fw-bold small text-truncate payment-title" style="font-size: 0.82rem;">Bancolombia</div>
+                                    <div class="text-muted" style="font-size: 0.67rem;">Transferencia</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="payment-method-card d-flex align-items-center gap-2 h-100" data-method="daviplata">
+                                <span class="payment-icon-badge rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" style="width: 36px; height: 36px; background: #FFE4E6; color: #E11D48;">
+                                    <i class="fa-solid fa-wallet"></i>
+                                </span>
+                                <div class="flex-grow-1 overflow-hidden">
+                                    <div class="fw-bold small text-truncate payment-title" style="font-size: 0.82rem;">Daviplata</div>
+                                    <div class="text-muted" style="font-size: 0.67rem;">Transferencia</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Calculadora de Cambio / Vueltas -->
+                    <div id="cambio_efectivo_container" class="vueltas-box mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <small class="fw-extrabold text-uppercase d-flex align-items-center gap-1" style="color: #9F1239; font-size: 0.7rem; letter-spacing: 0.5px;">
+                                <i class="fa-solid fa-calculator"></i> Calculadora de Vueltas
+                            </small>
+                        </div>
+                        <div class="input-group input-group-sm mb-2 rounded-3 overflow-hidden border bg-white">
+                            <span class="input-group-text bg-white border-0 fw-bold text-muted" style="font-size: 0.78rem;">Paga con: $</span>
+                            <input type="number" id="paga_con_input" class="form-control fw-bold border-0 bg-white fs-6 shadow-none" placeholder="Monto recibido" onkeyup="calcularCambioEfectivo()" onchange="calcularCambioEfectivo()">
+                            <button type="button" class="btn btn-link text-muted border-0 px-2" onclick="limpiarPagaCon()" title="Limpiar"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <!-- Botones Rápidos de Billetes -->
+                        <div class="d-flex flex-wrap gap-1 mb-2">
+                            <button type="button" class="btn-quick-bill" onclick="setPagaCon('exacto')">Exacto</button>
+                            <button type="button" class="btn-quick-bill" onclick="setPagaCon(20000)">$20k</button>
+                            <button type="button" class="btn-quick-bill" onclick="setPagaCon(50000)">$50k</button>
+                            <button type="button" class="btn-quick-bill" onclick="setPagaCon(100000)">$100k</button>
+                        </div>
+                        <!-- Mensaje / Resultado de Vueltas -->
+                        <div id="cambio_resultado_box">
+                            <div class="small text-muted py-1" style="font-size: 0.73rem;">
+                                <i class="fa-solid fa-circle-info me-1" style="color: #E11D48;"></i> Ingresa cuánto entrega el cliente para calcular el cambio.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modo 2: Pago Dividido/Mixto -->
+                <div id="pago_mixto_section" class="mb-3" style="display: none;">
+                    <div class="alert border-0 shadow-xs py-2 px-3 mb-3 rounded-3" id="saldo_restante_alert" style="background: #F8FAFC; border: 1px solid #E2E8F0 !important;">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="fw-bold text-muted text-uppercase" style="font-size: 0.72rem;"><i class="fa-solid fa-scale-balanced me-1"></i> Saldo por cubrir:</small>
+                            <span class="fw-bolder fs-5" id="saldo_restante" style="color: var(--brand-blue);">$0</span>
+                        </div>
+                        <div class="progress mt-2" style="height: 6px; border-radius: 10px;">
+                            <div class="progress-bar" id="barra_progreso_pago" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #F472B6, #E11D48); border-radius: 10px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+
+                    <div id="pagos_list" class="d-flex flex-column gap-2 mb-2"></div>
+
+                    <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill fw-bold w-100 py-1.5" id="btn_agregar_pago">
+                        <i class="fa-solid fa-plus me-1"></i> Agregar otro método de pago
+                    </button>
+                </div>
+
+                <!-- Switch de Imprimir Factura / Ticket -->
+                <div class="d-flex align-items-center justify-content-between p-2.5 px-3 rounded-4 mb-3" style="background: #F8FAFC; border: 1px solid #E2E8F0; padding: 0.65rem 0.9rem;">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="rounded-3 d-inline-flex align-items-center justify-content-center" style="width: 32px; height: 32px; background: #FFF1F5; color: #BE185D;">
+                            <i class="fa-solid fa-print"></i>
+                        </span>
+                        <div>
+                            <div class="fw-bold text-dark" style="font-size: 0.8rem; line-height: 1.15;">Imprimir Factura / Ticket</div>
+                            <small class="text-muted" style="font-size: 0.68rem;">Abrir tirilla al finalizar venta</small>
+                        </div>
+                    </div>
+                    <div class="form-check form-switch m-0">
+                        <input class="form-check-input m-0" type="checkbox" id="toggle_auto_print" checked style="cursor: pointer; width: 2.5rem; height: 1.3rem;">
+                    </div>
+                </div>
+
+                <!-- Botones de Acción Final -->
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-checkout-primary text-uppercase" id="btn_process_sale">
+                        <i class="fa-solid fa-circle-check me-2"></i> Procesar Cobro
+                    </button>
+                    <button type="button" class="btn btn-light fw-bold text-muted rounded-4 py-2 border-0" id="btn_clear_cart" style="font-size: 0.85rem;">
+                        <i class="fa-solid fa-rotate-left me-1"></i> Limpiar Venta
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Modal Producto Manual (Prestado de otro local) -->
 <div class="modal fade" id="modalProductoManual" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header border-0 bg-light">
-                <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-handshake me-2"></i>Producto Manual (Externo)</h5>
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 px-4 pt-4 pb-3" style="background: linear-gradient(135deg, #F0F9FA 0%, #E0F2FE 100%);">
+                <h5 class="modal-title fw-bold text-brand-black"><i class="fa-solid fa-handshake me-2 text-info"></i>Producto Manual (Externo)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="alert py-2 px-3 rounded-3 mb-4" style="background: #e8f4fd; border: 1px dashed #90c4e8;">
-                    <small class="text-muted"><i class="fa-solid fa-circle-info text-primary me-1"></i>Usa esta opción para productos <strong>prestados de otros locales</strong>. No se descuenta stock propio.</small>
+                <div class="alert py-2 px-3 rounded-3 mb-4" style="background: #F0F9FF; border: 1px dashed #7DD3FC;">
+                    <small class="text-muted"><i class="fa-solid fa-circle-info text-info me-1"></i>Usa esta opción para productos <strong>prestados de otros locales</strong>. No descuenta stock propio.</small>
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Nombre del Producto</label>
-                    <input type="text" id="manual_nombre" class="form-control bg-light border-0" placeholder="Ej: Funda iPhone 15 Pro Max - Local Alex" required>
+                    <label class="form-label fw-bold small text-uppercase text-muted">Nombre del Producto</label>
+                    <input type="text" id="manual_nombre" class="form-control bg-light border-0 rounded-3 py-2" placeholder="Ej: Funda iPhone 15 Pro Max - Local Alex" required>
                 </div>
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-bold"><i class="fa-solid fa-arrow-down text-danger me-1"></i>Costo de Compra</label>
+                        <label class="form-label fw-bold small text-uppercase text-muted"><i class="fa-solid fa-arrow-down text-danger me-1"></i>Costo de Compra</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0">$</span>
-                            <input type="number" step="1" min="0" id="manual_costo" class="form-control bg-light border-0" placeholder="Lo que se le paga al vecino" required>
+                            <input type="number" step="1" min="0" id="manual_costo" class="form-control bg-light border-0" placeholder="Pago al vecino" required>
                         </div>
-                        <small class="form-text text-muted">Precio al que te lo vende el otro local</small>
+                        <small class="form-text text-muted" style="font-size: 0.72rem;">Lo que se paga al otro local</small>
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-bold"><i class="fa-solid fa-arrow-up text-success me-1"></i>Precio de Venta</label>
+                        <label class="form-label fw-bold small text-uppercase text-muted"><i class="fa-solid fa-arrow-up text-success me-1"></i>Precio de Venta</label>
                         <div class="input-group">
                             <span class="input-group-text bg-light border-0 text-success fw-bold">$</span>
-                            <input type="number" step="1" min="0" id="manual_precio_venta" class="form-control bg-light border-0" placeholder="Lo que se cobra al cliente" required>
+                            <input type="number" step="1" min="0" id="manual_precio_venta" class="form-control bg-light border-0" placeholder="Cobro al cliente" required>
                         </div>
-                        <small class="form-text text-muted">Precio al que se le vende al cliente final</small>
+                        <small class="form-text text-muted" style="font-size: 0.72rem;">Precio al cliente final</small>
                     </div>
                 </div>
                 <div class="mb-0">
-                    <label class="form-label fw-bold">Cantidad</label>
-                    <input type="number" id="manual_cantidad" class="form-control bg-light border-0 w-25" min="1" value="1" required>
+                    <label class="form-label fw-bold small text-uppercase text-muted">Cantidad</label>
+                    <input type="number" id="manual_cantidad" class="form-control bg-light border-0 rounded-3 w-25" min="1" value="1" required>
                 </div>
             </div>
-            <div class="modal-footer border-0 bg-light">
-                <button type="button" class="btn btn-light rounded-pill" data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" class="btn btn-primary rounded-pill fw-bold px-4" id="btn_agregar_manual">
+            <div class="modal-footer border-0 bg-light px-4 py-3">
+                <button type="button" class="btn btn-light rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-blue rounded-pill fw-bold px-4" id="btn_agregar_manual">
                     <i class="fa-solid fa-plus me-1"></i> Agregar al Carrito
                 </button>
             </div>
@@ -308,29 +771,29 @@
 <!-- Modal Datos del Cliente (Celulares) -->
 <div class="modal fade" id="modalClienteCelular" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header bg-brand-blue text-white border-0">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-brand-blue text-brand-black border-0 px-4 py-3">
                 <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-tag me-2"></i>Datos del Cliente</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-4">
-                <div class="alert alert-warning py-2 mb-4 border-0 small">
+                <div class="alert alert-warning py-2 mb-4 border-0 small rounded-3">
                     <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Venta de Celular Detectada:</strong> Es obligatorio registrar los datos del cliente para temas de garantía y soporte técnico.
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Nombre Completo</label>
-                    <input type="text" id="cliente_nombre" class="form-control bg-light" placeholder="Ej: Juan Pérez" required>
+                    <input type="text" id="cliente_nombre" class="form-control bg-light border-0 py-2" placeholder="Ej: Juan Pérez" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Cédula / Documento</label>
-                    <input type="text" id="cliente_documento" class="form-control bg-light" placeholder="Número de identificación" required>
+                    <input type="text" id="cliente_documento" class="form-control bg-light border-0 py-2" placeholder="Número de identificación" required>
                 </div>
                 <div class="mb-3">
                     <label class="form-label fw-bold">Teléfono / WhatsApp</label>
-                    <input type="text" id="cliente_telefono" class="form-control bg-light" placeholder="Ej: 3001234567" required>
+                    <input type="text" id="cliente_telefono" class="form-control bg-light border-0 py-2" placeholder="Ej: 3001234567" required>
                 </div>
             </div>
-            <div class="modal-footer border-0 bg-light">
+            <div class="modal-footer border-0 bg-light px-4 py-3">
                 <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                 <button type="button" class="btn btn-success rounded-pill fw-bold px-4" onclick="confirmarVentaCelular()">
                     <i class="fa-solid fa-check me-1"></i> Confirmar Venta
@@ -339,6 +802,7 @@
         </div>
     </div>
 </div>
+
 <!-- Motor Javascript Vanilla para procesar Cajas Dinámicas sin recargar -->
 <script>
     let carrito = [];
@@ -348,7 +812,7 @@
     // Inicializar fecha de venta con la fecha de hoy (Solo Admin)
     (function() {
         const fechaInput = document.getElementById('fecha_venta_input');
-        if (!fechaInput) return; // Si no es admin, no existe en el DOM
+        if (!fechaInput) return;
         
         const hoy = new Date();
         const yyyy = hoy.getFullYear();
@@ -356,7 +820,7 @@
         const dd = String(hoy.getDate()).padStart(2, '0');
         
         fechaInput.value = `${yyyy}-${mm}-${dd}`;
-        fechaInput.max = `${yyyy}-${mm}-${dd}`; // No permitir fechas futuras
+        fechaInput.max = `${yyyy}-${mm}-${dd}`;
         fechaInput.addEventListener('change', actualizarLabelFecha);
     })();
 
@@ -380,7 +844,7 @@
 
         if (fechaInput.value === hoyStr || !fechaInput.value) {
             label.innerHTML = '📅 Hoy';
-            label.className = 'badge bg-light text-dark border rounded-pill px-3 py-1';
+            label.className = 'badge bg-white text-dark border rounded-pill px-3 py-1 shadow-xs';
         } else {
             const partes = fechaInput.value.split('-');
             const fechaFormateada = `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -388,6 +852,7 @@
             label.className = 'badge bg-warning bg-opacity-25 text-dark border border-warning rounded-pill px-3 py-1';
         }
     }
+
     const METODOS_DISPONIBLES = [
         { value: 'efectivo', label: '💵 Efectivo' },
         { value: 'nequi', label: '📱 Nequi' },
@@ -409,7 +874,6 @@
         renderizarCarrito();
         resetPagosMixtos();
     });
-
 
     // Botón para agregar producto manual (prestado de otro local)
     document.getElementById('btn_agregar_manual').addEventListener('click', function() {
@@ -457,7 +921,6 @@
         if (this.checked) {
             unicoSec.style.display = 'none';
             mixtoSec.style.display = 'block';
-            // Inicializar con un primer pago parcial
             if (pagosMixtos.length === 0) {
                 agregarPagoParcial();
             }
@@ -521,26 +984,24 @@
         
         saldoEl.innerText = formatoCOP(Math.abs(saldo));
         
-        // Calcular progreso
         const porcentaje = granTotal > 0 ? Math.min((sumaPagos / granTotal) * 100, 100) : 0;
         barraEl.style.width = porcentaje + '%';
         
-        // Estados visuales
         alertEl.classList.remove('saldo-cubierto', 'saldo-excedido');
         if (saldo === 0 && granTotal > 0) {
             alertEl.classList.add('saldo-cubierto');
-            saldoEl.style.color = '#28a745';
-            barraEl.style.background = 'linear-gradient(90deg, #28a745, #34ce57)';
-            document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> ¡Pago completo!';
+            saldoEl.style.color = '#16A34A';
+            barraEl.style.background = 'linear-gradient(90deg, #16A34A, #22C55E)';
+            document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-circle-check me-1 text-success"></i> ¡Pago completo!';
         } else if (saldo < 0) {
             alertEl.classList.add('saldo-excedido');
-            saldoEl.style.color = '#dc3545';
+            saldoEl.style.color = '#DC2626';
             saldoEl.innerText = '+' + formatoCOP(Math.abs(saldo));
-            barraEl.style.background = 'linear-gradient(90deg, #dc3545, #e74c5c)';
-            document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Excedente:';
+            barraEl.style.background = 'linear-gradient(90deg, #DC2626, #EF4444)';
+            document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1 text-danger"></i> Excedente:';
         } else {
-            saldoEl.style.color = 'var(--brand-blue)';
-            barraEl.style.background = 'linear-gradient(90deg, #A3D8DE, #7BC8D0)';
+            saldoEl.style.color = '#0E6B7A';
+            barraEl.style.background = 'linear-gradient(90deg, #F472B6, #E11D48)';
             document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-scale-balanced me-1"></i> Saldo por cubrir:';
         }
     }
@@ -553,22 +1014,21 @@
             const div = document.createElement('div');
             div.className = 'pago-item d-flex gap-2 align-items-center';
             
-            // Select del método
             let optionsHtml = METODOS_DISPONIBLES.map(m => 
                 `<option value="${m.value}" ${m.value === pago.metodo_pago ? 'selected' : ''}>${m.label}</option>`
             ).join('');
 
             div.innerHTML = `
-                <select class="form-select form-select-sm border-0 shadow-sm bg-light" style="cursor: pointer; flex: 1;" onchange="actualizarPagoParcial(${index}, 'metodo_pago', this.value)">
+                <select class="form-select form-select-sm border shadow-xs bg-white rounded-3 fw-semibold" style="cursor: pointer; flex: 1;" onchange="actualizarPagoParcial(${index}, 'metodo_pago', this.value)">
                     ${optionsHtml}
                 </select>
                 <div class="input-group input-group-sm" style="flex: 1;">
-                    <span class="input-group-text bg-light border-0">$</span>
-                    <input type="number" class="form-control border-0 shadow-sm text-end" placeholder="Monto" value="${pago.monto > 0 ? Math.round(pago.monto) : ''}" 
+                    <span class="input-group-text bg-light border">$</span>
+                    <input type="number" class="form-control border shadow-xs text-end fw-bold" placeholder="Monto" value="${pago.monto > 0 ? Math.round(pago.monto) : ''}" 
                            oninput="actualizarPagoParcial(${index}, 'monto', this.value)" 
                            step="1" min="0">
                 </div>
-                <button type="button" class="btn btn-sm text-danger px-2" onclick="eliminarPagoParcial(${index})" title="Quitar este pago">
+                <button type="button" class="btn btn-sm btn-light text-danger border rounded-3 px-2" onclick="eliminarPagoParcial(${index})" title="Quitar este pago">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             `;
@@ -584,7 +1044,6 @@
         if (!sku) return;
 
         try {
-            // Mandar solicitud JSON rápida a nuestra ruta Flask
             const response = await fetch(`/sales/api/producto/${encodeURIComponent(sku)}`);
             if (!response.ok) {
                 alert(`Error: El SKU '${sku}' no existe en la base de datos.`);
@@ -596,7 +1055,6 @@
 
             const existente = carrito.find(item => item.id === producto.id && (!item.variantes || item.variantes.length === 0));
             if (existente) {
-                // Validación Estricta: Sobreventa (Stock) en productos planos
                 if (existente.cantidad + 1 > producto.cantidad_stock) {
                     alert(`¡Stock insuficiente! Solo te quedan ${producto.cantidad_stock} unidades de ${producto.nombre}.`);
                 } else {
@@ -608,7 +1066,6 @@
                     return;
                 }
                 
-                // Si es nuevo, inicializar con el array. Permite encolar un renglón nuevo si tiene variantes.
                 let initial_variant_id = null;
                 let initial_precio = producto.precio_sugerido;
                 let initial_limite = producto.precio_limite;
@@ -635,6 +1092,7 @@
                     precio_final: initial_precio, 
                     precio_limite: initial_limite,
                     precio_minimo: initial_minimo,
+                    precio_sugerido: initial_precio,
                     cantidad_stock: producto.cantidad_stock,
                     variantes: producto.variantes,
                     variant_id: initial_variant_id,
@@ -642,13 +1100,24 @@
                 });
             }
 
-            inputStr.value = ''; // Limpiar cajón para el próximo escaneo
+            inputStr.value = '';
             renderizarCarrito();
             
         } catch (error) {
             console.error('Error Catcher:', error);
             alert('Error comunicándose con el Backend (Flask). Verifica el servidor.');
         }
+    }
+
+    function cambiarCantidadStepper(index, delta) {
+        const item = carrito[index];
+        if (!item) return;
+        const nueva = (parseInt(item.cantidad) || 1) + delta;
+        if (nueva <= 0) {
+            eliminarItem(index);
+            return;
+        }
+        actualizarItem(index, 'cantidad', nueva);
     }
 
     // Detector interactivo de Casillas Precio/Cantidad editadas en Real-Time
@@ -663,9 +1132,7 @@
                 return;
             }
             
-            // Los productos manuales no tienen stock real que validar
             if (!item.es_manual) {
-                // Validar stock de la variante si existe, si no del producto base
                 let max_stock = item.cantidad_stock;
                 if (item.variantes && item.variantes.length > 0) {
                     const varSel = item.variantes.find(v => v.id == item.variant_id);
@@ -690,8 +1157,8 @@
                     alert(`Has seleccionado una variante con poco stock (${varSel.stock}). Se ajustará la cantidad.`);
                     item.cantidad = varSel.stock > 0 ? varSel.stock : 1;
                 }
-                // Update specific variant bounds & price
                 item.precio_final = varSel.precio_sugerido;
+                item.precio_sugerido = varSel.precio_sugerido;
                 item.precio_limite = varSel.precio_limite;
                 item.precio_minimo = varSel.precio_minimo;
             }
@@ -700,16 +1167,15 @@
         if (campo === 'precio_final') {
             const nuevoPrecio = parseFloat(valor);
             
-            // Regla de Negocio: Control de precio según Autoridad
             if (!item.es_obsequio && nuevoPrecio < item.precio_limite) {
                 alert(`¡OPERACIÓN BLOQUEADA! El precio pactado ($${nuevoPrecio}) es INFERIOR al Mínimo Autorizado para tu nivel de usuario ($${item.precio_limite}). No se puede vender a este precio para evitar pérdidas.`);
-                renderizarCarrito(); // Re-renderizar ignorando el valor digitado
+                renderizarCarrito();
                 return;
             }
             item.precio_final = nuevoPrecio;
         }
         
-        renderizarCarrito(); // Redibujar siempre al procesar total
+        renderizarCarrito();
     }
 
     function eliminarItem(index) {
@@ -721,7 +1187,6 @@
         let item = carrito[index];
         if (item.es_obsequio) {
             item.es_obsequio = false;
-            // Restaurar precio sugerido
             item.precio_final = item.precio_sugerido || 0;
         } else {
             item.es_obsequio = true;
@@ -741,21 +1206,24 @@
 
         if (carrito.length === 0) {
             tbody.innerHTML = `<tr>
-                <td colspan="5" class="text-center py-5 text-muted" id="empty_cart_msg">
-                    <i class="fa-solid fa-cart-arrow-down fs-2 mb-2 d-block text-brand-pink opacity-50"></i>
-                    La venta está vacía actualmente.
+                <td colspan="5" class="p-0 border-0" id="empty_cart_msg">
+                    <div class="empty-cart-showcase">
+                        <div class="empty-cart-circle">
+                            <i class="fa-solid fa-cart-plus"></i>
+                        </div>
+                        <h6 class="fw-bold text-brand-black mb-1" style="font-family: 'Outfit', sans-serif;">La venta está vacía actualmente</h6>
+                        <p class="text-muted small mb-0">Escanea un código SKU arriba o usa el botón <strong>Externo</strong> para comenzar a facturar.</p>
+                    </div>
                 </td>
             </tr>`;
             totalAmountEl.innerText = '$0';
             totalItemsEl.innerText = '0';
-            // Actualizar saldo restante si estamos en modo mixto
             if (document.getElementById('toggle_pago_mixto').checked) {
                 actualizarSaldoRestante();
             }
             return;
         }
 
-        // Iterar los productos virtuales agregados y dibujar cascarones DOM
         carrito.forEach((item, index) => {
             const subtotal = item.cantidad * item.precio_final;
             granTotal += subtotal;
@@ -763,10 +1231,9 @@
 
             let variantHtml = '';
             if (item.variantes && item.variantes.length > 0) {
-                variantHtml = `<select class="form-select form-select-sm mt-1 text-secondary bg-light border-0 shadow-sm" onchange="actualizarItem(${index}, 'variant_id', this.value)">`;
+                variantHtml = `<select class="form-select form-select-sm mt-1.5 text-secondary bg-light border-0 rounded-3 shadow-xs fw-semibold" style="font-size: 0.78rem;" onchange="actualizarItem(${index}, 'variant_id', this.value)">`;
                 item.variantes.forEach(v => {
                     let selected = (v.id == item.variant_id) ? "selected" : "";
-                    // Si tiene 0 despintar opción o alertarlo
                     let disableStr = v.stock <= 0 ? "(Sin stock)" : `(Stock: ${v.stock})`;
                     variantHtml += `<option value="${v.id}" ${selected}>${v.nombre} ${disableStr}</option>`;
                 });
@@ -774,75 +1241,87 @@
             }
 
             const tr = document.createElement('tr');
-            // Celdas DOM
             let skuLabel = '';
             if (item.es_manual) {
-                skuLabel = `<span class="badge bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25 rounded-pill px-2" style="font-size: 0.7rem;"><i class="fa-solid fa-handshake me-1"></i>EXTERNO</span>`;
+                skuLabel = `<span class="badge badge-soft-blue rounded-pill px-2 py-0.5" style="font-size: 0.68rem;"><i class="fa-solid fa-handshake me-1"></i>EXTERNO</span>`;
             } else {
-                skuLabel = `<small class="text-muted">${item.sku}</small>`;
+                skuLabel = `<span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5 fw-semibold" style="font-size: 0.68rem;"><i class="fa-solid fa-barcode me-1 text-muted"></i>${item.sku}</span>`;
             }
-            let isObsequioClass = item.es_obsequio ? 'text-success' : 'text-muted';
+            let isObsequioClass = item.es_obsequio ? 'btn-success text-white' : 'btn-light text-muted border';
             let precioInputState = item.es_obsequio ? 'disabled' : '';
 
             tr.innerHTML = `
                 <td>
-                    <div class="fw-bold text-brand-black">${item.nombre}</div>
-                    ${skuLabel}
-                    ${item.es_obsequio ? '<span class="badge bg-success bg-opacity-10 text-success ms-2"><i class="fa-solid fa-gift me-1"></i>Obsequio</span>' : ''}
+                    <div class="fw-bold text-brand-black mb-1" style="font-size: 0.94rem;">${item.nombre}</div>
+                    <div class="d-flex align-items-center flex-wrap gap-1">
+                        ${skuLabel}
+                        ${item.es_obsequio ? '<span class="badge badge-soft-success rounded-pill px-2 py-0.5" style="font-size: 0.68rem;"><i class="fa-solid fa-gift me-1"></i>Obsequio</span>' : ''}
+                    </div>
                     ${variantHtml}
                 </td>
-                <td width="130">
-                    <input type="number" class="form-control form-control-sm text-center" value="${item.cantidad}" onchange="actualizarItem(${index}, 'cantidad', this.value)">
+                <td class="text-center" width="145">
+                    <div class="qty-stepper">
+                        <button type="button" class="qty-stepper-btn" onclick="cambiarCantidadStepper(${index}, -1)" title="Disminuir">
+                            <i class="fa-solid fa-minus" style="font-size: 0.68rem;"></i>
+                        </button>
+                        <input type="number" value="${item.cantidad}" onchange="actualizarItem(${index}, 'cantidad', this.value)">
+                        <button type="button" class="qty-stepper-btn" onclick="cambiarCantidadStepper(${index}, 1)" title="Aumentar">
+                            <i class="fa-solid fa-plus" style="font-size: 0.68rem;"></i>
+                        </button>
+                    </div>
                 </td>
-                <td width="180">
+                <td width="185">
                     ${item.es_manual ? `
-                    <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0">$</span>
-                        <input type="number" step="1" class="form-control text-end border-start-0 pe-2" value="${Math.round(item.precio_final)}" onchange="actualizarItem(${index}, 'precio_final', this.value)" ${precioInputState}>
+                    <div class="input-group input-group-sm rounded-3 overflow-hidden border">
+                        <span class="input-group-text bg-light border-0 fw-bold text-muted">$</span>
+                        <input type="number" step="1" class="form-control text-end border-0 fw-bold pe-2" value="${Math.round(item.precio_final)}" onchange="actualizarItem(${index}, 'precio_final', this.value)" ${precioInputState}>
                     </div>
                     ` : `
                     <div class="input-group input-group-sm">
-                        <span class="input-group-text bg-light border-end-0">$</span>
-                        <input type="number" step="1" class="form-control text-end border-start-0 pe-2" value="${Math.round(item.precio_final)}" onchange="actualizarItem(${index}, 'precio_final', this.value)" ${precioInputState}>
+                        <span class="input-group-text bg-light border-end-0 fw-bold text-muted">$</span>
+                        <input type="number" step="1" class="form-control text-end border-start-0 fw-bold pe-2" value="${Math.round(item.precio_final)}" onchange="actualizarItem(${index}, 'precio_final', this.value)" ${precioInputState}>
                         <button class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" type="button" data-bs-toggle="dropdown" aria-expanded="false" ${precioInputState}>
                             <span class="visually-hidden">Opciones</span>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                            <li><h6 class="dropdown-header">Precios Definidos</h6></li>
-                            <li><a class="dropdown-item py-2" href="#" onclick="event.preventDefault(); actualizarItem(${index}, 'precio_final', ${item.precio_minimo})">
-                                <div class="d-flex justify-content-between">
+                        <ul class="dropdown-menu dropdown-menu-end shadow border-0 rounded-4 p-1">
+                            <li><h6 class="dropdown-header small text-uppercase fw-bold">Precios Definidos</h6></li>
+                            <li><a class="dropdown-item rounded-3 py-2" href="#" onclick="event.preventDefault(); actualizarItem(${index}, 'precio_final', ${item.precio_minimo})">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <span>💸 Precio Mínimo</span>
                                     <span class="fw-bold ms-3">${formatoCOP(item.precio_minimo)}</span>
                                 </div>
                             </a></li>
-                            <li><a class="dropdown-item py-2 text-primary" href="#" onclick="event.preventDefault(); actualizarItem(${index}, 'precio_final', ${item.precio_sugerido})">
-                                <div class="d-flex justify-content-between">
+                            <li><a class="dropdown-item rounded-3 py-2 text-primary" href="#" onclick="event.preventDefault(); actualizarItem(${index}, 'precio_final', ${item.precio_sugerido})">
+                                <div class="d-flex justify-content-between align-items-center">
                                     <span>🏷️ Precio Sugerido</span>
                                     <span class="fw-bold ms-3">${formatoCOP(item.precio_sugerido)}</span>
                                 </div>
                             </a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><div class="px-3 py-1 small text-muted">Límite Permitido: ${formatoCOP(item.precio_limite)}</div></li>
+                            <li><div class="px-3 py-1 small text-muted">Límite Permitido: <strong>${formatoCOP(item.precio_limite)}</strong></div></li>
                         </ul>
                     </div>
                     `}
                 </td>
-                <td class="text-end fw-bold text-brand-black" width="120">
+                <td class="text-end fw-extrabold text-brand-black" width="130" style="font-family: 'Outfit', sans-serif; font-size: 1.02rem;">
                     ${formatoCOP(subtotal)}
                 </td>
                 <td class="text-center" width="90">
-                    {% if current_user.rol == 'admin' %}
-                    <button class="btn btn-sm ${isObsequioClass} me-1" title="Marcar como Obsequio" onclick="toggleObsequio(${index})">
-                        <i class="fa-solid fa-gift"></i>
-                    </button>
-                    {% endif %}
-                    <button class="btn btn-sm text-danger" onclick="eliminarItem(${index})"><i class="fa-solid fa-trash"></i></button>
+                    <div class="d-inline-flex align-items-center gap-1">
+                        {% if current_user.rol == 'admin' %}
+                        <button class="btn btn-sm rounded-3 ${isObsequioClass}" title="Marcar como Obsequio" onclick="toggleObsequio(${index})">
+                            <i class="fa-solid fa-gift"></i>
+                        </button>
+                        {% endif %}
+                        <button class="btn btn-sm btn-light text-danger border rounded-3" title="Quitar producto" onclick="eliminarItem(${index})">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </td>
             `;
             tbody.appendChild(tr);
         });
 
-        // Actualizar el DOM maestro Total
         totalAmountEl.innerText = formatoCOP(granTotal);
         totalItemsEl.innerText = totalItems;
 
@@ -850,7 +1329,6 @@
             calcularCambioEfectivo();
         }
 
-        // Actualizar saldo restante si estamos en modo mixto
         if (document.getElementById('toggle_pago_mixto').checked) {
             actualizarSaldoRestante();
         }
@@ -863,11 +1341,9 @@
 
         const tieneCelular = carrito.some(item => item.tipo_inventario === 'celulares');
         if (tieneCelular) {
-            // Mostrar modal de cliente
             const modalCliente = new bootstrap.Modal(document.getElementById('modalClienteCelular'));
             modalCliente.show();
         } else {
-            // Procesar normal sin cliente
             procesarPago(null);
         }
     });
@@ -896,14 +1372,10 @@
 
     // Evento Transaccional JSON de Salida
     async function procesarPago(datosCliente = null) {
-
         const esMixto = document.getElementById('toggle_pago_mixto').checked;
-
-        // Construir el payload de pagos
         let pagosPayload = [];
 
         if (esMixto) {
-            // Validar pagos mixtos
             const granTotal = obtenerGranTotal();
             let sumaPagos = 0;
 
@@ -919,7 +1391,6 @@
                 });
             }
 
-            // Validar que la suma sea correcta
             if (Math.round(sumaPagos) !== Math.round(granTotal)) {
                 const diff = Math.round(granTotal) - Math.round(sumaPagos);
                 return alert(`⚠️ La suma de los pagos ($${formatoCOP(sumaPagos).replace('$','')}) no coincide con el total de la venta ($${formatoCOP(granTotal).replace('$','')}). Falta: $${formatoCOP(Math.abs(diff)).replace('$','')}`);
@@ -932,7 +1403,6 @@
             });
         }
 
-        // Estructura de Diccionario aceptada estrictamente por Backend 
         const payload = {
             items: carrito.map(item => {
                 const base = {
@@ -959,12 +1429,11 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrf_token // Clave Maestra de Seguridad Requerida por Flask-WTF
+                    'X-CSRFToken': csrf_token
                 },
                 body: JSON.stringify(payload)
             });
 
-            // Si la sesión expiró o devolvió redirección a login / 401
             if (response.status === 401 || (response.redirected && response.url.includes('/auth/login'))) {
                 alert('⚠️ Tu sesión ha expirado por inactividad. Se abrirá la página para volver a iniciar sesión sin perder tu venta actual.');
                 window.open('/auth/login', '_blank');
@@ -974,7 +1443,6 @@
             const data = await response.json();
 
             if (response.ok) {
-                // Verificar si el usuario tiene activo el switch de imprimir ticket
                 const autoPrint = document.getElementById('toggle_auto_print')?.checked;
                 if (autoPrint) {
                     let reciboWindow = window.open(`/sales/recibo/${data.sale_id}`, '_blank');
@@ -983,15 +1451,12 @@
                     }
                 }
                 
-                // Alerta nativa solicitada para feedback directo (Mantiene pausada la pantalla de la Caja)
                 const tipoMsg = esMixto ? '(Pago Dividido)' : '';
                 alert(`✅ ¡Cobro en Caja Procesado ${tipoMsg}! El inventario ha sido descontado correctamente. ID: ${data.sale_id}`);
                 
-                // Purgar carrito para el próximo comprador
                 carrito = [];
                 pagosMixtos = [];
                 
-                // Reinicia dinámicamente el CSS/Contador de caja visual a $0.00
                 renderizarCarrito(); 
                 resetPagosMixtos();
                 
@@ -1033,8 +1498,8 @@
 
         if (!pagaConInput.value || pagaCon <= 0) {
             box.innerHTML = `
-                <div class="small text-muted py-1" style="font-size: 0.75rem;">
-                    <i class="fa-solid fa-circle-info me-1 text-brand-pink"></i> Ingresa cuánto entrega el cliente para calcular el cambio.
+                <div class="small text-muted py-1" style="font-size: 0.73rem;">
+                    <i class="fa-solid fa-circle-info me-1" style="color: #E11D48;"></i> Ingresa cuánto entrega el cliente para calcular el cambio.
                 </div>`;
             return;
         }
@@ -1043,7 +1508,7 @@
         if (vueltas >= 0) {
             box.innerHTML = `
                 <div class="p-2 rounded-3 text-center" style="background: #ECFDF5; border: 1.5px solid #A7F3D0;">
-                    <span class="d-block small fw-bold text-success text-uppercase" style="font-size: 0.7rem;">
+                    <span class="d-block small fw-bold text-success text-uppercase" style="font-size: 0.68rem;">
                         <i class="fa-solid fa-circle-check me-1"></i> Cambio / Vueltas a Devolver
                     </span>
                     <span class="fs-4 fw-bolder text-success">$${formatoCOP(vueltas).replace('$','')}</span>
@@ -1051,7 +1516,7 @@
         } else {
             box.innerHTML = `
                 <div class="p-2 rounded-3 text-center" style="background: #FFF1F2; border: 1.5px solid #FECDD3;">
-                    <span class="d-block small fw-bold text-danger text-uppercase" style="font-size: 0.7rem;">
+                    <span class="d-block small fw-bold text-danger text-uppercase" style="font-size: 0.68rem;">
                         <i class="fa-solid fa-triangle-exclamation me-1"></i> Faltan por Cubrir
                     </span>
                     <span class="fs-5 fw-bolder text-danger">$${formatoCOP(Math.abs(vueltas)).replace('$','')}</span>
@@ -1087,43 +1552,4 @@
         });
     }
 </script>
-
-<style>
-.payment-method-card {
-    background: #ffffff;
-    border: 1.5px solid #e2e8f0;
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
-    user-select: none;
-}
-.payment-method-card:hover {
-    border-color: #F472B6;
-    background: #FFF5F7;
-    transform: translateY(-1px);
-}
-.payment-method-card.active {
-    border: 2px solid #E11D48 !important;
-    background: #FFF1F5 !important;
-    box-shadow: 0 4px 12px rgba(225, 29, 72, 0.15) !important;
-}
-.payment-method-card.active .payment-title {
-    color: #9F1239 !important;
-    font-weight: 800 !important;
-}
-.btn-quick-bill {
-    border: 1px solid #FBCFE8;
-    background: #ffffff;
-    font-size: 0.72rem;
-    font-weight: 700;
-    color: #9F1239;
-    padding: 3px 10px;
-    border-radius: 20px;
-    transition: all 0.15s ease;
-}
-.btn-quick-bill:hover {
-    background: #FFE4E6;
-    border-color: #F472B6;
-    color: #881337;
-}
-</style>
 {% endblock %}
