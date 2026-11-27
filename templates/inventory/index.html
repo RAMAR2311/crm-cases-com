@@ -35,8 +35,10 @@
                     <i class="fa-solid fa-boxes-stacked"></i>
                 </div>
             </div>
-            <h3 class="kpi-value text-brand-black">{{ total_unidades_fisicas or 0 }} <span class="fs-6 fw-semibold text-muted">unidades</span></h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-barcode me-1 text-primary"></i> {{ total_productos or 0 }} referencias en catálogo</small>
+            <h3 class="kpi-value text-brand-black">{{ total_unidades_fisicas or 0 }} <span
+                    class="fs-6 fw-semibold text-muted">unidades</span></h3>
+            <small class="kpi-subtext"><i class="fa-solid fa-barcode me-1 text-primary"></i> {{ total_productos or 0 }}
+                referencias en catálogo</small>
         </div>
     </div>
 
@@ -50,7 +52,8 @@
                 </div>
             </div>
             <h3 class="kpi-value text-brand-black">${{ (valor_costo or 0)|cop }}</h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-vault me-1 text-secondary"></i> Capital invertido en tienda</small>
+            <small class="kpi-subtext"><i class="fa-solid fa-vault me-1 text-secondary"></i> Capital invertido en
+                tienda</small>
         </div>
     </div>
 
@@ -64,7 +67,8 @@
                 </div>
             </div>
             <h3 class="kpi-value" style="color: #047857;">${{ (valor_sugerido or 0)|cop }}</h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-chart-line me-1 text-success"></i> Proyección bruta de catálogo</small>
+            <small class="kpi-subtext"><i class="fa-solid fa-chart-line me-1 text-success"></i> Proyección bruta de
+                catálogo</small>
         </div>
     </div>
 </div>

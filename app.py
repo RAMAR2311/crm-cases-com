@@ -462,6 +462,57 @@ def create_app():
             except Exception:
                 pass
 
+        # Auto-sincronización segura de columnas nuevas (PostgreSQL y SQLite)
+        # Garantiza que aunque 'flask db upgrade' tenga múltiples cabeceras en el VPS,
+        # nunca falte ninguna columna y nunca ocurra un Error 500 por UndefinedColumn.
+        try:
+            from sqlalchemy import inspect as sa_inspect, text as sa_text
+            insp = sa_inspect(db.engine)
+            tablas_existentes = set(insp.get_table_names())
+
+            def _asegurar_columnas(tabla, definiciones_sql):
+                if tabla not in tablas_existentes:
+                    return
+                cols_actuales = {c['name'] for c in insp.get_columns(tabla)}
+                for col_name, col_sql in definiciones_sql:
+                    if col_name not in cols_actuales:
+                        try:
+                            db.session.execute(sa_text(f"ALTER TABLE {tabla} ADD COLUMN {col_name} {col_sql}"))
+                            db.session.commit()
+                        except Exception:
+                            db.session.rollback()
+
+            _asegurar_columnas('products', [
+                ('imei', 'VARCHAR(50)'),
+                ('imei2', 'VARCHAR(50)'),
+                ('marca', 'VARCHAR(100)'),
+                ('modelo_celular', 'VARCHAR(100)'),
+                ('estado_celular', "VARCHAR(50) DEFAULT 'Nuevo'"),
+                ('color', 'VARCHAR(50)'),
+                ('bateria', 'VARCHAR(50)'),
+                ('memoria', 'VARCHAR(50)'),
+                ('proveedor', 'VARCHAR(150)'),
+                ('subtipo_externo', 'VARCHAR(50)'),
+            ])
+            _asegurar_columnas('sale_clients', [
+                ('direccion', 'VARCHAR(255)'),
+                ('email', 'VARCHAR(150)'),
+            ])
+            _asegurar_columnas('sales', [
+                ('monto_retoma', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'),
+                ('tipo_venta', "VARCHAR(50) NOT NULL DEFAULT 'general'"),
+            ])
+            _asegurar_columnas('stock_adjustments', [
+                ('motivo', 'VARCHAR(255)'),
+            ])
+            _asegurar_columnas('arqueo_caja', [
+                ('efectivo_fisico_contado', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'),
+                ('diferencia_efectivo', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'),
+                ('tipo_arqueo', "VARCHAR(50) NOT NULL DEFAULT 'general'"),
+            ])
+        except Exception as e:
+            print(f"[AUTO-SCHEMA] Aviso verificando columnas: {e}")
+
     return app
 
 if __name__ == '__main__':

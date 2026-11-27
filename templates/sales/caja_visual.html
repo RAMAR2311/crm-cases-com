@@ -27,24 +27,23 @@
             </div>
         </div>
 
-        <!-- Grilla de productos -->
-        <div class="row g-3 overflow-auto pb-4" id="productsGrid" style="max-height: calc(100vh - 250px);">
+        <!-- Grilla de productos adaptable: Computador (4 cols), Tablet (3 cols), Celular/PWA (2 cols) -->
+        <div class="row g-2 g-md-3 pb-4 products-grid-responsive" id="productsGrid">
             {% for p in productos %}
-            {% set total_stock = p.cantidad_stock %}
+            {% set total_stock = p.total_stock or 0 %}
             {% set vars_data = [] %}
             {% if p.variantes %}
-                {% set total_stock = p.variantes | sum(attribute='cantidad_stock') %}
                 {% for v in p.variantes %}
-                    {% set _ = vars_data.append({"id": v.id, "nombre": v.nombre_variante, "stock": v.cantidad_stock, "precio_sugerido": (v.precio_sugerido or p.precio_sugerido or 0)|float, "precio_minimo": (v.precio_minimo or p.precio_minimo or 0)|float}) %}
+                    {% set _ = vars_data.append({"id": v.id, "nombre": v.nombre_variante or "", "stock": (v.cantidad_stock or 0), "precio_sugerido": (v.precio_sugerido or p.precio_sugerido or 0)|float, "precio_minimo": (v.precio_minimo or p.precio_minimo or 0)|float}) %}
                 {% endfor %}
             {% endif %}
             <div class="col-6 col-md-4 col-xl-3 product-card-container"
-                 data-name="{{ p.nombre|lower }}"
-                 data-sku="{{ p.sku|lower }}"
+                 data-name="{{ (p.nombre or '')|lower }}"
+                 data-sku="{{ (p.sku or '')|lower }}"
                  data-imei="{{ (p.imei or '')|lower }}">
                 <div class="card h-100 border-0 shadow-sm cursor-pointer product-card rounded-4 overflow-hidden"
-                     data-product='{{ {"id": p.id, "nombre": p.nombre, "sku": p.sku, "imei": p.imei or "", "precio_sugerido": (p.precio_sugerido or 0)|float, "precio_minimo": (p.precio_minimo or 0)|float, "cantidad_stock": total_stock, "tipo_inventario": p.tipo_inventario, "subtipo_externo": p.subtipo_externo or ""}|tojson|safe }}'
-                     data-variants='{{ vars_data|tojson|safe }}'
+                     data-product="{{ {'id': p.id, 'nombre': p.nombre or '', 'sku': p.sku or '', 'imei': p.imei or '', 'precio_sugerido': (p.precio_sugerido or 0)|float, 'precio_minimo': (p.precio_minimo or 0)|float, 'cantidad_stock': total_stock, 'tipo_inventario': p.tipo_inventario or 'tienda', 'subtipo_externo': p.subtipo_externo or ''}|tojson|forceescape }}"
+                     data-variants="{{ vars_data|tojson|forceescape }}"
                      onclick="handleProductClick(this)">
                     <div class="ratio ratio-1x1 bg-light d-flex align-items-center justify-content-center overflow-hidden position-relative">
                         {% if p.imagen %}
@@ -52,21 +51,21 @@
                         {% else %}
                             <span class="text-muted small text-center pt-4">
                                 <i class="fa-solid {% if p.tipo_inventario == 'celulares' or p.subtipo_externo == 'celular' %}fa-mobile-screen-button{% else %}fa-image{% endif %} fa-2x mb-2 text-black-50"></i><br>
-                                {{ p.tipo_inventario|capitalize }}
+                                {{ (p.tipo_inventario or 'tienda')|capitalize }}
                             </span>
                         {% endif %}
                         {% if p.tipo_inventario == 'externos' %}
                         <span class="position-absolute top-0 end-0 m-2 badge badge-soft-blue rounded-pill" style="font-size: 0.65rem; width: auto; height: auto;">EXTERNO</span>
                         {% endif %}
                     </div>
-                    <div class="card-body p-3 text-center d-flex flex-column justify-content-between">
+                    <div class="card-body p-2 p-md-3 text-center d-flex flex-column justify-content-between">
                         <div>
-                            <h6 class="card-title fw-bold text-dark text-truncate mb-1" title="{{ p.nombre }}">{{ p.nombre }}</h6>
-                            <small class="text-muted d-block font-monospace" style="font-size: 0.72rem;">{{ p.imei if p.imei else p.sku }}</small>
+                            <h6 class="card-title fw-bold text-dark text-truncate mb-1" title="{{ p.nombre }}" style="font-size: 0.92rem;">{{ p.nombre }}</h6>
+                            <small class="text-muted d-block font-monospace text-truncate" style="font-size: 0.7rem;">{{ p.imei if p.imei else p.sku }}</small>
                         </div>
                         <div class="mt-2">
-                            <h5 class="fw-bolder mb-1" style="color: #BE185D;">${{ p.precio_sugerido|cop }}</h5>
-                            <small class="text-muted"><i class="fa-solid fa-box text-secondary"></i> {{ total_stock }} disp.</small>
+                            <h5 class="fw-bolder mb-1 fs-6 fs-md-5" style="color: #BE185D;">${{ (p.precio_sugerido or 0)|cop }}</h5>
+                            <small class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-box text-secondary"></i> {{ total_stock }} disp.</small>
                         </div>
                     </div>
                 </div>
@@ -80,9 +79,9 @@
         </div>
     </div>
 
-    <!-- Panel Derecho: Carrito -->
-    <div class="col-lg-4">
-        <div class="card card-custom p-4 position-sticky shadow-sm rounded-4 border-0" style="top: 100px; background: #ffffff;">
+    <!-- Panel Derecho: Carrito / Factura -->
+    <div class="col-lg-4" id="balanceVentaCard">
+        <div class="card card-custom p-3 p-md-4 position-sticky shadow-sm rounded-4 border-0" style="top: 90px; background: #ffffff;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold m-0 text-brand-black"><i class="fa-solid fa-basket-shopping text-brand-pink me-2"></i> Balance de Venta</h5>
                 <span class="badge rounded-pill px-3 py-2 fw-bold" id="total_items" style="background: #FFE4E6; color: #BE185D;">0 items</span>
@@ -777,6 +776,8 @@
             </li>`;
             totalAmountEl.innerText = '$0';
             totalItemsEl.innerText = '0 items';
+            const mobBar = document.getElementById('mobileCartBar');
+            if (mobBar) mobBar.classList.add('d-none');
             return;
         }
 
@@ -821,6 +822,19 @@
 
         totalAmountEl.innerText = formatoCOP(obtenerGranTotal());
         totalItemsEl.innerText = `${totalItems} items`;
+
+        const mobBar = document.getElementById('mobileCartBar');
+        const mobCount = document.getElementById('mobileCartCount');
+        const mobTotal = document.getElementById('mobileCartTotal');
+        if (mobBar && mobCount && mobTotal) {
+            mobCount.innerText = `${totalItems} item${totalItems !== 1 ? 's' : ''}`;
+            mobTotal.innerText = formatoCOP(obtenerGranTotal());
+            if (totalItems > 0) {
+                mobBar.classList.remove('d-none');
+            } else {
+                mobBar.classList.add('d-none');
+            }
+        }
 
         if (typeof calcularCambioEfectivo === 'function') calcularCambioEfectivo();
         if (document.getElementById('toggle_pago_mixto').checked) actualizarSaldoRestante();
@@ -1039,7 +1053,45 @@
     }
 </script>
 
+<!-- Barra Flotante Inferior para Celular, Tablet y PWA (< 992px) -->
+<div id="mobileCartBar" class="d-lg-none d-none position-fixed start-0 end-0 bottom-0 p-3" style="z-index: 1040; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(12px); border-top: 2px solid #F9C8D3; padding-bottom: max(0.85rem, env(safe-area-inset-bottom)) !important;">
+    <div class="d-flex justify-content-between align-items-center gap-3">
+        <div class="text-white">
+            <span class="badge rounded-pill px-2.5 py-1 fw-bold me-1" id="mobileCartCount" style="background: #F9C8D3; color: #0F172A;">0 items</span>
+            <span class="fw-bolder fs-5 font-monospace" id="mobileCartTotal">$0</span>
+        </div>
+        <button type="button" class="btn btn-pink rounded-pill px-4 py-2 fw-bold shadow-sm" onclick="document.getElementById('balanceVentaCard').scrollIntoView({behavior: 'smooth'})">
+            <i class="fa-solid fa-basket-shopping me-1"></i> Ir a Facturar ↓
+        </button>
+    </div>
+</div>
+
 <style>
+/* Adaptabilidad Computador vs Tablet / Celular / PWA */
+@media (min-width: 992px) {
+    .products-grid-responsive {
+        max-height: calc(100vh - 230px);
+        overflow-y: auto;
+    }
+}
+@media (max-width: 991.98px) {
+    .products-grid-responsive {
+        max-height: none;
+        overflow-y: visible;
+    }
+    #balanceVentaCard {
+        margin-bottom: 85px;
+    }
+}
+.product-card {
+    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    border: 1.5px solid #E2E8F0 !important;
+}
+.product-card:hover, .product-card:active {
+    transform: translateY(-3px);
+    border-color: #F472B6 !important;
+    box-shadow: 0 10px 22px -6px rgba(15, 23, 42, 0.12) !important;
+}
 .payment-method-card {
     background: #ffffff;
     border: 1.5px solid #e2e8f0;

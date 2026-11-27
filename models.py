@@ -68,8 +68,8 @@ class Product(db.Model):
     @property
     def total_stock(self):
         if self.variantes:
-            return sum(v.cantidad_stock for v in self.variantes)
-        return self.cantidad_stock
+            return sum((v.cantidad_stock or 0) for v in self.variantes)
+        return self.cantidad_stock or 0
 
     @property
     def tiene_alerta_stock(self):

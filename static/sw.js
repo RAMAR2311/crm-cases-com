@@ -1,6 +1,5 @@
-const CACHE_NAME = 'cases-app-v3';
+const CACHE_NAME = 'cases-app-v4';
 const ASSETS_TO_CACHE = [
-    '/',
     '/static/manifest.json',
     '/static/img/cases.png?v=3',
     '/static/img/icons/icon-192x192.png?v=3',
@@ -13,9 +12,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
-                return cache.addAll(ASSETS_TO_CACHE);
-            })
+            .then((cache) => cache.addAll(ASSETS_TO_CACHE))
             .then(() => self.skipWaiting())
     );
 });
@@ -35,22 +32,21 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-    // Para las peticiones de navegación o de API, usamos estrategia Network First
+    if (event.request.method !== 'GET') return;
+
     event.respondWith(
         fetch(event.request)
             .then((response) => {
-                // Hacemos una copia para guardar en caché
-                const responseClone = response.clone();
-                caches.open(CACHE_NAME).then((cache) => {
-                    // Evitamos guardar en caché POST/PUT o extensiones raras si es necesario
-                    if(event.request.method === 'GET' && !event.request.url.includes('/api/')){
+                // Solo cachear recursos estáticos exitosos (HTTP 200), nunca errores 500 ni vistas dinámicas de caja
+                if (response && response.status === 200 && event.request.url.includes('/static/')) {
+                    const responseClone = response.clone();
+                    caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, responseClone);
-                    }
-                });
+                    });
+                }
                 return response;
             })
             .catch(() => {
-                // Fallback a caché si no hay red
                 return caches.match(event.request);
             })
     );

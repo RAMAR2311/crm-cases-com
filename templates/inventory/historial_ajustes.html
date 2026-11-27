@@ -6,7 +6,8 @@
         <h2 class="fw-bolder text-brand-black m-0">
             <i class="fa-solid fa-sliders text-brand-pink me-2"></i>Kardex y Trazabilidad por Producto
         </h2>
-        <p class="text-muted small mb-0">Busca cualquier producto escribiendo desde 2 letras para auditar todas sus entradas, ventas y ajustes de inventario.</p>
+        <p class="text-muted small mb-0">Busca cualquier producto escribiendo desde 2 letras para auditar todas sus
+            entradas, ventas y ajustes de inventario.</p>
     </div>
     <a href="{{ url_for('inventory_bp.index') }}" class="btn btn-blue rounded-pill px-4 fw-bold shadow-xs">
         <i class="fa-solid fa-arrow-left me-1"></i> Ir a Inventario
@@ -23,8 +24,10 @@
                     <i class="fa-solid fa-boxes-stacked"></i>
                 </div>
             </div>
-            <h3 class="kpi-value text-brand-black">{{ productos_kardex|length }} <span class="fs-6 text-muted fw-semibold">referencias</span></h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-clock-rotate-left me-1 text-primary"></i> {{ total_movimientos_global or 0 }} movimientos históricos</small>
+            <h3 class="kpi-value text-brand-black">{{ productos_kardex|length }} <span
+                    class="fs-6 text-muted fw-semibold">referencias</span></h3>
+            <small class="kpi-subtext"><i class="fa-solid fa-clock-rotate-left me-1 text-primary"></i> {{
+                total_movimientos_global or 0 }} movimientos históricos</small>
         </div>
     </div>
     <div class="col-12 col-md-4">
@@ -35,8 +38,10 @@
                     <i class="fa-solid fa-arrow-trend-up"></i>
                 </div>
             </div>
-            <h3 class="kpi-value" style="color: #047857;">+{{ total_entradas_global or 0 }} <span class="fs-6 text-muted fw-semibold">uds</span></h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-truck-ramp-box me-1 text-success"></i> Entradas y cargas de mercancía</small>
+            <h3 class="kpi-value" style="color: #047857;">+{{ total_entradas_global or 0 }} <span
+                    class="fs-6 text-muted fw-semibold">uds</span></h3>
+            <small class="kpi-subtext"><i class="fa-solid fa-truck-ramp-box me-1 text-success"></i> Entradas y cargas de
+                mercancía</small>
         </div>
     </div>
     <div class="col-12 col-md-4">
@@ -47,8 +52,10 @@
                     <i class="fa-solid fa-arrow-trend-down"></i>
                 </div>
             </div>
-            <h3 class="kpi-value" style="color: #BE185D;">-{{ total_salidas_global or 0 }} <span class="fs-6 text-muted fw-semibold">uds</span></h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-receipt me-1 text-brand-pink"></i> Ventas en caja y ajustes de salida</small>
+            <h3 class="kpi-value" style="color: #BE185D;">-{{ total_salidas_global or 0 }} <span
+                    class="fs-6 text-muted fw-semibold">uds</span></h3>
+            <small class="kpi-subtext"><i class="fa-solid fa-receipt me-1 text-brand-pink"></i> Ventas en caja y ajustes
+                de salida</small>
         </div>
     </div>
 </div>
@@ -58,27 +65,36 @@
     <div class="row align-items-center g-3">
         <div class="col-lg-8 position-relative">
             <label class="form-label fw-bold text-brand-black small mb-2">
-                <i class="fa-solid fa-magnifying-glass text-brand-pink me-1"></i> Buscador Rápido de Trazabilidad (Escribe al menos 2 letras de Nombre o SKU)
+                <i class="fa-solid fa-magnifying-glass text-brand-pink me-1"></i> Buscador Rápido de Trazabilidad
+                (Escribe al menos 2 letras de Nombre o SKU)
             </label>
-            <div class="input-group input-group-lg shadow-sm rounded-pill border" style="border-color: #CBD5E1 !important;">
-                <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-brand-pink"></i></span>
-                <input type="text" id="kardexSearchInput" class="form-control border-0 bg-white shadow-none ps-2 fw-semibold"
-                       placeholder="Ej: Adaptador, AirPods, Funda, ACC-..." value="{{ q or '' }}" autocomplete="off">
-                <button class="btn btn-light border-0 px-4 text-muted" type="button" id="clearKardexSearch" title="Limpiar" style="border-radius: 0 50px 50px 0;">
+            <div class="input-group input-group-lg shadow-sm rounded-pill border"
+                style="border-color: #CBD5E1 !important;">
+                <span class="input-group-text bg-white border-0 ps-4"><i
+                        class="fa-solid fa-magnifying-glass text-brand-pink"></i></span>
+                <input type="text" id="kardexSearchInput"
+                    class="form-control border-0 bg-white shadow-none ps-2 fw-semibold"
+                    placeholder="Ej: Adaptador, AirPods, Funda, ACC-..." value="{{ q or '' }}" autocomplete="off">
+                <button class="btn btn-light border-0 px-4 text-muted" type="button" id="clearKardexSearch"
+                    title="Limpiar" style="border-radius: 0 50px 50px 0;">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             <!-- Desplegable Instantáneo al escribir 2 letras -->
-            <div id="kardexQuickDropdown" class="dropdown-menu shadow-lg border w-100 p-0 mt-2 rounded-4 overflow-hidden d-none" style="max-height: 360px; overflow-y: auto; z-index: 1050;">
+            <div id="kardexQuickDropdown"
+                class="dropdown-menu shadow-lg border w-100 p-0 mt-2 rounded-4 overflow-hidden d-none"
+                style="max-height: 360px; overflow-y: auto; z-index: 1050;">
             </div>
         </div>
         <div class="col-lg-4 text-lg-end">
             <div class="p-3 rounded-4 bg-light border d-inline-block text-start w-100">
                 <div class="small fw-bold text-uppercase text-muted" style="font-size: 0.7rem;">Filtro en Vivo</div>
                 <div class="fw-bolder text-brand-black fs-6">
-                    Mostrando <span id="kardexVisibleCount" class="text-brand-pink">{{ productos_kardex|length }}</span> de {{ productos_kardex|length }} productos
+                    Mostrando <span id="kardexVisibleCount" class="text-brand-pink">{{ productos_kardex|length }}</span>
+                    de {{ productos_kardex|length }} productos
                 </div>
-                <small class="text-muted" style="font-size: 0.73rem;">Haz clic en un producto para abrir su trazabilidad</small>
+                <small class="text-muted" style="font-size: 0.73rem;">Haz clic en un producto para abrir su
+                    trazabilidad</small>
             </div>
         </div>
     </div>
@@ -102,11 +118,8 @@
                 {% for item in productos_kardex %}
                 {% set p = item.producto %}
                 {% set ult = item.ultimo_movimiento %}
-                <tr class="kardex-product-row"
-                    data-name="{{ p.nombre|lower }}"
-                    data-sku="{{ p.sku|lower }}"
-                    data-url="{{ url_for('inventory_bp.ver_producto', id=p.id) }}"
-                    style="cursor: pointer;"
+                <tr class="kardex-product-row" data-name="{{ p.nombre|lower }}" data-sku="{{ p.sku|lower }}"
+                    data-url="{{ url_for('inventory_bp.ver_producto', id=p.id) }}" style="cursor: pointer;"
                     onclick="window.location.href='{{ url_for('inventory_bp.ver_producto', id=p.id) }}'">
                     <td class="ps-4">
                         <span class="badge badge-soft-blue rounded-pill px-3 py-1 font-monospace">{{ p.sku }}</span>
@@ -114,46 +127,55 @@
                     <td>
                         <div class="fw-bold text-brand-black fs-6">{{ p.nombre }}</div>
                         {% if p.variantes %}
-                            <small class="text-muted"><i class="fa-solid fa-sitemap me-1 text-brand-pink"></i>{{ p.variantes|length }} subcategorías registradas</small>
+                        <small class="text-muted"><i class="fa-solid fa-sitemap me-1 text-brand-pink"></i>{{
+                            p.variantes|length }} subcategorías registradas</small>
                         {% else %}
-                            <small class="text-muted">Stock plano directo</small>
+                        <small class="text-muted">Stock plano directo</small>
                         {% endif %}
                     </td>
                     <td class="text-center">
-                        {% if (p.total_stock or 0) <= 3 %}
-                            <span class="badge bg-danger rounded-pill px-3 py-2">{{ p.total_stock or 0 }} uds (Crítico)</span>
-                        {% elif (p.total_stock or 0) <= 10 %}
-                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2">{{ p.total_stock or 0 }} uds (Bajo)</span>
-                        {% else %}
-                            <span class="badge badge-soft-success rounded-pill px-3 py-2">{{ p.total_stock or 0 }} unidades</span>
-                        {% endif %}
+                        {% if (p.total_stock or 0) <= 3 %} <span class="badge bg-danger rounded-pill px-3 py-2">{{
+                            p.total_stock or 0 }} uds (Crítico)</span>
+                            {% elif (p.total_stock or 0) <= 10 %} <span
+                                class="badge bg-warning text-dark rounded-pill px-3 py-2">{{ p.total_stock or 0 }} uds
+                                (Bajo)</span>
+                                {% else %}
+                                <span class="badge badge-soft-success rounded-pill px-3 py-2">{{ p.total_stock or 0 }}
+                                    unidades</span>
+                                {% endif %}
                     </td>
                     <td class="text-center">
                         <div class="d-inline-flex align-items-center gap-2">
-                            <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1" title="Total Unidades Ingresadas">
+                            <span
+                                class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 rounded-pill px-2.5 py-1"
+                                title="Total Unidades Ingresadas">
                                 <i class="fa-solid fa-arrow-up me-1"></i>+{{ item.total_entradas }}
                             </span>
-                            <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2.5 py-1" title="Total Unidades Vendidas / Salidas">
+                            <span
+                                class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25 rounded-pill px-2.5 py-1"
+                                title="Total Unidades Vendidas / Salidas">
                                 <i class="fa-solid fa-arrow-down me-1"></i>-{{ item.total_salidas }}
                             </span>
-                            <span class="badge bg-light text-muted border rounded-pill px-2 py-1" title="Cantidad de Eventos">
+                            <span class="badge bg-light text-muted border rounded-pill px-2 py-1"
+                                title="Cantidad de Eventos">
                                 {{ item.total_movimientos }} movs
                             </span>
                         </div>
                     </td>
                     <td>
                         {% if ult %}
-                            <div class="fw-semibold text-dark small">{{ ult.tipo_movimiento }}</div>
-                            <small class="text-muted">
-                                <i class="fa-regular fa-clock me-1"></i>{{ ult.fecha_ajuste.strftime('%Y-%m-%d %H:%M') }}
-                                · {{ ult.admin.nombre if ult.admin else 'Admin' }}
-                            </small>
+                        <div class="fw-semibold text-dark small">{{ ult.tipo_movimiento }}</div>
+                        <small class="text-muted">
+                            <i class="fa-regular fa-clock me-1"></i>{{ ult.fecha_ajuste.strftime('%Y-%m-%d %H:%M') }}
+                            · {{ ult.admin.nombre if ult.admin else 'Admin' }}
+                        </small>
                         {% else %}
-                            <span class="text-muted small">Sin movimientos registrados</span>
+                        <span class="text-muted small">Sin movimientos registrados</span>
                         {% endif %}
                     </td>
                     <td class="text-center pe-4" onclick="event.stopPropagation();">
-                        <a href="{{ url_for('inventory_bp.ver_producto', id=p.id) }}" class="btn btn-sm btn-pink rounded-pill px-3 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2">
+                        <a href="{{ url_for('inventory_bp.ver_producto', id=p.id) }}"
+                            class="btn btn-sm btn-pink rounded-pill px-3 py-2 fw-bold shadow-xs d-inline-flex align-items-center gap-2">
                             <i class="fa-solid fa-timeline"></i>
                             <span>Ver Trazabilidad</span>
                         </a>
@@ -180,32 +202,32 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const input = document.getElementById('kardexSearchInput');
-    const clearBtn = document.getElementById('clearKardexSearch');
-    const dropdown = document.getElementById('kardexQuickDropdown');
-    const rows = document.querySelectorAll('.kardex-product-row');
-    const visibleCountEl = document.getElementById('kardexVisibleCount');
-    const noResultsRow = document.getElementById('kardexNoResultsRow');
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('kardexSearchInput');
+        const clearBtn = document.getElementById('clearKardexSearch');
+        const dropdown = document.getElementById('kardexQuickDropdown');
+        const rows = document.querySelectorAll('.kardex-product-row');
+        const visibleCountEl = document.getElementById('kardexVisibleCount');
+        const noResultsRow = document.getElementById('kardexNoResultsRow');
 
-    function filterKardexProducts() {
-        const q = input.value.toLowerCase().trim();
-        let count = 0;
-        let quickItemsHtml = '';
+        function filterKardexProducts() {
+            const q = input.value.toLowerCase().trim();
+            let count = 0;
+            let quickItemsHtml = '';
 
-        rows.forEach(row => {
-            const name = row.dataset.name || '';
-            const sku = row.dataset.sku || '';
-            const url = row.dataset.url || '#';
-            const match = (q.length === 0) || name.includes(q) || sku.includes(q);
+            rows.forEach(row => {
+                const name = row.dataset.name || '';
+                const sku = row.dataset.sku || '';
+                const url = row.dataset.url || '#';
+                const match = (q.length === 0) || name.includes(q) || sku.includes(q);
 
-            if (match) {
-                row.classList.remove('d-none');
-                count++;
-                if (q.length >= 2 && count <= 8) {
-                    const titleText = row.querySelector('.fw-bold.text-brand-black')?.textContent || '';
-                    const skuText = row.querySelector('.font-monospace')?.textContent || '';
-                    quickItemsHtml += `
+                if (match) {
+                    row.classList.remove('d-none');
+                    count++;
+                    if (q.length >= 2 && count <= 8) {
+                        const titleText = row.querySelector('.fw-bold.text-brand-black')?.textContent || '';
+                        const skuText = row.querySelector('.font-monospace')?.textContent || '';
+                        quickItemsHtml += `
                         <a href="${url}" class="dropdown-item p-3 border-bottom d-flex justify-content-between align-items-center">
                             <div>
                                 <div class="fw-bold text-dark">${titleText}</div>
@@ -215,47 +237,47 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <i class="fa-solid fa-timeline me-1"></i> Entrar a Trazabilidad →
                             </span>
                         </a>`;
+                    }
+                } else {
+                    row.classList.add('d-none');
                 }
+            });
+
+            visibleCountEl.textContent = count;
+            if (count === 0) {
+                noResultsRow.classList.remove('d-none');
             } else {
-                row.classList.add('d-none');
+                noResultsRow.classList.add('d-none');
             }
-        });
 
-        visibleCountEl.textContent = count;
-        if (count === 0) {
-            noResultsRow.classList.remove('d-none');
-        } else {
-            noResultsRow.classList.add('d-none');
-        }
-
-        if (q.length >= 2 && quickItemsHtml !== '') {
-            dropdown.innerHTML = `
+            if (q.length >= 2 && quickItemsHtml !== '') {
+                dropdown.innerHTML = `
                 <div class="px-3 py-2 bg-light border-bottom small fw-bold text-muted text-uppercase" style="font-size: 0.7rem;">
                     Coincidencias rápidas (${count}) — Clic para abrir trazabilidad
                 </div>
                 ${quickItemsHtml}`;
-            dropdown.classList.remove('d-none');
-            dropdown.classList.add('show');
-        } else {
-            dropdown.classList.add('d-none');
-            dropdown.classList.remove('show');
+                dropdown.classList.remove('d-none');
+                dropdown.classList.add('show');
+            } else {
+                dropdown.classList.add('d-none');
+                dropdown.classList.remove('show');
+            }
         }
-    }
 
-    input.addEventListener('input', filterKardexProducts);
+        input.addEventListener('input', filterKardexProducts);
 
-    clearBtn.addEventListener('click', function () {
-        input.value = '';
-        filterKardexProducts();
-        input.focus();
+        clearBtn.addEventListener('click', function () {
+            input.value = '';
+            filterKardexProducts();
+            input.focus();
+        });
+
+        document.addEventListener('click', function (e) {
+            if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.classList.add('d-none');
+                dropdown.classList.remove('show');
+            }
+        });
     });
-
-    document.addEventListener('click', function (e) {
-        if (!input.contains(e.target) && !dropdown.contains(e.target)) {
-            dropdown.classList.add('d-none');
-            dropdown.classList.remove('show');
-        }
-    });
-});
 </script>
 {% endblock %}
