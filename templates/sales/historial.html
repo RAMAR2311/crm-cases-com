@@ -29,20 +29,20 @@
         {% endif %}
     </div>
 
-    <!-- UI: Resumen Financiero Dinámico (Tarjetas con Relieve 3D Elevado) -->
+    <!-- UI: Resumen Financiero Dinámico (Tarjetas Modernas 3D con Iconos Sólidos Elevados) -->
     {% set recaudo_total = total_general if total_general is defined else ((total_efectivo or 0) + (total_nequi or 0) + (total_bancolombia or 0) + (total_daviplata or 0) + (total_transferencia_legacy or 0)) %}
     
     <!-- 1. Tarjeta Destacada: TOTAL RECAUDADO -->
     <div class="col-12 col-md-6 col-xl mb-3">
-        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100">
+        <div class="card kpi-card-elevated kpi-accent-pink p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="kpi-label">Total Recaudado</span>
-                <span class="kpi-icon-elevated kpi-icon-rose">
+                <span class="kpi-icon-elevated kpi-icon-pink">
                     <i class="fa-solid fa-sack-dollar"></i>
                 </span>
             </div>
             <h3 class="kpi-value" style="color: #9F1239;">${{ (recaudo_total)|cop }}</h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-receipt me-1" style="color: #BE185D;"></i> {{ ventas|length }} ventas procesadas</small>
+            <small class="kpi-subtext"><i class="fa-solid fa-receipt me-1" style="color: #E11D48;"></i> {{ ventas|length }} ventas procesadas</small>
         </div>
     </div>
 
@@ -62,10 +62,10 @@
     
     <!-- 3. Tarjeta: Nequi -->
     <div class="col-6 col-md-6 col-xl mb-3">
-        <div class="card kpi-card-elevated kpi-accent-steel p-4 h-100" style="border-left: 4px solid #7C3AED !important;">
+        <div class="card kpi-card-elevated kpi-accent-purple p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="kpi-label">Nequi</span>
-                <span class="kpi-icon-elevated" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE;">
+                <span class="kpi-icon-elevated kpi-icon-purple">
                     <i class="fa-solid fa-mobile-button"></i>
                 </span>
             </div>
@@ -90,10 +90,10 @@
 
     <!-- 5. Tarjeta: Daviplata -->
     <div class="col-6 col-md-6 col-xl mb-3">
-        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100" style="border-left: 4px solid #DC2626 !important;">
+        <div class="card kpi-card-elevated kpi-accent-red p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="kpi-label">Daviplata</span>
-                <span class="kpi-icon-elevated" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA;">
+                <span class="kpi-icon-elevated kpi-icon-red">
                     <i class="fa-solid fa-mobile-screen"></i>
                 </span>
             </div>
@@ -159,7 +159,7 @@
                     <th>VENDEDOR RESPONSABLE</th>
                     <th class="text-center">VÍA DE PAGO</th>
                     <th class="text-end">IMPORTE CERRADO</th>
-                    <th class="text-center pe-4" width="280">ACCIONES / AUDITAR</th>
+                    <th class="text-center pe-4" width="160">ACCIONES</th>
                 </tr>
             </thead>
             <tbody>
@@ -210,25 +210,30 @@
                         ${{ (venta.monto_total)|cop }}
                     </td>
                     <td class="text-center pe-4">
-                        <div class="d-flex align-items-center justify-content-center gap-1.5 flex-wrap">
-                            <!-- 1. Botón Ver Recibo -->
-                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank" class="btn btn-sm rounded-pill px-3 py-1 fw-bold shadow-2xs d-inline-flex align-items-center" style="background-color: #FCE7F3; color: #BE185D; border: 1px solid rgba(190, 24, 93, 0.25);" title="Ver Recibo Digital">
-                                <i class="fa-solid fa-receipt me-1"></i> Recibo
+                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-nowrap">
+                            <!-- 1. Ver Recibo -->
+                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank"
+                               class="btn-action-icon btn-action-pink"
+                               title="Ver / Imprimir Recibo">
+                                <i class="fa-solid fa-receipt"></i>
                             </a>
 
-                            <!-- 2. Botón Cambiar Método de Pago -->
-                            <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-2.5 py-1 fw-bold shadow-2xs"
+                            <!-- 2. Cambiar Método de Pago -->
+                            <button type="button"
+                                    class="btn-action-icon btn-action-blue"
                                     data-bs-toggle="modal" data-bs-target="#modalCambiarPagoHist{{ venta.id }}"
                                     title="Cambiar Método de Pago">
-                                <i class="fa-solid fa-money-bill-transfer text-primary me-1"></i> Cambiar Pago
+                                <i class="fa-solid fa-right-left"></i>
                             </button>
                             
-                            <!-- 3. Botón Eliminar Venta -->
+                            <!-- 3. Eliminar Venta -->
                             {% if current_user.rol == 'admin' %}
-                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST" onsubmit="return confirm('⚠️ ¿Estás seguro de ELIMINAR el Ticket #{{ '%05d'|format(venta.id) }} por ${{ (venta.monto_total)|cop }}?\n\nEsta acción devolverá automáticamente el stock de los productos al inventario.');" class="m-0 p-0 d-inline">
+                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST"
+                                  onsubmit="return confirm('⚠️ ¿Estás seguro de ELIMINAR el Ticket #{{ '%05d'|format(venta.id) }} por ${{ (venta.monto_total)|cop }}?\n\nEsta acción devolverá automáticamente el stock de los productos al inventario.');"
+                                  class="m-0 p-0 d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1 fw-bold shadow-2xs" title="Eliminar venta y devolver stock">
-                                    <i class="fa-solid fa-trash-can me-1"></i> Eliminar
+                                <button type="submit" class="btn-action-icon btn-action-danger" title="Eliminar Venta y Restaurar Stock">
+                                    <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
                             {% endif %}

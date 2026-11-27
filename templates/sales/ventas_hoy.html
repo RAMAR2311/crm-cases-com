@@ -174,17 +174,17 @@
 <div class="row g-3 mb-4">
     <!-- 1. TOTAL FACTURADO HOY -->
     <div class="col-12 col-md-6 col-xl">
-        <div class="card kpi-card-elevated kpi-accent-rose h-100 p-4">
+        <div class="card kpi-card-elevated kpi-accent-pink h-100 p-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="kpi-label">Total Facturado Hoy</span>
-                <span class="kpi-icon-elevated kpi-icon-rose">
+                <span class="kpi-icon-elevated kpi-icon-pink">
                     <i class="fa-solid fa-sack-dollar"></i>
                 </span>
             </div>
             <h3 class="kpi-value" style="color: #9F1239;">
                 ${{ (total_general or (total_efectivo + total_transferencias))|cop }}
             </h3>
-            <small class="kpi-subtext"><i class="fa-solid fa-receipt me-1" style="color: #BE185D;"></i> {{ ventas|length }} tickets emitidos</small>
+            <small class="kpi-subtext"><i class="fa-solid fa-receipt me-1" style="color: #E11D48;"></i> {{ ventas|length }} tickets emitidos</small>
         </div>
     </div>
 
@@ -206,10 +206,10 @@
 
     <!-- 3. NEQUI -->
     <div class="col-6 col-md-4 col-xl">
-        <div class="card kpi-card-elevated kpi-accent-steel h-100 p-4" style="border-left: 4px solid #7C3AED !important;">
+        <div class="card kpi-card-elevated kpi-accent-purple h-100 p-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="kpi-label">Nequi</span>
-                <span class="kpi-icon-elevated" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE;">
+                <span class="kpi-icon-elevated kpi-icon-purple">
                     <i class="fa-solid fa-mobile-button"></i>
                 </span>
             </div>
@@ -238,10 +238,10 @@
 
     <!-- 5. DAVIPLATA -->
     <div class="col-6 col-md-4 col-xl">
-        <div class="card kpi-card-elevated kpi-accent-rose h-100 p-4" style="border-left: 4px solid #DC2626 !important;">
+        <div class="card kpi-card-elevated kpi-accent-red h-100 p-4">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <span class="kpi-label">Daviplata</span>
-                <span class="kpi-icon-elevated" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA;">
+                <span class="kpi-icon-elevated kpi-icon-red">
                     <i class="fa-solid fa-mobile-screen"></i>
                 </span>
             </div>
@@ -402,32 +402,31 @@
                         </span>
                     </td>
 
-                    <!-- Botones de Acción: Detalle, Recibo, Cambiar Pago y Eliminar -->
+                    <!-- Botones de Acción Compactos en una sola fila: Detalle, Recibo, Cambiar Pago y Eliminar -->
                     <td class="text-center d-print-none">
-                        <div class="d-inline-flex align-items-center justify-content-center gap-1 flex-wrap">
+                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-nowrap">
                             <button type="button"
-                                class="btn btn-sm btn-light border rounded-pill shadow-2xs text-secondary"
+                                class="btn-action-icon"
                                 data-bs-toggle="modal" data-bs-target="#modalTicket{{ venta.id }}" title="Ver Desglose">
-                                <i class="fa-solid fa-eye text-brand-pink"></i>
+                                <i class="fa-solid fa-eye text-secondary"></i>
                             </button>
                             <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank"
-                                class="btn btn-sm rounded-pill px-2.5 py-1 fw-bold"
-                                style="background-color: #FCE7F3; color: #BE185D; border: 1px solid rgba(190, 24, 93, 0.25);"
-                                title="Imprimir Recibo">
+                                class="btn-action-icon btn-action-pink"
+                                title="Ver / Imprimir Recibo">
                                 <i class="fa-solid fa-receipt"></i>
                             </a>
                             <button type="button"
-                                class="btn btn-sm btn-outline-dark rounded-pill px-2.5 py-1 fw-bold"
+                                class="btn-action-icon btn-action-blue"
                                 data-bs-toggle="modal" data-bs-target="#modalCambiarPagoHoy{{ venta.id }}"
                                 title="Cambiar Método de Pago">
-                                <i class="fa-solid fa-money-bill-transfer text-primary"></i>
+                                <i class="fa-solid fa-right-left"></i>
                             </button>
                             {% if current_user.rol == 'admin' %}
                             <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST"
                                 onsubmit="return confirm('⚠️ ¿Estás seguro de ELIMINAR el Ticket #{{ '%05d'|format(venta.id) }}?\n\nEsta acción devolverá automáticamente el stock al inventario.');"
                                 class="d-inline m-0 p-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1"
+                                <button type="submit" class="btn-action-icon btn-action-danger"
                                     title="Eliminar Venta">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>

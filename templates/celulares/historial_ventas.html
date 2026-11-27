@@ -127,21 +127,21 @@
                     </td>
                     {% endif %}
                     <td class="text-center pe-4">
-                        <div class="d-inline-flex align-items-center justify-content-center gap-1 flex-wrap">
-                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=v.id_venta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 fw-bold">
-                                <i class="fa-solid fa-receipt me-1"></i> Recibo
+                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-nowrap">
+                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=v.id_venta) }}" target="_blank" class="btn-action-icon btn-action-pink" title="Ver / Imprimir Recibo">
+                                <i class="fa-solid fa-receipt"></i>
                             </a>
-                            <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-2.5 py-1 fw-bold"
+                            <button type="button" class="btn-action-icon btn-action-blue"
                                     data-bs-toggle="modal" data-bs-target="#modalCambiarPagoCel{{ v.id_venta }}_{{ loop.index }}"
                                     title="Cambiar Método de Pago">
-                                <i class="fa-solid fa-money-bill-transfer text-primary me-1"></i> Pago
+                                <i class="fa-solid fa-right-left"></i>
                             </button>
                             {% if current_user.rol == 'admin' %}
                             <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=v.id_venta) }}" method="POST"
                                   onsubmit="return confirm('⚠️ ¿Estás seguro de ELIMINAR el Ticket #{{ '%05d'|format(v.id_venta) }}?\n\nEl celular volverá a quedar disponible en stock.');"
                                   class="d-inline m-0 p-0">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1" title="Eliminar Venta">
+                                <button type="submit" class="btn-action-icon btn-action-danger" title="Eliminar Venta">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
