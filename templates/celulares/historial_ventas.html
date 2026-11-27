@@ -29,25 +29,37 @@
     </div>
 </div>
 
-<!-- Tarjetas KPI -->
+<!-- Tarjetas KPI con Relieve 3D -->
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4">
-        <div class="card border-0 rounded-4 shadow-sm p-4 h-100" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border-left: 5px solid #E11D48 !important;">
-            <span class="text-uppercase fw-bold small" style="color: #9F1239;">Total Facturado Celulares</span>
-            <h3 class="fw-bolder mt-1 mb-0" style="color: #881337;">${{ (total_recaudado or 0)|cop }}</h3>
+        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Total Facturado Celulares</span>
+                <span class="kpi-icon-elevated kpi-icon-rose"><i class="fa-solid fa-sack-dollar"></i></span>
+            </div>
+            <h3 class="kpi-value" style="color: #881337;">${{ (total_recaudado or 0)|cop }}</h3>
+            <small class="kpi-subtext">Ingresos por venta de equipos</small>
         </div>
     </div>
     <div class="col-12 col-md-4">
-        <div class="card border-0 rounded-4 shadow-sm p-4 h-100" style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border-left: 5px solid #16A34A !important;">
-            <span class="text-uppercase fw-bold small text-success">Equipos Vendidos</span>
-            <h3 class="fw-bolder mt-1 mb-0 text-success">{{ total_equipos }}</h3>
+        <div class="card kpi-card-elevated kpi-accent-emerald p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Equipos Vendidos</span>
+                <span class="kpi-icon-elevated kpi-icon-emerald"><i class="fa-solid fa-mobile-screen-button"></i></span>
+            </div>
+            <h3 class="kpi-value text-success">{{ total_equipos }} <span class="fs-6 text-muted fw-semibold">unidades</span></h3>
+            <small class="kpi-subtext">Terminales facturadas</small>
         </div>
     </div>
     {% if current_user.rol == 'admin' %}
     <div class="col-12 col-md-4">
-        <div class="card border-0 rounded-4 shadow-sm p-4 h-100" style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border-left: 5px solid #2563EB !important;">
-            <span class="text-uppercase fw-bold small text-primary">Utilidad Neta Generada</span>
-            <h3 class="fw-bolder mt-1 mb-0 text-primary">${{ (total_utilidad or 0)|cop }}</h3>
+        <div class="card kpi-card-elevated kpi-accent-blue p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Utilidad Neta Generada</span>
+                <span class="kpi-icon-elevated kpi-icon-blue"><i class="fa-solid fa-chart-line"></i></span>
+            </div>
+            <h3 class="kpi-value text-primary">${{ (total_utilidad or 0)|cop }}</h3>
+            <small class="kpi-subtext">Ganancia limpia sobre costo</small>
         </div>
     </div>
     {% endif %}
@@ -78,7 +90,7 @@
                     {% if current_user.rol == 'admin' %}
                     <th class="text-end">Utilidad</th>
                     {% endif %}
-                    <th class="text-center pe-4">Recibo</th>
+                    <th class="text-center pe-4">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,9 +127,86 @@
                     </td>
                     {% endif %}
                     <td class="text-center pe-4">
-                        <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=v.id_venta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1">
-                            <i class="fa-solid fa-receipt me-1"></i> Tirilla
-                        </a>
+                        <div class="d-inline-flex align-items-center justify-content-center gap-1 flex-wrap">
+                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=v.id_venta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2.5 py-1 fw-bold">
+                                <i class="fa-solid fa-receipt me-1"></i> Recibo
+                            </a>
+                            <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-2.5 py-1 fw-bold"
+                                    data-bs-toggle="modal" data-bs-target="#modalCambiarPagoCel{{ v.id_venta }}_{{ loop.index }}"
+                                    title="Cambiar Método de Pago">
+                                <i class="fa-solid fa-money-bill-transfer text-primary me-1"></i> Pago
+                            </button>
+                            {% if current_user.rol == 'admin' %}
+                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=v.id_venta) }}" method="POST"
+                                  onsubmit="return confirm('⚠️ ¿Estás seguro de ELIMINAR el Ticket #{{ '%05d'|format(v.id_venta) }}?\n\nEl celular volverá a quedar disponible en stock.');"
+                                  class="d-inline m-0 p-0">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2.5 py-1" title="Eliminar Venta">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </form>
+                            {% endif %}
+                        </div>
+
+                        <!-- Modal Cambiar Método de Pago -->
+                        <div class="modal fade text-start" id="modalCambiarPagoCel{{ v.id_venta }}_{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="fa-solid fa-money-bill-transfer text-warning me-2"></i>Cambiar Método de Pago · Ticket #{{ "%05d"|format(v.id_venta) }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('sales_bp.cambiar_metodo_pago', sale_id=v.id_venta) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="modo_pago" value="unico">
+                                        <div class="modal-body p-4">
+                                            <div class="p-3 rounded-3 bg-light border mb-3 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="small text-muted d-block fw-bold">{{ v.celular }}</span>
+                                                    <span class="small text-secondary">Método actual: <strong>{{ v.metodo_pago }}</strong></span>
+                                                </div>
+                                                <span class="font-monospace fw-bolder fs-4 text-brand-black">${{ (v.precio_venta or 0)|cop }}</span>
+                                            </div>
+                                            <label class="form-label fw-bold small text-dark mb-2">Selecciona el Nuevo Método de Pago:</label>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #ECFDF5; border-color: #A7F3D0 !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="efectivo" class="form-check-input m-0" required>
+                                                        <span class="fw-bold small" style="color: #047857;"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</span>
+                                                    </label>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #EDE9FE; border-color: #DDD6FE !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="nequi" class="form-check-input m-0">
+                                                        <span class="fw-bold small" style="color: #5B21B6;"><i class="fa-solid fa-mobile-button me-1"></i> Nequi</span>
+                                                    </label>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #FEF3C7; border-color: #FDE68A !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="bancolombia" class="form-check-input m-0">
+                                                        <span class="fw-bold small" style="color: #B45309;"><i class="fa-solid fa-building-columns me-1"></i> Bancolombia</span>
+                                                    </label>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #FEE2E2; border-color: #FECACA !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="daviplata" class="form-check-input m-0">
+                                                        <span class="fw-bold small" style="color: #DC2626;"><i class="fa-solid fa-mobile-screen me-1"></i> Daviplata</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
+                                                <i class="fa-solid fa-check me-1 text-warning"></i> Guardar Nuevo Método
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
                     </td>
                 </tr>
                 {% else %}

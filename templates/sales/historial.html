@@ -29,76 +29,76 @@
         {% endif %}
     </div>
 
-    <!-- UI: Resumen Financiero Dinámico (Tarjetas Ampliadas con Total General) -->
+    <!-- UI: Resumen Financiero Dinámico (Tarjetas con Relieve 3D Elevado) -->
     {% set recaudo_total = total_general if total_general is defined else ((total_efectivo or 0) + (total_nequi or 0) + (total_bancolombia or 0) + (total_daviplata or 0) + (total_transferencia_legacy or 0)) %}
     
     <!-- 1. Tarjeta Destacada: TOTAL RECAUDADO -->
     <div class="col-12 col-md-6 col-xl mb-3">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.45) 0%, #FFFFFF 70%); border: 1.5px solid rgba(244, 114, 182, 0.7) !important; box-shadow: 0 10px 25px rgba(244, 114, 182, 0.15) !important;">
+        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Total Recaudado</span>
-                <div style="background: #FCE7F3; color: #BE185D; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-sack-dollar fs-5"></i>
-                </div>
+                <span class="kpi-label">Total Recaudado</span>
+                <span class="kpi-icon-elevated kpi-icon-rose">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </span>
             </div>
-            <h3 class="fw-bolder m-0 mb-1" style="color: #9F1239;">${{ (recaudo_total)|cop }}</h3>
-            <small class="text-muted" style="font-size: 0.75rem;"><i class="fa-solid fa-receipt me-1" style="color: #BE185D;"></i> {{ ventas|length }} ventas procesadas</small>
+            <h3 class="kpi-value" style="color: #9F1239;">${{ (recaudo_total)|cop }}</h3>
+            <small class="kpi-subtext"><i class="fa-solid fa-receipt me-1" style="color: #BE185D;"></i> {{ ventas|length }} ventas procesadas</small>
         </div>
     </div>
 
     <!-- 2. Tarjeta: Efectivo -->
     <div class="col-6 col-md-6 col-xl mb-3">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(16, 185, 129, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(16, 185, 129, 0.3) !important;">
+        <div class="card kpi-card-elevated kpi-accent-emerald p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Efectivo</span>
-                <div style="background: #D1FAE5; color: #059669; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-money-bills fs-5"></i>
-                </div>
+                <span class="kpi-label">Efectivo</span>
+                <span class="kpi-icon-elevated kpi-icon-emerald">
+                    <i class="fa-solid fa-money-bills"></i>
+                </span>
             </div>
-            <h3 class="fw-bolder m-0 mb-1" style="color: #047857;">${{ (total_efectivo)|cop }}</h3>
-            <small class="text-muted" style="font-size: 0.75rem;">Caja física</small>
+            <h3 class="kpi-value" style="color: #047857;">${{ (total_efectivo)|cop }}</h3>
+            <small class="kpi-subtext">Caja física</small>
         </div>
     </div>
     
     <!-- 3. Tarjeta: Nequi -->
     <div class="col-6 col-md-6 col-xl mb-3">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(111, 66, 193, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(111, 66, 193, 0.3) !important;">
+        <div class="card kpi-card-elevated kpi-accent-steel p-4 h-100" style="border-left: 4px solid #7C3AED !important;">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Nequi</span>
-                <div style="background: #EDE9FE; color: #6D28D9; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-mobile-button fs-5"></i>
-                </div>
+                <span class="kpi-label">Nequi</span>
+                <span class="kpi-icon-elevated" style="background: #EDE9FE; color: #6D28D9; border: 1px solid #DDD6FE;">
+                    <i class="fa-solid fa-mobile-button"></i>
+                </span>
             </div>
-            <h3 class="fw-bolder m-0 mb-1" style="color: #5B21B6;">${{ (total_nequi)|cop }}</h3>
-            <small class="text-muted" style="font-size: 0.75rem;">Medio digital</small>
+            <h3 class="kpi-value" style="color: #5B21B6;">${{ (total_nequi)|cop }}</h3>
+            <small class="kpi-subtext">Medio digital</small>
         </div>
     </div>
 
     <!-- 4. Tarjeta: Bancolombia -->
     <div class="col-6 col-md-6 col-xl mb-3">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(245, 158, 11, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(245, 158, 11, 0.3) !important;">
+        <div class="card kpi-card-elevated kpi-accent-amber p-4 h-100">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Bancolombia</span>
-                <div style="background: #FEF3C7; color: #D97706; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-building-columns fs-5"></i>
-                </div>
+                <span class="kpi-label">Bancolombia</span>
+                <span class="kpi-icon-elevated kpi-icon-amber">
+                    <i class="fa-solid fa-building-columns"></i>
+                </span>
             </div>
-            <h3 class="fw-bolder m-0 mb-1" style="color: #B45309;">${{ (total_bancolombia)|cop }}</h3>
-            <small class="text-muted" style="font-size: 0.75rem;">Transferencias</small>
+            <h3 class="kpi-value" style="color: #B45309;">${{ (total_bancolombia)|cop }}</h3>
+            <small class="kpi-subtext">Transferencias</small>
         </div>
     </div>
 
     <!-- 5. Tarjeta: Daviplata -->
     <div class="col-6 col-md-6 col-xl mb-3">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm rounded-4" style="background: radial-gradient(120% 120% at 100% 0%, rgba(220, 53, 69, 0.15) 0%, #FFFFFF 70%); border: 1px solid rgba(220, 53, 69, 0.3) !important;">
+        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100" style="border-left: 4px solid #DC2626 !important;">
             <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-muted fw-bold text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Daviplata</span>
-                <div style="background: #FEE2E2; color: #DC2626; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-mobile-screen fs-5"></i>
-                </div>
+                <span class="kpi-label">Daviplata</span>
+                <span class="kpi-icon-elevated" style="background: #FEE2E2; color: #DC2626; border: 1px solid #FECACA;">
+                    <i class="fa-solid fa-mobile-screen"></i>
+                </span>
             </div>
-            <h3 class="fw-bolder m-0 mb-1" style="color: #DC2626;">${{ (total_daviplata)|cop }}</h3>
-            <small class="text-muted" style="font-size: 0.75rem;">Medio digital</small>
+            <h3 class="kpi-value" style="color: #DC2626;">${{ (total_daviplata)|cop }}</h3>
+            <small class="kpi-subtext">Medio digital</small>
         </div>
     </div>
 
@@ -159,7 +159,7 @@
                     <th>VENDEDOR RESPONSABLE</th>
                     <th class="text-center">VÍA DE PAGO</th>
                     <th class="text-end">IMPORTE CERRADO</th>
-                    <th class="text-center pe-4" width="180">AUDITAR</th>
+                    <th class="text-center pe-4" width="280">ACCIONES / AUDITAR</th>
                 </tr>
             </thead>
             <tbody>
@@ -172,7 +172,7 @@
                         <i class="fa-regular fa-calendar me-1" style="color: #BE185D;"></i> {{ venta.fecha_venta.strftime('%Y-%m-%d · %H:%M') }}
                     </td>
                     <td class="fw-semibold text-brand-black">
-                        <i class="fa-solid fa-user-circle text-muted me-1"></i> {{ venta.vendedor.nombre }}
+                        <i class="fa-solid fa-user-circle text-muted me-1"></i> {{ venta.vendedor.nombre if venta.vendedor else 'Cajero' }}
                     </td>
                     <td class="text-center">
                         {% if venta.pagos|length > 1 %}
@@ -210,20 +210,90 @@
                         ${{ (venta.monto_total)|cop }}
                     </td>
                     <td class="text-center pe-4">
-                        <div class="d-flex align-items-center justify-content-center gap-2">
-                            <!-- Botón Ver Recibo en Rosa Pastel Sofisticado -->
-                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank" class="btn btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-inline-flex align-items-center" style="background-color: #FCE7F3; color: #BE185D; border: 1px solid rgba(190, 24, 93, 0.25);" title="Ver Recibo Digital">
+                        <div class="d-flex align-items-center justify-content-center gap-1.5 flex-wrap">
+                            <!-- 1. Botón Ver Recibo -->
+                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" target="_blank" class="btn btn-sm rounded-pill px-3 py-1 fw-bold shadow-2xs d-inline-flex align-items-center" style="background-color: #FCE7F3; color: #BE185D; border: 1px solid rgba(190, 24, 93, 0.25);" title="Ver Recibo Digital">
                                 <i class="fa-solid fa-receipt me-1"></i> Recibo
                             </a>
+
+                            <!-- 2. Botón Cambiar Método de Pago -->
+                            <button type="button" class="btn btn-sm btn-outline-dark rounded-pill px-2.5 py-1 fw-bold shadow-2xs"
+                                    data-bs-toggle="modal" data-bs-target="#modalCambiarPagoHist{{ venta.id }}"
+                                    title="Cambiar Método de Pago">
+                                <i class="fa-solid fa-money-bill-transfer text-primary me-1"></i> Cambiar Pago
+                            </button>
                             
+                            <!-- 3. Botón Eliminar Venta -->
                             {% if current_user.rol == 'admin' %}
-                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST" onsubmit="return confirm('ATENCIÓN: ¿Está seguro de anular esta venta? Esta acción NO se puede deshacer y retornará el stock de los productos vendidos.');" class="m-0 p-0 d-inline">
+                            <form action="{{ url_for('sales_bp.eliminar_venta', sale_id=venta.id) }}" method="POST" onsubmit="return confirm('⚠️ ¿Estás seguro de ELIMINAR el Ticket #{{ '%05d'|format(venta.id) }} por ${{ (venta.monto_total)|cop }}?\n\nEsta acción devolverá automáticamente el stock de los productos al inventario.');" class="m-0 p-0 d-inline">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2 py-1 shadow-sm" title="Anular venta">
-                                    <i class="fa-solid fa-trash-can"></i>
+                                <button type="submit" class="btn btn-outline-danger btn-sm rounded-pill px-2.5 py-1 fw-bold shadow-2xs" title="Eliminar venta y devolver stock">
+                                    <i class="fa-solid fa-trash-can me-1"></i> Eliminar
                                 </button>
                             </form>
                             {% endif %}
+                        </div>
+
+                        <!-- Modal Cambiar Método de Pago -->
+                        {% set metodo_act = (venta.pagos[0].metodo_pago if venta.pagos|length == 1 else (venta.metodo_pago or 'efectivo'))|lower %}
+                        <div class="modal fade text-start" id="modalCambiarPagoHist{{ venta.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="fa-solid fa-money-bill-transfer text-warning me-2"></i>Cambiar Método de Pago · Ticket #{{ "%05d"|format(venta.id) }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('sales_bp.cambiar_metodo_pago', sale_id=venta.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="modo_pago" value="unico">
+                                        <div class="modal-body p-4">
+                                            <div class="p-3 rounded-3 bg-light border mb-3 d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <span class="small text-muted d-block fw-bold">Importe del Ticket #{{ "%05d"|format(venta.id) }}</span>
+                                                    <span class="small text-secondary">Método actual: <strong>{{ venta.metodo_pago_display }}</strong></span>
+                                                </div>
+                                                <span class="font-monospace fw-bolder fs-4 text-brand-black">${{ (venta.monto_total or 0)|cop }}</span>
+                                            </div>
+
+                                            <label class="form-label fw-bold small text-dark mb-2">Selecciona el Nuevo Método de Pago:</label>
+                                            <div class="row g-2">
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #ECFDF5; border-color: #A7F3D0 !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="efectivo" class="form-check-input m-0" {% if metodo_act == 'efectivo' %}checked{% endif %} required>
+                                                        <span class="fw-bold small" style="color: #047857;"><i class="fa-solid fa-money-bills me-1"></i> Efectivo</span>
+                                                    </label>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #EDE9FE; border-color: #DDD6FE !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="nequi" class="form-check-input m-0" {% if metodo_act == 'nequi' %}checked{% endif %}>
+                                                        <span class="fw-bold small" style="color: #5B21B6;"><i class="fa-solid fa-mobile-button me-1"></i> Nequi</span>
+                                                    </label>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #FEF3C7; border-color: #FDE68A !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="bancolombia" class="form-check-input m-0" {% if metodo_act == 'bancolombia' %}checked{% endif %}>
+                                                        <span class="fw-bold small" style="color: #B45309;"><i class="fa-solid fa-building-columns me-1"></i> Bancolombia</span>
+                                                    </label>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="w-100 p-2.5 rounded-3 border d-flex align-items-center gap-2" style="cursor: pointer; background: #FEE2E2; border-color: #FECACA !important;">
+                                                        <input type="radio" name="nuevo_metodo_pago" value="daviplata" class="form-check-input m-0" {% if metodo_act == 'daviplata' %}checked{% endif %}>
+                                                        <span class="fw-bold small" style="color: #DC2626;"><i class="fa-solid fa-mobile-screen me-1"></i> Daviplata</span>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
+                                                <i class="fa-solid fa-check me-1 text-warning"></i> Guardar Nuevo Método
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </td>
 

@@ -808,24 +808,99 @@ def ventas_hoy():
     )
 
 
+@sales_bp.route('/cambiar_metodo_pago/<int:sale_id>', methods=['POST'])
+@login_required
+def cambiar_metodo_pago(sale_id):
+    venta = Sale.query.get_or_404(sale_id)
+
+    # Admin puede cambiar cualquier venta; Vendedor solo sus ventas del día de hoy
+    if current_user.rol != 'admin':
+        hoy = obtener_hora_bogota().date()
+        if venta.vendedor_id != current_user.id or (venta.fecha_venta and venta.fecha_venta.date() != hoy):
+            flash('Solo el Administrador puede cambiar el método de pago de ventas de otros días o vendedores.', 'danger')
+            return redirect(request.referrer or url_for('sales_bp.ventas_hoy'))
+
+    modo = (request.form.get('modo_pago') or 'unico').strip()
+    total_venta = Decimal(str(venta.monto_total or 0))
+
+    try:
+        if modo == 'mixto':
+            metodos = request.form.getlist('metodo_mixto[]')
+            montos = request.form.getlist('monto_mixto[]')
+            nuevos_pagos = []
+            suma = Decimal('0.00')
+            for m, val_str in zip(metodos, montos):
+                m_clean = (m or '').strip().lower()
+                val_clean = (val_str or '0').replace(',', '').replace('.', '').strip()
+                if m_clean in ['efectivo', 'nequi', 'bancolombia', 'daviplata'] and val_clean:
+                    monto_dec = Decimal(val_clean)
+                    if monto_dec > 0:
+                        nuevos_pagos.append((m_clean, monto_dec))
+                        suma += monto_dec
+
+            if not nuevos_pagos or abs(suma - total_venta) > Decimal('1.00'):
+                flash(f'La suma de los pagos mixtos (${suma:,.0f}) debe coincidir exactamente con el total del Ticket #{"%05d" % venta.id} (${total_venta:,.0f}).', 'danger')
+                return redirect(request.referrer or url_for('sales_bp.historial'))
+
+            for p_old in list(venta.pagos):
+                db.session.delete(p_old)
+            db.session.flush()
+
+            for m_clean, monto_dec in nuevos_pagos:
+                db.session.add(SalePayment(
+                    sale_id=venta.id,
+                    metodo_pago=m_clean,
+                    monto=monto_dec
+                ))
+            venta.metodo_pago = nuevos_pagos[0][0] if len(nuevos_pagos) == 1 else 'mixto'
+        else:
+            nuevo_metodo = (request.form.get('nuevo_metodo_pago') or '').strip().lower()
+            if nuevo_metodo not in ['efectivo', 'nequi', 'bancolombia', 'daviplata']:
+                flash('Selecciona un método de pago válido (Efectivo, Nequi, Bancolombia o Daviplata).', 'warning')
+                return redirect(request.referrer or url_for('sales_bp.historial'))
+
+            for p_old in list(venta.pagos):
+                db.session.delete(p_old)
+            db.session.flush()
+
+            if total_venta > 0:
+                db.session.add(SalePayment(
+                    sale_id=venta.id,
+                    metodo_pago=nuevo_metodo,
+                    monto=total_venta
+                ))
+            venta.metodo_pago = nuevo_metodo
+
+        db.session.commit()
+        flash(f'✅ Método de pago del Ticket #{"%05d" % venta.id} actualizado a {venta.metodo_pago_display}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al cambiar el método de pago: {str(e)}', 'danger')
+
+    return redirect(request.referrer or url_for('sales_bp.historial'))
+
+
 @sales_bp.route('/eliminar/<int:sale_id>', methods=['POST'])
 @login_required
 @admin_required
 def eliminar_venta(sale_id):
     venta = Sale.query.get_or_404(sale_id)
+    ticket_num = f"#{'%05d' % venta.id}"
 
     try:
-        for detalle in venta.detalles:
+        # 1. Devolver el stock al inventario (Productos y Variantes)
+        for detalle in list(venta.detalles):
             if detalle.variant_id:
                 variante = ProductVariant.query.with_for_update().get(detalle.variant_id)
                 if variante:
-                    stock_anterior = variante.cantidad_stock
-                    variante.cantidad_stock += detalle.cantidad_vendida
+                    stock_anterior = variante.cantidad_stock or 0
+                    variante.cantidad_stock = stock_anterior + detalle.cantidad_vendida
 
                     ajuste = StockAdjustment(
                         product_id=detalle.product_id,
                         admin_id=current_user.id,
                         tipo_movimiento=f"Anulación Venta #{venta.id} (Subcat: {variante.nombre_variante})",
+                        motivo=f"Eliminación de Ticket {ticket_num}",
                         stock_anterior=stock_anterior,
                         stock_nuevo=variante.cantidad_stock
                     )
@@ -833,31 +908,48 @@ def eliminar_venta(sale_id):
 
                 producto = Product.query.with_for_update().get(detalle.product_id)
                 if producto:
-                    producto.cantidad_stock += detalle.cantidad_vendida
+                    producto.cantidad_stock = (producto.cantidad_stock or 0) + detalle.cantidad_vendida
             elif detalle.product_id:
                 producto = Product.query.with_for_update().get(detalle.product_id)
                 if producto:
-                    stock_anterior = producto.cantidad_stock
-                    producto.cantidad_stock += detalle.cantidad_vendida
+                    stock_anterior = producto.cantidad_stock or 0
+                    producto.cantidad_stock = stock_anterior + detalle.cantidad_vendida
 
                     ajuste = StockAdjustment(
                         product_id=producto.id,
                         admin_id=current_user.id,
                         tipo_movimiento=f"Anulación Venta #{venta.id}",
+                        motivo=f"Eliminación de Ticket {ticket_num}",
                         stock_anterior=stock_anterior,
                         stock_nuevo=producto.cantidad_stock
                     )
                     db.session.add(ajuste)
 
+        # 2. Limpiar o desvincular referencias externas para evitar errores de ForeignKey en PostgreSQL
+        for ap in PriceApproval.query.filter_by(sale_id=venta.id).all():
+            ap.sale_id = None
+
+        for inv in ProviderInvoice.query.filter_by(sale_id=venta.id).all():
+            if not inv.abonos and inv.estado == 'PENDIENTE' and inv.product_id is None:
+                db.session.delete(inv)
+            else:
+                inv.sale_id = None
+
+        for ret in Retoma.query.filter_by(sale_id=venta.id).all():
+            if ret.estado == 'CUARENTENA' and not ret.product_id_generado:
+                db.session.delete(ret)
+            else:
+                ret.sale_id = None
+
         db.session.delete(venta)
         db.session.commit()
-        flash('Venta anulada y stock devuelto exitosamente.', 'success')
+        flash(f'🗑️ Venta {ticket_num} eliminada y stock restaurado en el inventario exitosamente.', 'success')
 
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        flash('Ocurrió un error al anular la venta.', 'danger')
+        flash(f'Ocurrió un error al eliminar la venta: {str(e)}', 'danger')
 
-    return redirect(url_for('sales_bp.historial'))
+    return redirect(request.referrer or url_for('sales_bp.historial'))
 
 
 @sales_bp.route('/catalogo', methods=['GET'])
