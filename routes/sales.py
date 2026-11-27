@@ -202,22 +202,52 @@ def _ejecutar_procesamiento_venta(data):
                     )
                     db.session.add(ajuste)
 
-                # Control estricto de Precio Mínimo mediante PriceApproval
+                # Control estricto de Precio Mínimo mediante PriceApproval por cada Vendedor
                 if not es_obsequio and precio_venta_final < precio_minimo_item:
-                    q_app = PriceApproval.query.filter_by(
-                        product_id=producto.id,
-                        estado='aprobado'
-                    )
-                    if variant_id:
-                        q_app = q_app.filter_by(variant_id=variant_id)
-                    aprobacion = q_app.order_by(PriceApproval.id.desc()).first()
-
-                    if not aprobacion or Decimal(str(aprobacion.precio_solicitado)) > precio_venta_final:
-                        raise ValueError(
-                            f"BLOQUEO DE PRECIO MÍNIMO: El precio digitado (${precio_venta_final:,.0f}) para '{producto.nombre}' "
-                            f"es inferior al Precio Mínimo (${precio_minimo_item:,.0f}). Debes solicitar una Autorización de Precio (PriceApproval) y que esté en estado 'aprobado'."
+                    # Si el usuario actual es el Administrador, puede facturar directamente o usar su aprobación
+                    if current_user.rol == 'admin':
+                        q_app = PriceApproval.query.filter_by(
+                            product_id=producto.id,
+                            estado='aprobado'
                         )
-                    aprobaciones_usadas.append(aprobacion)
+                        if variant_id:
+                            q_app = q_app.filter_by(variant_id=variant_id)
+                        aprobacion = q_app.order_by(PriceApproval.id.desc()).first()
+                        if aprobacion:
+                            aprobaciones_usadas.append(aprobacion)
+                    else:
+                        # Verificar primero si el vendedor actual tiene una solicitud PENDIENTE sin resolver
+                        q_pend = PriceApproval.query.filter_by(
+                            product_id=producto.id,
+                            vendedor_id=current_user.id,
+                            estado='pendiente'
+                        )
+                        if variant_id:
+                            q_pend = q_pend.filter_by(variant_id=variant_id)
+                        pendiente_activa = q_pend.order_by(PriceApproval.id.desc()).first()
+                        if pendiente_activa:
+                            raise ValueError(
+                                f"⏳ AUTORIZACIÓN PENDIENTE: Tienes la solicitud #{pendiente_activa.id} para '{producto.nombre}' "
+                                f"por ${Decimal(str(pendiente_activa.precio_solicitado)):,.0f} esperando respuesta del Administrador. "
+                                f"No puedes facturar hasta que el Administrador la apruebe o la rechace."
+                            )
+
+                        # Buscar aprobación otorgada específicamente a este vendedor
+                        q_app = PriceApproval.query.filter_by(
+                            product_id=producto.id,
+                            vendedor_id=current_user.id,
+                            estado='aprobado'
+                        )
+                        if variant_id:
+                            q_app = q_app.filter_by(variant_id=variant_id)
+                        aprobacion = q_app.order_by(PriceApproval.id.desc()).first()
+
+                        if not aprobacion or Decimal(str(aprobacion.precio_solicitado)) > precio_venta_final:
+                            raise ValueError(
+                                f"BLOQUEO DE PRECIO MÍNIMO: El precio digitado (${precio_venta_final:,.0f}) para '{producto.nombre}' "
+                                f"es inferior al Precio Mínimo (${precio_minimo_item:,.0f}). Debes solicitar Autorización al Administrador y esperar su aprobación."
+                            )
+                        aprobaciones_usadas.append(aprobacion)
 
                 detalle = SaleDetail(
                     sale_id=nueva_venta.id,
@@ -231,19 +261,28 @@ def _ejecutar_procesamiento_venta(data):
                 if not es_obsequio:
                     subtotal_bruto += (precio_venta_final * cantidad_vendida)
 
-                # Si es un Producto Externo (tipo_inventario == 'externos'), generar automáticamente ProviderInvoice
+                # Si es un Producto Externo (tipo_inventario == 'externos'), vincular o generar ProviderInvoice
                 if producto.tipo_inventario == 'externos' and precio_costo_item > 0:
                     prov_nombre = (producto.proveedor or 'Proveedor Externo').strip()
-                    db.session.add(ProviderInvoice(
-                        proveedor=prov_nombre,
+                    factura_previa = ProviderInvoice.query.filter_by(
                         product_id=producto.id,
-                        sale_id=nueva_venta.id,
-                        usuario_id=current_user.id,
-                        concepto=f"{cantidad_vendida}x {producto.nombre} ({producto.sku}) - Ticket #{nueva_venta.id}",
-                        monto_costo=(precio_costo_item * cantidad_vendida),
-                        estado='PENDIENTE',
-                        fecha_creacion=fecha_venta_obj
-                    ))
+                        sale_id=None
+                    ).order_by(ProviderInvoice.id.desc()).first()
+                    if factura_previa:
+                        factura_previa.sale_id = nueva_venta.id
+                        if f"Ticket #{nueva_venta.id}" not in (factura_previa.concepto or ''):
+                            factura_previa.concepto = f"{factura_previa.concepto} - Ticket #{nueva_venta.id}"[:255]
+                    else:
+                        db.session.add(ProviderInvoice(
+                            proveedor=prov_nombre,
+                            product_id=producto.id,
+                            sale_id=nueva_venta.id,
+                            usuario_id=current_user.id,
+                            concepto=f"{cantidad_vendida}x {producto.nombre} ({producto.sku}) - Ticket #{nueva_venta.id}",
+                            monto_costo=(precio_costo_item * cantidad_vendida),
+                            estado='PENDIENTE',
+                            fecha_creacion=fecha_venta_obj
+                        ))
 
         if monto_retoma_dec > subtotal_bruto:
             raise ValueError(f"El valor de la retoma (${monto_retoma_dec:,.0f}) no puede superar el subtotal de la venta (${subtotal_bruto:,.0f}).")
@@ -306,7 +345,17 @@ def _ejecutar_procesamiento_venta(data):
             if abs(total_pagos - monto_total_neto) > Decimal('0.01'):
                 raise ValueError(f"La suma de los pagos (${total_pagos:,.0f}) no coincide con el total a pagar tras retoma (${monto_total_neto:,.0f}).")
 
-        # Guardar datos del cliente (MinTIC / SIC con dirección y correo)
+        # Guardar datos del cliente (Obligatorio en ventas de celulares: Nombre, Dirección, Celular y Cédula)
+        if tipo_venta_detectado == 'celulares':
+            if not cliente_data or not isinstance(cliente_data, dict):
+                raise ValueError("Para facturar un celular es obligatorio registrar los datos del cliente (Nombre, Cédula, Celular y Dirección).")
+            nombre_cli = (cliente_data.get('nombre') or '').strip()
+            doc_cli = (cliente_data.get('documento') or '').strip()
+            tel_cli = (cliente_data.get('telefono') or '').strip()
+            dir_cli = (cliente_data.get('direccion') or '').strip()
+            if not nombre_cli or not doc_cli or not tel_cli or not dir_cli:
+                raise ValueError("En ventas de celulares es obligatorio completar: Nombre, Cédula, Celular y Dirección del comprador.")
+
         if cliente_data and isinstance(cliente_data, dict):
             nombre_cli = (cliente_data.get('nombre') or '').strip()
             doc_cli = (cliente_data.get('documento') or '').strip()
@@ -412,7 +461,7 @@ def api_buscar_producto(sku):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# AUTORIZACIONES DE PRECIO MÍNIMO (PriceApproval)
+# AUTORIZACIONES DE PRECIO MÍNIMO (PriceApproval) EN TIEMPO REAL
 # ══════════════════════════════════════════════════════════════════════════
 
 @sales_bp.route('/api/solicitar_precio', methods=['POST'])
@@ -437,33 +486,146 @@ def api_solicitar_precio():
     if precio_solicitado <= 0:
         return jsonify({'error': 'El precio solicitado debe ser mayor a $0.'}), 400
 
-    # Si el usuario actual es Admin, puede auto-aprobar de inmediato o crearla ya aprobada
-    auto_aprobar = (current_user.rol == 'admin' and bool(data.get('auto_aprobar', True)))
-
-    aprobacion = PriceApproval(
+    # Si ya existe una solicitud pendiente de este mismo vendedor para este mismo producto, actualizarla en vez de duplicarla
+    existente_pend = PriceApproval.query.filter_by(
         product_id=prod.id,
         variant_id=variant_id,
         vendedor_id=current_user.id,
-        admin_id=current_user.id if auto_aprobar else None,
-        precio_minimo_original=precio_min,
-        precio_solicitado=precio_solicitado,
-        motivo=motivo,
-        estado='aprobado' if auto_aprobar else 'pendiente',
-        fecha_resolucion=obtener_hora_bogota() if auto_aprobar else None
-    )
-    db.session.add(aprobacion)
-    db.session.commit()
+        estado='pendiente'
+    ).first()
+
+    # Solo el Admin auto-aprueba; un Vendedor SIEMPRE queda en 'pendiente' esperando al Admin
+    auto_aprobar = (current_user.rol == 'admin')
+
+    if existente_pend and not auto_aprobar:
+        existente_pend.precio_solicitado = precio_solicitado
+        existente_pend.motivo = motivo
+        existente_pend.fecha_solicitud = obtener_hora_bogota()
+        db.session.commit()
+        aprobacion = existente_pend
+    else:
+        aprobacion = PriceApproval(
+            product_id=prod.id,
+            variant_id=variant_id,
+            vendedor_id=current_user.id,
+            admin_id=current_user.id if auto_aprobar else None,
+            precio_minimo_original=precio_min,
+            precio_solicitado=precio_solicitado,
+            motivo=motivo,
+            estado='aprobado' if auto_aprobar else 'pendiente',
+            fecha_resolucion=obtener_hora_bogota() if auto_aprobar else None
+        )
+        db.session.add(aprobacion)
+        db.session.commit()
 
     return jsonify({
         'success': True,
         'approval_id': aprobacion.id,
         'estado': aprobacion.estado,
+        'precio_solicitado': float(aprobacion.precio_solicitado),
+        'precio_minimo': float(precio_min or 0),
         'mensaje': (
-            f'✅ Precio especial de ${float(precio_solicitado):,.0f} autorizado inmediatamente por Administrador.'
+            f'✅ Precio especial de ${float(precio_solicitado):,.0f} aplicado por Administrador.'
             if auto_aprobar else
-            f'⏳ Solicitud #{aprobacion.id} enviada al Administrador. Una vez aprobada podrás procesar el cobro.'
+            f'⏳ Solicitud #{aprobacion.id} enviada al Administrador. Tu facturación queda en espera hasta que el Administrador apruebe o rechace el precio.'
         )
     }), 201
+
+
+@sales_bp.route('/api/aprobaciones/pendientes_admin', methods=['GET'])
+@login_required
+def api_aprobaciones_pendientes_admin():
+    """Devuelve al Administrador todas las solicitudes de precio pendientes en tiempo real para la barra persistente."""
+    if current_user.rol != 'admin':
+        return jsonify({'count': 0, 'items': []}), 200
+
+    pendientes = PriceApproval.query.filter_by(estado='pendiente').order_by(PriceApproval.fecha_solicitud.asc()).all()
+    items = []
+    for ap in pendientes:
+        nom_prod = ap.producto.nombre if ap.producto else 'Producto'
+        if ap.variante:
+            nom_prod = f"{nom_prod} ({ap.variante.nombre_variante})"
+        items.append({
+            'id': ap.id,
+            'product_id': ap.product_id,
+            'variant_id': ap.variant_id,
+            'producto_nombre': nom_prod,
+            'sku': ap.producto.sku if ap.producto else '',
+            'imei': ap.producto.imei if (ap.producto and ap.producto.imei) else '',
+            'vendedor_id': ap.vendedor_id,
+            'vendedor_nombre': ap.vendedor.nombre if ap.vendedor else 'Vendedor',
+            'precio_minimo': float(ap.precio_minimo_original or 0),
+            'precio_solicitado': float(ap.precio_solicitado or 0),
+            'motivo': ap.motivo or 'Solicitud de descuento en Caja',
+            'hora': ap.fecha_solicitud.strftime('%I:%M %p') if ap.fecha_solicitud else ''
+        })
+    return jsonify({'count': len(items), 'items': items}), 200
+
+
+@sales_bp.route('/api/aprobaciones/resolver_ajax/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def api_resolver_aprobacion_ajax(id):
+    """Permite al Administrador aprobar o rechazar desde la notificación flotante sin cambiar de pantalla."""
+    ap = PriceApproval.query.get_or_404(id)
+    data = request.get_json() or {}
+    accion = (data.get('accion') or request.form.get('accion') or 'aprobar').strip().lower()
+    precio_autorizado_raw = data.get('precio_autorizado') or request.form.get('precio_autorizado')
+
+    if accion == 'aprobar':
+        ap.estado = 'aprobado'
+        if precio_autorizado_raw:
+            try:
+                nuevo_p = Decimal(str(precio_autorizado_raw).replace(',', '').replace('.', ''))
+                if nuevo_p > 0:
+                    ap.precio_solicitado = nuevo_p
+            except Exception:
+                pass
+    else:
+        ap.estado = 'rechazado'
+
+    ap.admin_id = current_user.id
+    ap.fecha_resolucion = obtener_hora_bogota()
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'id': ap.id,
+        'estado': ap.estado,
+        'precio_autorizado': float(ap.precio_solicitado or 0),
+        'precio_minimo': float(ap.precio_minimo_original or 0)
+    }), 200
+
+
+@sales_bp.route('/api/aprobaciones/estado_vendedor', methods=['GET'])
+@login_required
+def api_estado_aprobaciones_vendedor():
+    """Permite a la Caja del vendedor que solicitó la autorización consultar en vivo si el Admin ya aprobó o rechazó."""
+    ids_raw = (request.args.get('ids') or '').strip()
+    ids_list = [int(x) for x in ids_raw.split(',') if x.strip().isdigit()]
+
+    query = PriceApproval.query.filter_by(vendedor_id=current_user.id)
+    if ids_list:
+        aprobaciones = query.filter(PriceApproval.id.in_(ids_list)).all()
+    else:
+        aprobaciones = query.filter_by(estado='pendiente').all()
+
+    resultado = []
+    for ap in aprobaciones:
+        resultado.append({
+            'id': ap.id,
+            'product_id': ap.product_id,
+            'variant_id': ap.variant_id,
+            'estado': ap.estado, # 'pendiente', 'aprobado', 'rechazado', 'completada'
+            'precio_solicitado': float(ap.precio_solicitado or 0),
+            'precio_minimo': float(ap.precio_minimo_original or 0),
+            'producto_nombre': ap.producto.nombre if ap.producto else 'Producto'
+        })
+    tiene_pendientes = any(r['estado'] == 'pendiente' for r in resultado)
+    return jsonify({
+        'tiene_pendientes': tiene_pendientes,
+        'aprobaciones': resultado
+    }), 200
 
 
 @sales_bp.route('/aprobaciones_precio', methods=['GET'])
@@ -702,25 +864,61 @@ def eliminar_venta(sale_id):
 @login_required
 def catalogo():
     query_str = request.args.get('q', '').strip()
+    categoria = request.args.get('categoria', 'todos').strip().lower() # 'todos', 'accesorios', 'celulares'
+
+    base_query = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares', 'externos']))
 
     if query_str:
         search_term = f"%{query_str}%"
-        productos = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares', 'externos'])).filter(
+        base_query = base_query.filter(
             or_(
                 Product.sku.ilike(search_term),
                 Product.nombre.ilike(search_term),
-                Product.imei.ilike(search_term)
+                Product.imei.ilike(search_term),
+                Product.marca.ilike(search_term),
+                Product.modelo_celular.ilike(search_term)
             )
-        ).limit(50).all()
-    else:
-        productos = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares', 'externos'])).limit(50).all()
+        )
 
-    return render_template('sales/catalogo.html', productos=productos, q=query_str)
+    todos_raw = base_query.order_by(Product.nombre.asc()).all()
+    # Excluir registros históricos de IMEI archivados (-OLD-)
+    todos_limpios = [
+        p for p in todos_raw
+        if '-OLD-' not in (p.sku or '') and '-OLD-' not in (p.imei or '')
+    ]
+
+    accesorios_list = [
+        p for p in todos_limpios
+        if p.tipo_inventario == 'tienda' or (p.tipo_inventario == 'externos' and p.subtipo_externo != 'celular')
+    ]
+    celulares_list = [
+        p for p in todos_limpios
+        if p.tipo_inventario == 'celulares' or (p.tipo_inventario == 'externos' and p.subtipo_externo == 'celular')
+    ]
+
+    if categoria == 'accesorios':
+        productos = accesorios_list
+    elif categoria == 'celulares':
+        productos = celulares_list
+    else:
+        categoria = 'todos'
+        productos = todos_limpios
+
+    return render_template(
+        'sales/catalogo.html',
+        productos=productos,
+        q=query_str,
+        categoria=categoria,
+        total_todos=len(todos_limpios),
+        total_accesorios=len(accesorios_list),
+        total_celulares=len(celulares_list)
+    )
 
 
 @sales_bp.route('/caja_visual', methods=['GET'])
 @login_required
 def caja_visual():
+    from routes.externos import obtener_proveedores_registrados
     hoy_bogota = obtener_hora_bogota()
     todos = Product.query.filter(
         Product.tipo_inventario.in_(['tienda', 'celulares', 'externos'])
@@ -736,5 +934,6 @@ def caja_visual():
     return render_template(
         'sales/caja_visual.html',
         productos=productos,
+        proveedores_registrados=obtener_proveedores_registrados(),
         hoy=hoy_bogota.strftime('%Y-%m-%d')
     )

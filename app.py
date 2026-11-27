@@ -142,6 +142,10 @@ def create_app():
     from routes.legal import legal_bp
     app.register_blueprint(legal_bp, url_prefix='/legal')
 
+    # Registro de Blueprint Vales (Adelantos y Vales por Vendedor con Comprobante)
+    from routes.vales import vales_bp
+    app.register_blueprint(vales_bp, url_prefix='/vales')
+
     @app.template_filter('cop')
     def cop_filter(value):
         if value is None:
@@ -509,6 +513,17 @@ def create_app():
                 ('efectivo_fisico_contado', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'),
                 ('diferencia_efectivo', 'NUMERIC(10, 2) NOT NULL DEFAULT 0.00'),
                 ('tipo_arqueo', "VARCHAR(50) NOT NULL DEFAULT 'general'"),
+            ])
+            _asegurar_columnas('provider_payments', [
+                ('comprobante_imagen', 'VARCHAR(255)'),
+                ('observacion', 'VARCHAR(255)'),
+                ('metodo_pago', "VARCHAR(50) DEFAULT 'transferencia'"),
+            ])
+            _asegurar_columnas('vales', [
+                ('expense_id', 'INTEGER'),
+                ('comprobante_imagen', 'VARCHAR(255)'),
+                ('observacion', 'VARCHAR(255)'),
+                ('metodo_pago', "VARCHAR(50) DEFAULT 'efectivo'"),
             ])
         except Exception as e:
             print(f"[AUTO-SCHEMA] Aviso verificando columnas: {e}")

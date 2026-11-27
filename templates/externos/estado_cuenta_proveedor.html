@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+
+{% block title %}Estado de Cuenta · {{ proveedor }} - cases.com{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+            <a href="{{ url_for('externos_bp.cuentas_por_pagar') }}" class="btn btn-sm btn-light border rounded-pill px-3 fw-bold">
+                <i class="fa-solid fa-arrow-left me-1"></i> Volver a Proveedores
+            </a>
+            <span class="badge rounded-pill px-3 py-1.5 fw-bold" style="background: #EFF6FF; color: #0284C7; border: 1px solid #BFDBFE;">
+                <i class="fa-solid fa-building-user me-1"></i> PROVEEDOR EXTERNO
+            </span>
+        </div>
+        <h2 class="fw-bolder text-brand-black m-0">
+            Estado de Cuenta: <span class="text-primary">{{ proveedor }}</span>
+        </h2>
+        <small class="text-muted">Detalle completo de facturas/productos asociados, saldo pendiente e historial de abonos con comprobante fotográfico</small>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% if current_user.rol == 'admin' %}
+        <button type="button" class="btn btn-success rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRegistrarAbonoProveedor">
+            <i class="fa-solid fa-hand-holding-dollar me-1.5"></i> + Realizar Abono / Pago
+        </button>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Tarjetas KPI del Estado de Cuenta del Proveedor -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-steel p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Total Facturado (Mercancía)</span>
+                <span class="kpi-icon-elevated kpi-icon-steel"><i class="fa-solid fa-file-invoice"></i></span>
+            </div>
+            <h3 class="kpi-value text-brand-black">${{ (total_facturado or 0)|cop }}</h3>
+            <small class="kpi-subtext">{{ facturas|length }} factura(s) / producto(s) traídos</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-emerald p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Total Abonado al Proveedor</span>
+                <span class="kpi-icon-elevated kpi-icon-emerald"><i class="fa-solid fa-money-bill-transfer"></i></span>
+            </div>
+            <h3 class="kpi-value text-success">${{ (total_abonado or 0)|cop }}</h3>
+            <small class="kpi-subtext">{{ abonos|length }} abono(s) registrado(s)</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated {% if saldo_pendiente > 0 %}kpi-accent-rose{% else %}kpi-accent-emerald{% endif %} p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Saldo Pendiente por Pagar</span>
+                <span class="kpi-icon-elevated {% if saldo_pendiente > 0 %}kpi-icon-rose{% else %}kpi-icon-emerald{% endif %}">
+                    <i class="fa-solid {% if saldo_pendiente > 0 %}fa-scale-unbalanced{% else %}fa-circle-check{% endif %}"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value {% if saldo_pendiente > 0 %}text-danger{% else %}text-success{% endif %}">
+                ${{ (saldo_pendiente or 0)|cop }}
+            </h3>
+            <small class="kpi-subtext">
+                {% if saldo_pendiente > 0 %}Saldo actual adeudado a {{ proveedor }}{% else %}Proveedor 100% al día sin deuda{% endif %}
+            </small>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- COLUMNA 1: FACTURAS / PRODUCTOS ASOCIADOS AL PROVEEDOR -->
+    <div class="col-12 col-xl-7">
+        <div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4 h-100">
+            <div class="p-3 px-4 bg-light border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bolder text-brand-black m-0">
+                        <i class="fa-solid fa-file-invoice text-primary me-2"></i>Facturas / Productos Asociados ({{ facturas|length }})
+                    </h6>
+                    <small class="text-muted">Equipos y accesorios traídos de este proveedor</small>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-custom mb-0 align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">FECHA / ID</th>
+                            <th>CONCEPTO / PRODUCTO</th>
+                            <th>TICKET VENTA</th>
+                            <th class="text-end">VALOR COSTO</th>
+                            <th class="text-center pe-4">ESTADO</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for f in facturas %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">#{{ f.id }} · {{ f.fecha_creacion.strftime('%d/%m/%Y') if f.fecha_creacion else '-' }}</div>
+                                <small class="text-muted">{{ f.fecha_creacion.strftime('%H:%M') if f.fecha_creacion else '' }}</small>
+                            </td>
+                            <td>
+                                <div class="fw-semibold text-dark" style="font-size: 0.88rem;">{{ f.concepto }}</div>
+                                {% if f.abonos %}
+                                <small class="text-success fw-bold d-block mt-0.5" style="font-size: 0.72rem;">
+                                    Abonado directo: ${{ f.total_abonado|cop }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if f.sale_id %}
+                                <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=f.sale_id) }}" target="_blank" class="badge bg-light text-dark border text-decoration-none">
+                                    <i class="fa-solid fa-receipt text-brand-pink me-1"></i>Ticket #{{ "%05d"|format(f.sale_id) }}
+                                </a>
+                                {% else %}
+                                <span class="badge bg-light text-muted border">Ingreso Externo</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end font-monospace fw-bolder text-brand-black">
+                                ${{ (f.monto_costo or 0)|cop }}
+                            </td>
+                            <td class="text-center pe-4">
+                                {% if f.estado == 'PAGADO' %}
+                                <span class="badge badge-soft-success rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-check me-1"></i> PAGADA
+                                </span>
+                                {% elif f.estado == 'PARCIAL' %}
+                                <span class="badge badge-soft-warning rounded-pill px-3 py-1">
+                                    <i class="fa-solid fa-clock me-1"></i> ABONO PARCIAL
+                                </span>
+                                {% else %}
+                                <span class="badge badge-soft-danger rounded-pill px-3 py-1">
+                                    PENDIENTE
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                No hay facturas registradas para este proveedor.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- COLUMNA 2: HISTORIAL DE ABONOS Y COMPROBANTES -->
+    <div class="col-12 col-xl-5">
+        <div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4 h-100">
+            <div class="p-3 px-4 bg-light border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <h6 class="fw-bolder text-brand-black m-0">
+                        <i class="fa-solid fa-receipt text-success me-2"></i>Historial de Abonos y Comprobantes ({{ abonos|length }})
+                    </h6>
+                    <small class="text-muted">Pagos parciales o totales realizados al proveedor</small>
+                </div>
+                {% if current_user.rol == 'admin' %}
+                <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalRegistrarAbonoProveedor">
+                    + Abonar
+                </button>
+                {% endif %}
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover table-custom mb-0 align-middle">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="ps-4">FECHA / MÉTODO</th>
+                            <th>DETALLE / FACTURA</th>
+                            <th class="text-end">MONTO ABONO</th>
+                            <th class="text-center pe-4">COMPROBANTE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ab in abonos %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark">{{ ab.fecha_abono.strftime('%d/%m/%Y') if ab.fecha_abono else '-' }}</div>
+                                <small class="text-muted">{{ ab.fecha_abono.strftime('%H:%M') if ab.fecha_abono else '' }} · <span class="text-uppercase fw-bold">{{ ab.metodo_pago }}</span></small>
+                            </td>
+                            <td>
+                                {% if ab.invoice_id %}
+                                <span class="badge bg-light text-dark border mb-1">Factura #{{ ab.invoice_id }}</span>
+                                {% else %}
+                                <span class="badge bg-light text-primary border mb-1">Abono a Saldo General</span>
+                                {% endif %}
+                                {% if ab.observacion %}
+                                <small class="text-muted d-block" style="font-size: 0.75rem;">{{ ab.observacion }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="text-end font-monospace fw-bolder text-success">
+                                +${{ (ab.monto or 0)|cop }}
+                            </td>
+                            <td class="text-center pe-4">
+                                {% if ab.comprobante_imagen %}
+                                <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 fw-bold"
+                                    data-bs-toggle="modal" data-bs-target="#modalVerComprobante{{ ab.id }}">
+                                    <i class="fa-solid fa-image me-1"></i> Ver Foto
+                                </button>
+
+                                <!-- Modal Previsualizar Comprobante -->
+                                <div class="modal fade" id="modalVerComprobante{{ ab.id }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                            <div class="modal-header border-0 bg-dark text-white">
+                                                <h6 class="modal-title fw-bold">
+                                                    <i class="fa-solid fa-receipt text-warning me-2"></i>Comprobante de Abono #{{ ab.id }} · ${{ (ab.monto or 0)|cop }}
+                                                </h6>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body p-3 text-center bg-light">
+                                                <img src="{{ url_for('static', filename='uploads/' + ab.comprobante_imagen) }}"
+                                                    alt="Comprobante de abono"
+                                                    class="img-fluid rounded-3 shadow-sm border"
+                                                    style="max-height: 72vh; object-fit: contain;">
+                                                <div class="mt-2 small text-muted">
+                                                    Proveedor: <strong>{{ proveedor }}</strong> · Fecha: {{ ab.fecha_abono.strftime('%d/%m/%Y %H:%M') if ab.fecha_abono else '' }} · Método: <strong class="text-uppercase">{{ ab.metodo_pago }}</strong>
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer border-0 bg-white justify-content-between">
+                                                <a href="{{ url_for('static', filename='uploads/' + ab.comprobante_imagen) }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold">
+                                                    <i class="fa-solid fa-up-right-from-square me-1"></i> Abrir en pestaña nueva
+                                                </a>
+                                                <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <span class="text-muted small">Sin foto</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-hand-holding-dollar fs-2 mb-2 text-success opacity-50 d-block"></i>
+                                <span class="small">Aún no se han registrado abonos para este proveedor.</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Registrar Abono con Imagen de Comprobante -->
+{% if current_user.rol == 'admin' %}
+<div class="modal fade" id="modalRegistrarAbonoProveedor" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-hand-holding-dollar me-2"></i>Registrar Abono a {{ proveedor }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('externos_bp.registrar_abono_proveedor') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="proveedor" value="{{ proveedor }}">
+                <div class="modal-body p-4">
+                    <div class="p-3 rounded-3 bg-light border mb-3 d-flex justify-content-between align-items-center">
+                        <div>
+                            <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.7rem;">Saldo Pendiente Actual</small>
+                            <span class="font-monospace fw-bolder fs-5 text-danger">${{ (saldo_pendiente or 0)|cop }}</span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold"
+                            onclick="document.getElementById('inputMontoAbonoProv').value = '{{ '%.0f'|format(saldo_pendiente|float) }}'">
+                            Abonar Todo el Saldo
+                        </button>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Aplicar Abono a:</label>
+                        <select name="invoice_id" class="form-select fw-semibold" onchange="seleccionarFacturaAbono(this)">
+                            <option value="" data-saldo="{{ '%.0f'|format(saldo_pendiente|float) }}">📊 Abono General al Saldo del Proveedor (Se descuenta de las más antiguas)</option>
+                            {% for fp in facturas_pendientes %}
+                            <option value="{{ fp.id }}" data-saldo="{{ '%.0f'|format(fp.saldo_pendiente|float) }}">
+                                📄 Factura #{{ fp.id }} ({{ fp.fecha_creacion.strftime('%d/%m/%Y') if fp.fecha_creacion else '' }}) - {{ fp.concepto[:45] }} · Saldo: ${{ fp.saldo_pendiente|cop }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-7">
+                            <label class="form-label fw-bold small text-success">Valor del Abono ($) <span class="text-danger">*</span></label>
+                            <input type="number" step="1" min="1" name="monto" id="inputMontoAbonoProv"
+                                class="form-control fw-bolder border-success text-success fs-5"
+                                value="{{ '%.0f'|format(saldo_pendiente|float) if saldo_pendiente > 0 else '' }}"
+                                placeholder="Ej: 50000" required>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label fw-bold small">Método de Pago</label>
+                            <select name="metodo_pago" class="form-select fw-bold">
+                                <option value="nequi">Nequi</option>
+                                <option value="bancolombia">Bancolombia</option>
+                                <option value="daviplata">Daviplata</option>
+                                <option value="efectivo">Efectivo</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small text-primary">
+                            <i class="fa-solid fa-camera me-1"></i>Adjuntar Imagen del Comprobante (Opcional)
+                        </label>
+                        <input type="file" name="comprobante" class="form-control" accept="image/*">
+                        <small class="text-muted">Puedes subir la captura de Nequi, Bancolombia, Daviplata o foto del recibo firmado.</small>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-bold small text-muted">Observación / Nota</label>
+                        <input type="text" name="observacion" class="form-control" placeholder="Ej: Abono transferencia Nequi ref 4451">
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fa-solid fa-check me-1"></i> Guardar Abono
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+function seleccionarFacturaAbono(sel) {
+    const opt = sel.options[sel.selectedIndex];
+    const saldo = opt ? opt.getAttribute('data-saldo') : '';
+    const inp = document.getElementById('inputMontoAbonoProv');
+    if (inp && saldo && parseFloat(saldo) > 0) {
+        inp.value = saldo;
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

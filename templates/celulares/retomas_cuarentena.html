@@ -1,71 +1,95 @@
 {% extends "base.html" %}
 
-{% block title %}Retomas en Cuarentena - cases.com{% endblock %}
+{% block title %}Retomas de Celulares - cases.com{% endblock %}
 
 {% block content %}
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div>
         <h2 class="fw-bolder text-brand-black m-0">
-            <i class="fa-solid fa-rotate-left text-warning me-2"></i>Retomas & Cuarentena de Celulares
+            <i class="fa-solid fa-rotate-left text-warning me-2"></i>Retomas de Celulares
         </h2>
-        <small class="text-muted">Los equipos recibidos en parte de pago entran en cuarentena hasta que el Administrador defina su costo real y precio de venta</small>
+        <small class="text-muted">Equipos recibidos en parte de pago desde Caja: envíalos a <strong>Arreglos</strong> con observación o pásalos directo a <strong>Inventario</strong> definiendo Precio Mínimo y Sugerido</small>
     </div>
     <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('retomas_bp.arreglos') }}" class="btn btn-outline-danger rounded-pill px-3.5 fw-bold shadow-xs">
+            <i class="fa-solid fa-screwdriver-wrench me-1"></i> Módulo Arreglos ({{ total_arreglos or 0 }})
+        </a>
+        <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-outline-dark rounded-pill px-3.5 fw-bold shadow-xs">
+            <i class="fa-solid fa-mobile-screen-button me-1"></i> Inventario Celulares
+        </a>
         <button type="button" class="btn btn-pink rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevaRetomaManual">
             <i class="fa-solid fa-plus me-1"></i> Registrar Retoma Manual
         </button>
-        <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-outline-dark rounded-pill px-3 fw-bold">
-            <i class="fa-solid fa-mobile-screen-button me-1"></i> Inventario Celulares
-        </a>
     </div>
 </div>
 
-<!-- KPIs de Cuarentena -->
+<!-- Tarjetas KPI con Relieve 3D -->
 <div class="row g-3 mb-4">
-    <div class="col-12 col-md-4">
-        <div class="card card-custom p-3 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(254, 243, 199, 0.55) 0%, #FFFFFF 70%);">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem;">Equipos en Cuarentena</span>
-                <span class="rounded-3 d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #FEF3C7; color: #D97706;">
-                    <i class="fa-solid fa-hourglass-half"></i>
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-amber p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Retomas Pendientes</span>
+                <span class="kpi-icon-elevated kpi-icon-amber">
+                    <i class="fa-solid fa-rotate-left"></i>
                 </span>
             </div>
-            <h3 class="fw-bolder text-brand-black mb-0">{{ total_cuarentena or 0 }} <span class="fs-6 text-muted">pendientes</span></h3>
+            <h3 class="kpi-value text-brand-black">{{ total_cuarentena or 0 }} <span class="fs-6 text-muted fw-semibold">por definir</span></h3>
+            <small class="kpi-subtext">Para mandar a Arreglos o a Inventario</small>
         </div>
     </div>
-    <div class="col-12 col-md-4">
-        <div class="card card-custom p-3 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(249, 200, 211, 0.35) 0%, #FFFFFF 70%);">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem;">Valor Recibido en Cuarentena</span>
-                <span class="rounded-3 d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #FCE7F3; color: #BE185D;">
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Valor Recibido Pendiente</span>
+                <span class="kpi-icon-elevated kpi-icon-rose">
                     <i class="fa-solid fa-hand-holding-dollar"></i>
                 </span>
             </div>
-            <h3 class="fw-bolder text-brand-black mb-0">${{ (valor_cuarentena or 0)|cop }}</h3>
+            <h3 class="kpi-value text-brand-black">${{ (valor_cuarentena or 0)|cop }}</h3>
+            <small class="kpi-subtext">Total recibido en parte de pago</small>
         </div>
     </div>
-    <div class="col-12 col-md-4">
-        <div class="card card-custom p-3 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(16, 185, 129, 0.2) 0%, #FFFFFF 70%);">
-            <div class="d-flex justify-content-between align-items-center mb-1">
-                <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem;">Retomas Aprobadas e Ingresadas</span>
-                <span class="rounded-3 d-inline-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #D1FAE5; color: #047857;">
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-blue p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Equipos en Arreglos</span>
+                <span class="kpi-icon-elevated kpi-icon-blue">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value" style="color: #0284C7;">{{ total_arreglos or 0 }} <span class="fs-6 text-muted fw-semibold">en taller</span></h3>
+            <small class="kpi-subtext"><a href="{{ url_for('retomas_bp.arreglos') }}" class="text-decoration-none fw-bold" style="color: #0284C7;">Ir al módulo de Arreglos →</a></small>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-emerald p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Ingresadas a Inventario</span>
+                <span class="kpi-icon-elevated kpi-icon-emerald">
                     <i class="fa-solid fa-circle-check"></i>
                 </span>
             </div>
-            <h3 class="fw-bolder text-success mb-0">{{ total_aprobadas or 0 }} <span class="fs-6 text-muted">equipos</span></h3>
+            <h3 class="kpi-value" style="color: #047857;">{{ total_aprobadas or 0 }} <span class="fs-6 text-muted fw-semibold">listas</span></h3>
+            <small class="kpi-subtext">Ya disponibles en stock de celulares</small>
         </div>
     </div>
 </div>
 
-<!-- Filtro de Estado -->
-<div class="d-flex gap-2 mb-3">
-    <a href="{{ url_for('retomas_bp.cuarentena', estado='CUARENTENA') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if estado_filtro == 'CUARENTENA' %}btn-warning text-dark shadow-xs{% else %}btn-light text-muted border{% endif %}">
-        ⏳ En Cuarentena ({{ total_cuarentena }})
+<!-- Filtros de Vista -->
+<div class="d-flex flex-wrap gap-2 mb-3">
+    <a href="{{ url_for('retomas_bp.cuarentena', estado='CUARENTENA') }}" class="btn btn-sm rounded-pill px-3.5 py-1.5 fw-bold {% if estado_filtro == 'CUARENTENA' %}btn-warning text-dark shadow-xs{% else %}btn-light text-muted border{% endif %}">
+        📥 Pendientes por Definir ({{ total_cuarentena or 0 }})
     </a>
-    <a href="{{ url_for('retomas_bp.cuarentena', estado='APROBADA') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if estado_filtro == 'APROBADA' %}btn-success text-white shadow-xs{% else %}btn-light text-muted border{% endif %}">
-        ✅ Aprobadas ({{ total_aprobadas }})
+    <a href="{{ url_for('retomas_bp.arreglos') }}" class="btn btn-sm rounded-pill px-3.5 py-1.5 fw-bold btn-light text-danger border">
+        🔧 En Arreglos ({{ total_arreglos or 0 }})
     </a>
-    <a href="{{ url_for('retomas_bp.cuarentena', estado='TODAS') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if estado_filtro == 'TODAS' %}btn-dark text-white shadow-xs{% else %}btn-light text-muted border{% endif %}">
+    <a href="{{ url_for('retomas_bp.cuarentena', estado='APROBADA') }}" class="btn btn-sm rounded-pill px-3.5 py-1.5 fw-bold {% if estado_filtro == 'APROBADA' %}btn-success text-white shadow-xs{% else %}btn-light text-muted border{% endif %}">
+        ✅ Ingresadas a Inventario ({{ total_aprobadas or 0 }})
+    </a>
+    <a href="{{ url_for('retomas_bp.cuarentena', estado='TODAS') }}" class="btn btn-sm rounded-pill px-3.5 py-1.5 fw-bold {% if estado_filtro == 'TODAS' %}btn-dark text-white shadow-xs{% else %}btn-light text-muted border{% endif %}">
         📋 Todas
     </a>
 </div>
@@ -75,13 +99,14 @@
         <table class="table table-hover table-custom mb-0 align-middle">
             <thead class="bg-light">
                 <tr>
-                    <th class="ps-4">FECHA / TICKET</th>
-                    <th>EQUIPO RECIBIDO</th>
-                    <th>IMEI</th>
-                    <th>CLIENTE QUE ENTREGÓ</th>
-                    <th class="text-end">VALOR RECIBIDO</th>
-                    <th class="text-center">ESTADO</th>
-                    <th class="text-center pe-4">ACCIÓN</th>
+                    <th class="ps-4" style="min-width: 140px;">FECHA / TICKET</th>
+                    <th style="min-width: 220px;">EQUIPO RECIBIDO</th>
+                    <th style="min-width: 155px;">IMEI 1</th>
+                    <th style="min-width: 155px;">IMEI 2</th>
+                    <th style="min-width: 160px;">CLIENTE QUE ENTREGÓ</th>
+                    <th class="text-end" style="min-width: 130px;">VALOR RECIBIDO</th>
+                    <th class="text-center" style="min-width: 130px;">ESTADO</th>
+                    <th class="text-center pe-4" style="min-width: 265px;">ACCIONES</th>
                 </tr>
             </thead>
             <tbody>
@@ -89,124 +114,203 @@
                 <tr>
                     <td class="ps-4">
                         <div class="fw-bold text-dark">{{ r.fecha_recepcion.strftime('%d/%m/%Y') if r.fecha_recepcion else '-' }}</div>
-                        <small class="text-muted">{{ r.fecha_recepcion.strftime('%H:%M') if r.fecha_recepcion else '' }} · Por: {{ r.usuario_recibe.nombre if r.usuario_recibe else 'Cajero' }}</small>
+                        <small class="text-muted">{{ r.fecha_recepcion.strftime('%H:%M') if r.fecha_recepcion else '' }} · {{ r.usuario_recibe.nombre if r.usuario_recibe else 'Caja' }}</small>
                         {% if r.sale_id %}
-                        <div><span class="badge bg-light text-dark border mt-1">Ticket #{{ r.sale_id }}</span></div>
+                        <div>
+                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=r.sale_id) }}" target="_blank" class="badge bg-light text-dark border mt-1 text-decoration-none">
+                                <i class="fa-solid fa-receipt text-brand-pink me-1"></i>Ticket #{{ "%05d"|format(r.sale_id) }}
+                            </a>
+                        </div>
                         {% endif %}
                     </td>
                     <td>
-                        <div class="fw-bold text-dark">{{ r.marca }} {{ r.modelo_celular }}</div>
+                        <div class="fw-bolder text-brand-black" style="font-size: 0.95rem;">{{ r.marca }} {{ r.modelo_celular }}</div>
                         <div class="d-flex flex-wrap gap-1 mt-1">
-                            {% if r.memoria %}<span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">{{ r.memoria }}</span>{% endif %}
+                            {% if r.memoria %}<span class="badge bg-white text-dark border fw-bold" style="font-size: 0.68rem;">{{ r.memoria }}</span>{% endif %}
                             {% if r.color %}<span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">{{ r.color }}</span>{% endif %}
-                            {% if r.bateria %}<span class="badge bg-light text-success border" style="font-size: 0.68rem;">Bat: {{ r.bateria }}</span>{% endif %}
+                            {% if r.bateria %}<span class="badge rounded-pill px-2" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 0.68rem;">Bat: {{ r.bateria }}</span>{% endif %}
                         </div>
-                        {% if r.observaciones %}<small class="text-muted d-block mt-1">{{ r.observaciones }}</small>{% endif %}
+                        {% if r.observaciones %}<small class="text-muted d-block mt-1"><i class="fa-regular fa-comment-dots me-1"></i>{{ r.observaciones }}</small>{% endif %}
                     </td>
+                    <!-- IMEI 1 -->
                     <td>
-                        <span class="font-monospace fw-bold text-dark">{{ r.imei }}</span>
-                        <div>
-                            <a href="{{ url_for('celulares_bp.trazabilidad', imei=r.imei) }}" class="small text-decoration-none">
-                                <i class="fa-solid fa-timeline me-1"></i>Ver historial IMEI
+                        <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 bg-light border font-monospace fw-bold text-dark" style="font-size: 0.8rem;">
+                            <i class="fa-solid fa-barcode text-brand-pink"></i>
+                            <span>{{ r.imei }}</span>
+                        </div>
+                        <div class="mt-1">
+                            <a href="{{ url_for('celulares_bp.trazabilidad', imei=r.imei) }}" class="small text-decoration-none" style="font-size: 0.72rem;">
+                                <i class="fa-solid fa-timeline me-1"></i>Historial IMEI
                             </a>
                         </div>
+                    </td>
+                    <!-- IMEI 2 -->
+                    <td>
+                        {% if r.imei2 %}
+                        <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 bg-light border font-monospace fw-semibold text-secondary" style="font-size: 0.8rem;">
+                            <i class="fa-solid fa-barcode text-muted"></i>
+                            <span>{{ r.imei2 }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">—</span>
+                        {% endif %}
                     </td>
                     <td>
                         <div class="fw-semibold text-dark">{{ r.cliente_nombre or 'Mostrador' }}</div>
                         {% if r.cliente_documento %}<small class="text-muted d-block">CC: {{ r.cliente_documento }}</small>{% endif %}
                         {% if r.cliente_telefono %}<small class="text-muted d-block">Tel: {{ r.cliente_telefono }}</small>{% endif %}
                     </td>
-                    <td class="text-end font-monospace fw-bolder text-brand-black">
+                    <td class="text-end font-monospace fw-bolder text-brand-black" style="font-size: 0.95rem;">
                         ${{ (r.valor_recibido or 0)|cop }}
                     </td>
                     <td class="text-center">
                         {% if r.estado == 'CUARENTENA' %}
                             <span class="badge badge-soft-warning rounded-pill px-3 py-1.5">
-                                <i class="fa-solid fa-hourglass-half me-1"></i> EN CUARENTENA
+                                <i class="fa-solid fa-clock me-1"></i> PENDIENTE
+                            </span>
+                        {% elif r.estado == 'EN_ARREGLO' %}
+                            <span class="badge badge-soft-danger rounded-pill px-3 py-1.5">
+                                <i class="fa-solid fa-screwdriver-wrench me-1"></i> EN ARREGLOS
                             </span>
                         {% elif r.estado == 'APROBADA' %}
                             <span class="badge badge-soft-success rounded-pill px-3 py-1.5">
-                                <i class="fa-solid fa-circle-check me-1"></i> APROBADA
+                                <i class="fa-solid fa-circle-check me-1"></i> EN INVENTARIO
                             </span>
                             <small class="d-block text-muted mt-1" style="font-size: 0.7rem;">
                                 Costo: ${{ (r.costo_real or 0)|cop }} | Sug: ${{ (r.precio_sugerido or 0)|cop }}
                             </small>
                         {% else %}
-                            <span class="badge badge-soft-danger rounded-pill px-3 py-1.5">{{ r.estado }}</span>
+                            <span class="badge bg-secondary rounded-pill px-3 py-1.5">{{ r.estado }}</span>
                         {% endif %}
                     </td>
                     <td class="text-center pe-4">
-                        {% if r.estado == 'CUARENTENA' and current_user.rol == 'admin' %}
-                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalAprobarRetoma{{ r.id }}">
-                            <i class="fa-solid fa-check me-1"></i> Aprobar e Ingresar
-                        </button>
+                        {% if r.estado == 'CUARENTENA' %}
+                        <div class="d-inline-flex flex-wrap justify-content-center gap-1.5">
+                            <!-- Acción 1: Mandar a Arreglos -->
+                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold shadow-2xs" data-bs-toggle="modal" data-bs-target="#modalEnviarArreglo{{ r.id }}">
+                                <i class="fa-solid fa-screwdriver-wrench me-1"></i> A Arreglos
+                            </button>
+                            <!-- Acción 2: Mandar directo a Inventario -->
+                            {% if current_user.rol == 'admin' %}
+                            <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalAprobarRetoma{{ r.id }}">
+                                <i class="fa-solid fa-box-open me-1"></i> A Inventario
+                            </button>
+                            {% endif %}
+                        </div>
 
-                        <!-- Modal Aprobar Retoma -->
-                        <div class="modal fade text-start" id="modalAprobarRetoma{{ r.id }}" tabindex="-1" aria-hidden="true">
+                        <!-- Modal 1: Mandar a Módulo de Arreglos con Observación -->
+                        <div class="modal fade text-start" id="modalEnviarArreglo{{ r.id }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content border-0 shadow-lg rounded-4">
-                                    <div class="modal-header border-0 bg-light">
-                                        <h5 class="modal-title fw-bold text-brand-black">
-                                            <i class="fa-solid fa-circle-check text-success me-2"></i>Aprobar Retoma #{{ r.id }}
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #DC2626 0%, #991B1B 100%);">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="fa-solid fa-screwdriver-wrench me-2"></i>Mandar a Arreglos · Retoma #{{ r.id }}
                                         </h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
-                                    <form method="POST" action="{{ url_for('retomas_bp.aprobar_retoma', id=r.id) }}">
+                                    <form method="POST" action="{{ url_for('retomas_bp.enviar_a_arreglo', id=r.id) }}">
                                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         <div class="modal-body p-4">
                                             <div class="p-3 rounded-3 bg-light border mb-3">
-                                                <div class="fw-bold text-dark">{{ r.marca }} {{ r.modelo_celular }} {{ r.memoria or '' }} {{ r.color or '' }}</div>
-                                                <div class="small text-muted font-monospace">IMEI: {{ r.imei }}</div>
-                                                <div class="small text-secondary mt-1">Valor descontado en caja: <strong>${{ (r.valor_recibido or 0)|cop }}</strong></div>
-                                            </div>
-                                            <div class="alert alert-warning border-0 small py-2 mb-3">
-                                                <i class="fa-solid fa-rotate me-1"></i> Si este IMEI ya había sido vendido antes por la tienda, el sistema archivará automáticamente el registro previo como <code>{{ r.imei }}-OLD-1</code> y creará el nuevo ingreso en stock como <strong>Usado</strong>.
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold small">Costo Real Asignado ($) <span class="text-danger">*</span></label>
-                                                <input type="number" step="1" min="0" name="costo_real" class="form-control fw-bold" value="{{ "%.0f"|format(r.valor_recibido|float) }}" required>
-                                                <small class="text-muted">Incluye valor recibido + alistamiento/reparación si aplica.</small>
-                                            </div>
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-6">
-                                                    <label class="form-label fw-bold small text-danger">Precio Mínimo ($) <span class="text-danger">*</span></label>
-                                                    <input type="number" step="1" min="0" name="precio_minimo" class="form-control fw-bold" value="{{ "%.0f"|format((r.valor_recibido|float) * 1.15) }}" required>
+                                                <div class="fw-bolder text-dark">{{ r.marca }} {{ r.modelo_celular }} {{ r.memoria or '' }} {{ r.color or '' }}</div>
+                                                <div class="small text-muted font-monospace mt-1">
+                                                    IMEI 1: <strong>{{ r.imei }}</strong>
+                                                    {% if r.imei2 %} · IMEI 2: <strong>{{ r.imei2 }}</strong>{% endif %}
                                                 </div>
-                                                <div class="col-6">
-                                                    <label class="form-label fw-bold small text-success">Precio Sugerido ($) <span class="text-danger">*</span></label>
-                                                    <input type="number" step="1" min="0" name="precio_sugerido" class="form-control fw-bold" value="{{ "%.0f"|format((r.valor_recibido|float) * 1.30) }}" required>
-                                                </div>
+                                                <div class="small text-secondary mt-1">Valor recibido en retoma: <strong>${{ (r.valor_recibido or 0)|cop }}</strong></div>
                                             </div>
                                             <div class="mb-0">
-                                                <label class="form-label fw-bold small">Observaciones para Inventario</label>
-                                                <input type="text" name="observaciones" class="form-control" value="{{ r.observaciones or '' }}" placeholder="Ej: Retoma revisada 10/10">
+                                                <label class="form-label fw-bold small text-danger">
+                                                    <i class="fa-solid fa-message me-1"></i>Mensaje / Observación de lo que se va a arreglar <span class="text-danger">*</span>
+                                                </label>
+                                                <textarea name="observacion_arreglo" rows="3" class="form-control fw-semibold" placeholder="Ej: Cambio de batería y mantenimiento de auricular..." required>{{ r.observaciones or '' }}</textarea>
+                                                <small class="text-muted d-block mt-1">
+                                                    El equipo pasará al módulo <strong>Arreglos</strong>. Cuando lo entreguen arreglado, podrás registrar cuánto costó el arreglo para que se sume al costo y asignarle el precio de venta.
+                                                </small>
                                             </div>
                                         </div>
                                         <div class="modal-footer border-0 bg-light">
                                             <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">
-                                                <i class="fa-solid fa-box-open me-1"></i> Aprobar y Pasar a Stock
+                                            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                                                <i class="fa-solid fa-screwdriver-wrench me-1"></i> Enviar a Arreglos
                                             </button>
                                         </div>
                                     </form>
                                 </div>
                             </div>
                         </div>
-                        {% elif r.product_id_generado %}
-                        <a href="{{ url_for('celulares_bp.editar_celular', id=r.product_id_generado) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3">
-                            Ver Equipo #{{ r.product_id_generado }}
+
+                        <!-- Modal 2: Mandar Directo a Inventario (Pide Precio Mínimo y Precio Sugerido) -->
+                        {% if current_user.rol == 'admin' %}
+                        <div class="modal fade text-start" id="modalAprobarRetoma{{ r.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #10B981 0%, #047857 100%);">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="fa-solid fa-box-open me-2"></i>Mandar a Inventario · Retoma #{{ r.id }}
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('retomas_bp.aprobar_retoma', id=r.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="costo_real" value="{{ '%.0f'|format(r.valor_recibido|float) }}">
+                                        <div class="modal-body p-4">
+                                            <div class="p-3 rounded-3 bg-light border mb-3">
+                                                <div class="fw-bolder text-dark fs-6">{{ r.marca }} {{ r.modelo_celular }} {{ r.memoria or '' }} {{ r.color or '' }}</div>
+                                                <div class="small text-muted font-monospace mt-1">
+                                                    IMEI 1: <strong>{{ r.imei }}</strong>
+                                                    {% if r.imei2 %} · IMEI 2: <strong>{{ r.imei2 }}</strong>{% endif %}
+                                                </div>
+                                                <div class="mt-2 pt-2 border-top d-flex justify-content-between align-items-center">
+                                                    <span class="small text-muted fw-semibold">Costo (Valor recibido en retoma):</span>
+                                                    <span class="font-monospace fw-bolder text-brand-black fs-6">${{ (r.valor_recibido or 0)|cop }}</span>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-6">
+                                                    <label class="form-label fw-bold small" style="color: #BE185D;">Precio Mínimo ($) <span class="text-danger">*</span></label>
+                                                    <input type="number" step="1" min="1" name="precio_minimo" class="form-control fw-bolder fs-6" style="color: #BE185D; border-color: #FBCFE8;" placeholder="Ej: 1500000" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label fw-bold small text-success">Precio Sugerido ($) <span class="text-danger">*</span></label>
+                                                    <input type="number" step="1" min="1" name="precio_sugerido" class="form-control fw-bolder border-success text-success fs-6" placeholder="Ej: 1650000" required>
+                                                </div>
+                                            </div>
+                                            <div class="mb-0">
+                                                <label class="form-label fw-bold small text-muted">Observaciones para Inventario (Opcional)</label>
+                                                <input type="text" name="observaciones" class="form-control" value="{{ r.observaciones or '' }}" placeholder="Ej: Retoma 10/10 lista para venta">
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                                                <i class="fa-solid fa-check me-1"></i> Ingresar a Inventario
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% elif r.estado == 'EN_ARREGLO' %}
+                        <a href="{{ url_for('retomas_bp.arreglos') }}" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                            <i class="fa-solid fa-screwdriver-wrench me-1"></i> Ver en Arreglos
                         </a>
-                        {% else %}
-                        <span class="text-muted small">Solo Admin</span>
+                        {% elif r.product_id_generado %}
+                        <a href="{{ url_for('celulares_bp.editar_celular', id=r.product_id_generado) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
+                            <i class="fa-solid fa-mobile-screen-button me-1"></i> Ver en Inventario
+                        </a>
                         {% endif %}
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
+                    <td colspan="8" class="text-center py-5 text-muted">
                         <i class="fa-solid fa-rotate-left fs-1 mb-3 text-brand-pink d-block"></i>
-                        <h6 class="fw-bold text-dark">No hay retomas en este estado</h6>
-                        <p class="small mb-0">Las retomas recibidas desde la Caja aparecerán aquí automáticamente en estado CUARENTENA.</p>
+                        <h6 class="fw-bold text-dark">No hay retomas en esta vista</h6>
+                        <p class="small mb-0">Las retomas recibidas en Caja aparecen aquí para mandarlas a <strong>Arreglos</strong> o directo a <strong>Inventario</strong>.</p>
                     </td>
                 </tr>
                 {% endfor %}
@@ -220,40 +324,50 @@
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 bg-light">
-                <h5 class="modal-title fw-bold"><i class="fa-solid fa-rotate-left text-warning me-2"></i>Ingresar Retoma a Cuarentena</h5>
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-rotate-left text-warning me-2"></i>Registrar Retoma Manual</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="{{ url_for('retomas_bp.cuarentena') }}">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="marca" id="retman_marca_hidden">
+                <input type="hidden" name="modelo_celular" id="retman_modelo_hidden">
                 <div class="modal-body p-4">
                     <div class="row g-3">
                         <div class="col-md-4">
-                            <label class="form-label fw-bold small">IMEI Principal <span class="text-danger">*</span></label>
-                            <input type="text" name="imei" class="form-control font-monospace" required>
-                        </div>
-                        <div class="col-md-4">
                             <label class="form-label fw-bold small">Marca <span class="text-danger">*</span></label>
-                            <input type="text" name="marca" class="form-control" placeholder="Ej: Apple" required>
+                            <select id="retman_marca_select" class="form-select fw-semibold" required></select>
+                            <input type="text" id="retman_marca_custom" class="form-control form-control-sm mt-1 d-none" placeholder="Escribir marca...">
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label fw-bold small">Modelo <span class="text-danger">*</span></label>
-                            <input type="text" name="modelo_celular" class="form-control" placeholder="Ej: iPhone 13" required>
+                            <label class="form-label fw-bold small">Referencia / Modelo <span class="text-danger">*</span></label>
+                            <select id="retman_modelo_select" class="form-select fw-semibold" required>
+                                <option value="">-- Primero elija Marca --</option>
+                            </select>
+                            <input type="text" id="retman_modelo_custom" class="form-control form-control-sm mt-1 d-none" placeholder="Escribir referencia...">
                         </div>
-                        <div class="col-md-3">
-                            <label class="form-label fw-bold small">Memoria</label>
-                            <input type="text" name="memoria" class="form-control" placeholder="128GB">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Capacidad / RAM</label>
+                            <select name="memoria" id="retman_memoria_select" class="form-select"></select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small">Color</label>
-                            <input type="text" name="color" class="form-control" placeholder="Azul">
+                            <select name="color" id="retman_color_select" class="form-select"></select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small">% Batería</label>
-                            <input type="text" name="bateria" class="form-control" placeholder="88%">
+                            <input type="text" name="bateria" class="form-control" placeholder="Ej: 88% o N/A">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-4">
                             <label class="form-label fw-bold small text-success">Valor Recibido ($) <span class="text-danger">*</span></label>
                             <input type="number" step="1" min="0" name="valor_recibido" class="form-control fw-bold" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">IMEI 1 (Principal) <span class="text-danger">*</span></label>
+                            <input type="text" name="imei" class="form-control font-monospace fw-bold" placeholder="15 dígitos IMEI 1" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small text-muted">IMEI 2 (Opcional)</label>
+                            <input type="text" name="imei2" class="form-control font-monospace" placeholder="Segundo IMEI">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold small">Nombre del Cliente</label>
@@ -276,11 +390,18 @@
                 <div class="modal-footer border-0 bg-light">
                     <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
                     <button type="submit" class="btn btn-warning text-dark rounded-pill px-4 fw-bold">
-                        <i class="fa-solid fa-hourglass-half me-1"></i> Enviar a Cuarentena
+                        <i class="fa-solid fa-check me-1"></i> Guardar Retoma
                     </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.initSelectorCelular) {
+        window.initSelectorCelular('retman');
+    }
+});
+</script>
 {% endblock %}

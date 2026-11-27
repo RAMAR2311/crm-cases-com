@@ -1,5 +1,6 @@
 import os
 import re
+import json
 from io import BytesIO
 from datetime import datetime
 from decimal import Decimal
@@ -22,6 +23,98 @@ retomas_bp = Blueprint('retomas_bp', __name__)
 
 def obtener_hora_bogota():
     return datetime.now(pytz.timezone('America/Bogota')).replace(tzinfo=None)
+
+
+def _ruta_json_imagenes_ref():
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+    return os.path.join(upload_folder, 'referencias_imagenes.json')
+
+
+def cargar_mapa_imagenes_referencia():
+    ruta = _ruta_json_imagenes_ref()
+    if not os.path.exists(ruta):
+        return {}
+    try:
+        with open(ruta, 'r', encoding='utf-8') as f:
+            return json.load(f) or {}
+    except Exception:
+        return {}
+
+
+def guardar_imagen_en_mapa_referencia(marca, modelo_celular, color, filename):
+    mapa = cargar_mapa_imagenes_referencia()
+    m_key = (marca or '').strip().lower()
+    mod_key = (modelo_celular or '').strip().lower()
+    col_key = (color or '').strip().lower()
+
+    if col_key and col_key != 'todos':
+        key = f"{m_key}|{mod_key}|{col_key}"
+        label = f"{marca} {modelo_celular} ({color})"
+    else:
+        key = f"{m_key}|{mod_key}"
+        label = f"{marca} {modelo_celular} (Todos los colores)"
+
+    mapa[key] = {
+        'marca': marca,
+        'modelo': modelo_celular,
+        'color': color if (col_key and col_key != 'todos') else 'Todos',
+        'label': label,
+        'imagen': filename,
+        'fecha': obtener_hora_bogota().strftime('%d/%m/%Y %H:%M')
+    }
+    try:
+        with open(_ruta_json_imagenes_ref(), 'w', encoding='utf-8') as f:
+            json.dump(mapa, f, ensure_ascii=False, indent=2)
+    except Exception:
+        pass
+
+
+def obtener_imagen_por_referencia(marca, modelo_celular, color=None):
+    """
+    Busca automáticamente la imagen configurada para una Referencia (y Color opcional).
+    1. Primero busca coincidencia exacta Marca + Referencia + Color en el catálogo de imágenes por referencia.
+    2. Luego busca coincidencia general Marca + Referencia.
+    3. Como respaldo, busca si ya existe algún celular de esa misma Referencia en la BD con foto asignada.
+    """
+    m_key = (marca or '').strip().lower()
+    mod_key = (modelo_celular or '').strip().lower()
+    col_key = (color or '').strip().lower()
+    if not mod_key:
+        return None
+
+    mapa = cargar_mapa_imagenes_referencia()
+    if col_key:
+        entry_col = mapa.get(f"{m_key}|{mod_key}|{col_key}")
+        if entry_col and entry_col.get('imagen'):
+            return entry_col['imagen']
+
+    entry_ref = mapa.get(f"{m_key}|{mod_key}")
+    if entry_ref and entry_ref.get('imagen'):
+        return entry_ref['imagen']
+
+    # Respaldo: buscar en base de datos otro equipo de la misma referencia que ya tenga foto
+    try:
+        if col_key:
+            existente_col = Product.query.filter(
+                Product.modelo_celular.ilike(modelo_celular.strip()),
+                Product.color.ilike(color.strip()),
+                Product.imagen.isnot(None),
+                Product.imagen != ''
+            ).first()
+            if existente_col:
+                return existente_col.imagen
+        existente_ref = Product.query.filter(
+            Product.modelo_celular.ilike(modelo_celular.strip()),
+            Product.imagen.isnot(None),
+            Product.imagen != ''
+        ).first()
+        if existente_ref:
+            return existente_ref.imagen
+    except Exception:
+        pass
+
+    return None
 
 
 def archivar_imei_existente_si_vendido(imei_limpio):
@@ -65,7 +158,8 @@ def archivar_imei_existente_si_vendido(imei_limpio):
 @login_required
 def inventario():
     q = request.args.get('q', '').strip()
-    estado_filtro = request.args.get('estado', '').strip() # 'disponibles', 'vendidos', 'maneo', 'todos'
+    # Por defecto mostramos SOLO los Activos ('disponibles') para no confundir con vendidos o maneo
+    estado_filtro = request.args.get('estado', 'disponibles').strip() or 'disponibles'
 
     query = Product.query.filter_by(tipo_inventario='celulares')
 
@@ -85,15 +179,24 @@ def inventario():
 
     todos_celulares = Product.query.filter_by(tipo_inventario='celulares').all()
 
-    # KPIs en tiempo real sobre el stock activo de celulares
+    # KPIs y contadores en tiempo real por pestaña
     stock_activo = 0
     costo_total_invertido = Decimal('0.00')
     valor_proyectado_venta = Decimal('0.00')
     equipos_en_maneo = 0
+    count_activos = 0
+    count_vendidos = 0
 
     for c in todos_celulares:
-        if c.tiene_maneo_pendiente:
+        en_maneo = c.tiene_maneo_pendiente
+        if en_maneo:
             equipos_en_maneo += 1
+        st_total = c.total_stock
+        if st_total > 0 and not en_maneo:
+            count_activos += 1
+        elif st_total <= 0 and not en_maneo:
+            count_vendidos += 1
+
         if c.variantes:
             for v in c.variantes:
                 st = int(v.cantidad_stock or 0)
@@ -108,14 +211,20 @@ def inventario():
                 costo_total_invertido += Decimal(str(c.precio_costo or 0)) * st
                 valor_proyectado_venta += Decimal(str(c.precio_sugerido or 0)) * st
 
+    count_soporte = Retoma.query.filter_by(estado='EN_ARREGLO').count()
+    count_retomas = Retoma.query.filter_by(estado='CUARENTENA').count()
+
     celulares = query.order_by(Product.cantidad_stock.desc(), Product.fecha_creacion.desc()).all()
 
     if estado_filtro == 'disponibles':
-        celulares = [c for c in celulares if c.total_stock > 0]
+        celulares = [c for c in celulares if c.total_stock > 0 and not c.tiene_maneo_pendiente]
     elif estado_filtro == 'vendidos':
         celulares = [c for c in celulares if c.total_stock <= 0 and not c.tiene_maneo_pendiente]
     elif estado_filtro == 'maneo':
         celulares = [c for c in celulares if c.tiene_maneo_pendiente]
+    # Si estado_filtro == 'todos', muestra todos
+
+    mapa_imagenes_ref = list(cargar_mapa_imagenes_referencia().values())
 
     return render_template(
         'celulares/inventario.html',
@@ -124,6 +233,11 @@ def inventario():
         costo_total_invertido=costo_total_invertido,
         valor_proyectado_venta=valor_proyectado_venta,
         equipos_en_maneo=equipos_en_maneo,
+        count_activos=count_activos,
+        count_vendidos=count_vendidos,
+        count_soporte=count_soporte,
+        count_retomas=count_retomas,
+        imagenes_referencia=mapa_imagenes_ref,
         q=q,
         estado_filtro=estado_filtro
     )
@@ -175,6 +289,10 @@ def nuevo_celular():
                 os.makedirs(upload_folder, exist_ok=True)
                 file.save(os.path.join(upload_folder, filename))
                 imagen_filename = filename
+
+        # Si no se subió foto manual, asignar automáticamente la imagen configurada para esa Referencia
+        if not imagen_filename:
+            imagen_filename = obtener_imagen_por_referencia(marca, modelo_celular, color)
 
         nuevo = Product(
             nombre=nombre_completo,
@@ -281,28 +399,375 @@ def editar_celular(id):
     return render_template('celulares/form_celular.html', celular=celular)
 
 
+@celulares_bp.route('/api/precios-actuales', methods=['GET'])
+@login_required
+def api_precios_actuales_referencia():
+    marca = (request.args.get('marca') or '').strip()
+    modelo = (request.args.get('modelo') or '').strip()
+    memoria = (request.args.get('memoria') or '').strip()
+    color = (request.args.get('color') or '').strip()
+    estado = (request.args.get('estado') or 'Nuevo').strip()
+
+    if not modelo:
+        return jsonify({'found': False, 'count': 0})
+
+    query = Product.query.filter(
+        Product.tipo_inventario == 'celulares',
+        Product.cantidad_stock > 0
+    )
+    if marca:
+        query = query.filter(or_(Product.marca.ilike(marca), Product.nombre.ilike(f"%{marca}%")))
+
+    query = query.filter(or_(Product.modelo_celular.ilike(modelo), Product.nombre.ilike(f"%{modelo}%")))
+
+    if memoria and memoria.upper() != 'TODAS':
+        query = query.filter(or_(Product.memoria.ilike(memoria), Product.nombre.ilike(f"%{memoria}%")))
+
+    if color and color.upper() != 'TODOS':
+        query = query.filter(or_(Product.color.ilike(color), Product.nombre.ilike(f"%{color}%")))
+
+    if estado == 'Nuevo':
+        query = query.filter(Product.estado_celular.ilike('Nuevo'))
+    elif estado == 'Usado_Sin_Retoma':
+        query = query.filter(
+            Product.estado_celular.ilike('Usado'),
+            ~Product.sku.ilike('RET-%'),
+            or_(Product.proveedor.is_(None), ~Product.proveedor.ilike('%Retoma%'))
+        )
+    elif estado == 'Retomas_Sin_Arreglo':
+        query = query.filter(
+            or_(Product.sku.ilike('RET-%'), Product.proveedor.ilike('%Retoma%')),
+            or_(Product.observacion.is_(None), ~Product.observacion.ilike('%[ARREGLADO%'))
+        )
+    elif estado == 'Retomas_Con_Arreglo':
+        query = query.filter(
+            or_(Product.sku.ilike('RET-%'), Product.proveedor.ilike('%Retoma%')),
+            Product.observacion.ilike('%[ARREGLADO%')
+        )
+    elif estado == 'Retomas_Todas':
+        query = query.filter(
+            or_(Product.sku.ilike('RET-%'), Product.proveedor.ilike('%Retoma%'))
+        )
+    elif estado == 'Usado':
+        query = query.filter(Product.estado_celular.ilike('Usado'))
+
+    equipos = query.order_by(Product.id.desc()).all()
+    if not equipos:
+        return jsonify({'found': False, 'count': 0})
+
+    primero = equipos[0]
+    return jsonify({
+        'found': True,
+        'count': len(equipos),
+        'ejemplo_nombre': primero.nombre,
+        'precio_costo': int(float(primero.precio_costo or 0)),
+        'precio_minimo': int(float(primero.precio_minimo or 0)),
+        'precio_sugerido': int(float(primero.precio_sugerido or 0))
+    })
+
+
+@celulares_bp.route('/cambio-precio-masivo', methods=['POST'])
+@login_required
+@admin_required
+def cambio_precio_masivo():
+    marca = (request.form.get('marca') or '').strip()
+    modelo = (request.form.get('modelo_celular') or '').strip()
+    memoria = (request.form.get('memoria') or '').strip()
+    color = (request.form.get('color') or '').strip()
+    estado_filtro = (request.form.get('estado_celular') or 'Nuevo').strip()
+
+    nuevo_costo_str = (request.form.get('nuevo_precio_costo') or '').replace(',', '').replace('.', '').strip()
+    nuevo_min_str = (request.form.get('nuevo_precio_minimo') or '').replace(',', '').replace('.', '').strip()
+    nuevo_sug_str = (request.form.get('nuevo_precio_sugerido') or '').replace(',', '').replace('.', '').strip()
+
+    if not modelo:
+        flash('Debes seleccionar la Referencia / Modelo para aplicar el cambio de precio masivo.', 'warning')
+        return redirect(url_for('celulares_bp.inventario'))
+
+    nuevo_sug = safe_float(nuevo_sug_str, 0.0) if nuevo_sug_str else 0.0
+    nuevo_min = safe_float(nuevo_min_str, 0.0) if nuevo_min_str else 0.0
+    nuevo_costo = safe_float(nuevo_costo_str, 0.0) if nuevo_costo_str else 0.0
+
+    if nuevo_sug <= 0 and nuevo_min <= 0 and nuevo_costo <= 0:
+        flash('Ingresa al menos un nuevo precio (Sugerido, Mínimo o Costo) mayor a $0.', 'danger')
+        return redirect(url_for('celulares_bp.inventario'))
+
+    query = Product.query.filter(
+        Product.tipo_inventario == 'celulares',
+        Product.cantidad_stock > 0
+    )
+
+    if marca:
+        query = query.filter(
+            or_(
+                Product.marca.ilike(marca),
+                Product.nombre.ilike(f"%{marca}%")
+            )
+        )
+
+    query = query.filter(
+        or_(
+            Product.modelo_celular.ilike(modelo),
+            Product.nombre.ilike(f"%{modelo}%")
+        )
+    )
+
+    if memoria and memoria.upper() != 'TODAS':
+        query = query.filter(
+            or_(
+                Product.memoria.ilike(memoria),
+                Product.nombre.ilike(f"%{memoria}%")
+            )
+        )
+
+    if color and color.upper() != 'TODOS':
+        query = query.filter(
+            or_(
+                Product.color.ilike(color),
+                Product.nombre.ilike(f"%{color}%")
+            )
+        )
+
+    if estado_filtro == 'Nuevo':
+        query = query.filter(Product.estado_celular.ilike('Nuevo'))
+    elif estado_filtro == 'Usado_Sin_Retoma':
+        query = query.filter(
+            Product.estado_celular.ilike('Usado'),
+            ~Product.sku.ilike('RET-%'),
+            or_(Product.proveedor.is_(None), ~Product.proveedor.ilike('%Retoma%'))
+        )
+    elif estado_filtro == 'Retomas_Sin_Arreglo':
+        query = query.filter(
+            or_(Product.sku.ilike('RET-%'), Product.proveedor.ilike('%Retoma%')),
+            or_(Product.observacion.is_(None), ~Product.observacion.ilike('%[ARREGLADO%'))
+        )
+    elif estado_filtro == 'Retomas_Con_Arreglo':
+        query = query.filter(
+            or_(Product.sku.ilike('RET-%'), Product.proveedor.ilike('%Retoma%')),
+            Product.observacion.ilike('%[ARREGLADO%')
+        )
+    elif estado_filtro == 'Retomas_Todas':
+        query = query.filter(
+            or_(Product.sku.ilike('RET-%'), Product.proveedor.ilike('%Retoma%'))
+        )
+    elif estado_filtro == 'Usado':
+        query = query.filter(Product.estado_celular.ilike('Usado'))
+
+    equipos = query.all()
+    if not equipos:
+        cap_txt = f" ({memoria})" if (memoria and memoria.upper() != 'TODAS') else ""
+        col_txt = f" [{color}]" if (color and color.upper() != 'TODOS') else ""
+        flash(f'No se encontraron equipos activos en stock para "{marca} {modelo}{cap_txt}{col_txt}".', 'warning')
+        return redirect(url_for('celulares_bp.inventario'))
+
+    try:
+        for eq in equipos:
+            if nuevo_costo > 0:
+                eq.precio_costo = nuevo_costo
+            if nuevo_min > 0:
+                eq.precio_minimo = nuevo_min
+            if nuevo_sug > 0:
+                eq.precio_sugerido = nuevo_sug
+        db.session.commit()
+        cap_txt = f" · {memoria}" if (memoria and memoria.upper() != 'TODAS') else ""
+        col_txt = f" · Color: {color}" if (color and color.upper() != 'TODOS') else ""
+        flash(f'✅ Cambio de precio masivo aplicado a {len(equipos)} equipo(s) de "{marca} {modelo}{cap_txt}{col_txt}".', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al actualizar precios masivamente: {str(e)}', 'danger')
+
+    return redirect(url_for('celulares_bp.inventario'))
+
+
+@celulares_bp.route('/imagen-por-referencia', methods=['POST'])
+@login_required
+@admin_required
+def asignar_imagen_por_referencia():
+    marca = (request.form.get('marca') or '').strip()
+    modelo = (request.form.get('modelo_celular') or '').strip()
+    color = (request.form.get('color') or '').strip()
+
+    if not modelo:
+        flash('Debes seleccionar la Referencia / Modelo para asignar la imagen.', 'warning')
+        return redirect(url_for('celulares_bp.inventario'))
+
+    if 'imagen' not in request.files or not request.files['imagen'].filename:
+        flash('Debes seleccionar un archivo de imagen.', 'danger')
+        return redirect(url_for('celulares_bp.inventario'))
+
+    file = request.files['imagen']
+    filename = secure_filename(file.filename)
+    filename = f"ref_{datetime.now().strftime('%Y%m%d%H%M%S')}_{filename}"
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
+    file.save(os.path.join(upload_folder, filename))
+
+    guardar_imagen_en_mapa_referencia(marca, modelo, color, filename)
+
+    query = Product.query.filter(
+        Product.tipo_inventario.in_(['celulares', 'externos']),
+        or_(
+            Product.modelo_celular.ilike(modelo),
+            Product.nombre.ilike(f"%{modelo}%")
+        )
+    )
+    if marca:
+        query = query.filter(
+            or_(
+                Product.marca.ilike(marca),
+                Product.nombre.ilike(f"%{marca}%")
+            )
+        )
+    if color and color.upper() != 'TODOS':
+        query = query.filter(
+            or_(
+                Product.color.ilike(color),
+                Product.nombre.ilike(f"%{color}%")
+            )
+        )
+
+    equipos_existentes = query.all()
+    for eq in equipos_existentes:
+        eq.imagen = filename
+
+    db.session.commit()
+    col_txt = f" ({color})" if (color and color.upper() != 'TODOS') else " (Todos los colores)"
+    flash(
+        f'✅ Imagen configurada para "{marca} {modelo}{col_txt}". '
+        f'Se actualizó en {len(equipos_existentes)} equipo(s) actual(es) y se asignará automáticamente a los próximos que ingresen.',
+        'success'
+    )
+    return redirect(url_for('celulares_bp.inventario'))
+
+
 @celulares_bp.route('/plantilla-excel')
 @login_required
 @admin_required
 def descargar_plantilla_celulares():
-    cols = [
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.worksheet.datavalidation import DataValidation
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Carga_Celulares_IMEI"
+
+    headers = [
         'imei', 'imei2', 'marca', 'modelo_celular', 'estado_celular',
         'memoria', 'color', 'bateria', 'proveedor',
         'precio_costo', 'precio_minimo', 'precio_sugerido', 'observacion'
     ]
-    df = pd.DataFrame(columns=cols)
-    df.loc[0] = [
-        '358901234567890', '', 'Apple', 'iPhone 15 Pro', 'Nuevo',
-        '256GB', 'Titanio Natural', '100%', 'Importadora Mobile',
-        3800000, 4100000, 4350000, 'Caja sellada'
+    ws.append(headers)
+
+    # Estilizar encabezados
+    header_fill = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="solid")
+    header_font = Font(color="FFFFFF", bold=True, size=10)
+    thin_border = Border(
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1'),
+        top=Side(style='thin', color='CBD5E1'),
+        bottom=Side(style='thin', color='CBD5E1')
+    )
+    for col_idx in range(1, len(headers) + 1):
+        cell = ws.cell(row=1, column=col_idx)
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+
+    # Filas de ejemplo con formato estandarizado
+    ejemplos = [
+        [
+            '358901234567890', '', 'Apple', 'iPhone 17 Pro Max', 'Nuevo',
+            '256GB', 'Naranja', '100%', 'Apple Distribución Mayorista',
+            5200000, 5600000, 5950000, 'Caja sellada garantía 1 año'
+        ],
+        [
+            '359988776655443', '359988776655444', 'Samsung', 'Galaxy S25 Ultra', 'Usado',
+            '12GB / 256GB', 'Negro', '95%', 'Samsung Partner Colombia',
+            3800000, 4150000, 4450000, 'Impecable con caja'
+        ]
     ]
-    df.loc[1] = [
-        '359988776655443', '359988776655444', 'Samsung', 'Galaxy S23 Ultra', 'Usado',
-        '256GB / 12GB', 'Negro', '93%', 'Proveedor Local',
-        2600000, 2900000, 3150000, 'Impecable con cargador'
+    for row_data in ejemplos:
+        ws.append(row_data)
+
+    # Ajustar anchos de columna
+    col_widths = [18, 18, 14, 24, 15, 16, 22, 10, 26, 15, 15, 16, 28]
+    for i, w in enumerate(col_widths, start=1):
+        ws.column_dimensions[ws.cell(row=1, column=i).column_letter].width = w
+
+    # Crear hoja de catálogo oficial para alimentar los desplegables de Excel
+    ws_cat = wb.create_sheet(title="Catalogo_Oficial")
+    ws_cat.append(["MARCAS", "REFERENCIAS_OFICIALES", "CAPACIDADES_OFICIALES", "COLORES_OFICIALES", "ESTADOS"])
+
+    marcas_oficiales = ["Apple", "Samsung"]
+    referencias_oficiales = [
+        # Apple (hasta 18 Pro Max)
+        "iPhone 18 Pro Max", "iPhone 18 Pro", "iPhone 18 Air", "iPhone 18 Plus", "iPhone 18",
+        "iPhone 17 Pro Max", "iPhone 17 Pro", "iPhone 17 Air", "iPhone 17 Plus", "iPhone 17",
+        "iPhone 16 Pro Max", "iPhone 16 Pro", "iPhone 16 Plus", "iPhone 16", "iPhone 16e",
+        "iPhone 15 Pro Max", "iPhone 15 Pro", "iPhone 15 Plus", "iPhone 15",
+        "iPhone 14 Pro Max", "iPhone 14 Pro", "iPhone 14 Plus", "iPhone 14",
+        "iPhone 13 Pro Max", "iPhone 13 Pro", "iPhone 13", "iPhone 13 Mini",
+        "iPhone 12 Pro Max", "iPhone 12 Pro", "iPhone 12", "iPhone 12 Mini",
+        "iPhone 11 Pro Max", "iPhone 11 Pro", "iPhone 11", "iPhone SE (3ra Gen)",
+        "iPad Pro", "iPad Air", "iPad (10ma / 9na Gen)",
+        "Apple Watch Ultra 2 / Ultra", "Apple Watch Series 10 / 9 / SE",
+        # Samsung
+        "Galaxy S26 Ultra", "Galaxy S26+", "Galaxy S26",
+        "Galaxy S25 Ultra", "Galaxy S25+", "Galaxy S25", "Galaxy S25 Edge",
+        "Galaxy S24 Ultra", "Galaxy S24+", "Galaxy S24", "Galaxy S24 FE",
+        "Galaxy S23 Ultra", "Galaxy S23+", "Galaxy S23", "Galaxy S23 FE",
+        "Galaxy S22 Ultra", "Galaxy S22+ / S22",
+        "Galaxy Z Fold 7", "Galaxy Z Fold 6", "Galaxy Z Fold 5",
+        "Galaxy Z Flip 7", "Galaxy Z Flip 6", "Galaxy Z Flip 5",
+        "Galaxy A56 5G", "Galaxy A55 5G", "Galaxy A54 5G",
+        "Galaxy A36 5G", "Galaxy A35 5G", "Galaxy A34 5G",
+        "Galaxy A26 5G", "Galaxy A25 5G", "Galaxy A16 5G / A16", "Galaxy A15 5G / A15", "Galaxy A06", "Galaxy A05s / A05"
     ]
+    capacidades_oficiales = [
+        "64GB", "128GB", "256GB", "512GB", "1TB", "2TB",
+        "4GB / 64GB", "4GB / 128GB", "6GB / 128GB",
+        "8GB / 128GB", "8GB / 256GB", "12GB / 128GB", "12GB / 256GB", "12GB / 512GB", "12GB / 1TB", "16GB / 1TB",
+        "40mm", "41mm", "42mm", "44mm", "45mm", "46mm", "49mm GPS + Cellular"
+    ]
+    colores_oficiales = [
+        "Negro", "Blanco", "Plata", "Natural", "Desierto", "Azul", "Naranja",
+        "Oro", "Grafito", "Gris", "Morado", "Rosa", "Verde", "Amarillo", "Rojo",
+        "Lavanda", "Menta", "Crema", "Violeta", "Vino", "Bronce", "Azul Oscuro", "Azul Claro"
+    ]
+    estados_oficiales = ["Nuevo", "Usado"]
+
+    max_len = max(len(marcas_oficiales), len(referencias_oficiales), len(capacidades_oficiales), len(colores_oficiales), len(estados_oficiales))
+    for i in range(max_len):
+        ws_cat.append([
+            marcas_oficiales[i] if i < len(marcas_oficiales) else None,
+            referencias_oficiales[i] if i < len(referencias_oficiales) else None,
+            capacidades_oficiales[i] if i < len(capacidades_oficiales) else None,
+            colores_oficiales[i] if i < len(colores_oficiales) else None,
+            estados_oficiales[i] if i < len(estados_oficiales) else None,
+        ])
+
+    # Validaciones Desplegables (DataValidation) en las filas 2 a 500
+    dv_marca = DataValidation(type="list", formula1=f"='Catalogo_Oficial'!$A$2:$A${len(marcas_oficiales)+1}", allow_blank=True)
+    dv_modelo = DataValidation(type="list", formula1=f"='Catalogo_Oficial'!$B$2:$B${len(referencias_oficiales)+1}", allow_blank=True)
+    dv_estado = DataValidation(type="list", formula1=f"='Catalogo_Oficial'!$E$2:$E${len(estados_oficiales)+1}", allow_blank=True)
+    dv_memoria = DataValidation(type="list", formula1=f"='Catalogo_Oficial'!$C$2:$C${len(capacidades_oficiales)+1}", allow_blank=True)
+    dv_color = DataValidation(type="list", formula1=f"='Catalogo_Oficial'!$D$2:$D${len(colores_oficiales)+1}", allow_blank=True)
+
+    ws.add_data_validation(dv_marca)
+    ws.add_data_validation(dv_modelo)
+    ws.add_data_validation(dv_estado)
+    ws.add_data_validation(dv_memoria)
+    ws.add_data_validation(dv_color)
+
+    dv_marca.add("C2:C500")
+    dv_modelo.add("D2:D500")
+    dv_estado.add("E2:E500")
+    dv_memoria.add("F2:F500")
+    dv_color.add("G2:G500")
+
     output = BytesIO()
-    df.to_excel(output, index=False, engine='openpyxl')
+    wb.save(output)
     output.seek(0)
     return send_file(output, download_name="plantilla_celulares_imei.xlsx", as_attachment=True)
 
@@ -386,6 +851,8 @@ def importar_celulares_excel():
             if Product.query.filter_by(sku=sku_gen).first():
                 sku_gen = f"CEL-{datetime.now().strftime('%Y%m%d%H%M%S')}-{idx}"[:50]
 
+            imagen_auto = obtener_imagen_por_referencia(marca, modelo, color)
+
             nuevo = Product(
                 nombre=nombre_completo,
                 sku=sku_gen,
@@ -403,7 +870,8 @@ def importar_celulares_excel():
                 color=color,
                 bateria=bateria,
                 proveedor=proveedor,
-                observacion=obs
+                observacion=obs,
+                imagen=imagen_auto
             )
             db.session.add(nuevo)
             db.session.flush()
@@ -472,14 +940,14 @@ def gestionar_imeis(id):
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# 1.3 RETOMAS / CUARENTENA (/retomas/cuarentena y /retomas/aprobar/<id>)
+# 1.3 RETOMAS & ARREGLOS (/retomas/cuarentena, /retomas/arreglos, /retomas/aprobar/<id>)
 # ══════════════════════════════════════════════════════════════════════════
 
 @retomas_bp.route('/cuarentena', methods=['GET', 'POST'])
 @login_required
 def cuarentena():
     if request.method == 'POST':
-        # Registro manual de una retoma directamente en cuarentena (opcional además de Caja)
+        # Registro manual de una retoma (además de Caja)
         imei = request.form.get('imei', '').strip()
         imei2 = request.form.get('imei2', '').strip() or None
         marca = request.form.get('marca', '').strip()
@@ -494,13 +962,16 @@ def cuarentena():
         observaciones = request.form.get('observaciones', '').strip() or None
 
         if not imei or not marca or not modelo_celular:
-            flash('IMEI, Marca y Modelo son obligatorios para registrar una retoma.', 'danger')
+            flash('IMEI 1, Marca y Referencia son obligatorios para registrar una retoma.', 'danger')
             return redirect(url_for('retomas_bp.cuarentena'))
 
-        # Verificar que no haya otra retoma en CUARENTENA con el mismo IMEI
-        en_cuarentena = Retoma.query.filter_by(imei=imei, estado='CUARENTENA').first()
-        if en_cuarentena:
-            flash(f'El IMEI {imei} ya se encuentra actualmente en Cuarentena de Retomas.', 'warning')
+        # Verificar que no haya otra retoma pendiente o en arreglo con el mismo IMEI
+        pendiente_existente = Retoma.query.filter(
+            Retoma.imei == imei,
+            Retoma.estado.in_(['CUARENTENA', 'EN_ARREGLO'])
+        ).first()
+        if pendiente_existente:
+            flash(f'El IMEI {imei} ya se encuentra registrado en Retomas / Arreglos pendientes.', 'warning')
             return redirect(url_for('retomas_bp.cuarentena'))
 
         nueva_retoma = Retoma(
@@ -522,7 +993,7 @@ def cuarentena():
         try:
             db.session.add(nueva_retoma)
             db.session.commit()
-            flash(f'Equipo {marca} {modelo_celular} (IMEI: {imei}) ingresado a Cuarentena.', 'success')
+            flash(f'Retoma {marca} {modelo_celular} (IMEI 1: {imei}) registrada exitosamente.', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al registrar retoma: {str(e)}', 'danger')
@@ -537,6 +1008,7 @@ def cuarentena():
     retomas = query.order_by(Retoma.fecha_recepcion.desc()).all()
     total_cuarentena = Retoma.query.filter_by(estado='CUARENTENA').count()
     valor_cuarentena = sum(float(r.valor_recibido or 0) for r in Retoma.query.filter_by(estado='CUARENTENA').all())
+    total_arreglos = Retoma.query.filter_by(estado='EN_ARREGLO').count()
     total_aprobadas = Retoma.query.filter_by(estado='APROBADA').count()
 
     return render_template(
@@ -545,7 +1017,50 @@ def cuarentena():
         estado_filtro=estado_filtro,
         total_cuarentena=total_cuarentena,
         valor_cuarentena=valor_cuarentena,
+        total_arreglos=total_arreglos,
         total_aprobadas=total_aprobadas
+    )
+
+
+@retomas_bp.route('/enviar-arreglo/<int:id>', methods=['POST'])
+@login_required
+def enviar_a_arreglo(id):
+    retoma = Retoma.query.get_or_404(id)
+    if retoma.estado not in ['CUARENTENA', 'EN_ARREGLO']:
+        flash('Esta retoma ya fue ingresada al inventario.', 'warning')
+        return redirect(url_for('retomas_bp.cuarentena'))
+
+    motivo_arreglo = (request.form.get('observacion_arreglo') or '').strip()
+    if not motivo_arreglo:
+        flash('Debes escribir la observación o detalle de lo que se va a mandar a arreglar.', 'warning')
+        return redirect(url_for('retomas_bp.cuarentena'))
+
+    retoma.observaciones = motivo_arreglo
+    retoma.estado = 'EN_ARREGLO'
+    try:
+        db.session.commit()
+        flash(f'🔧 Equipo "{retoma.marca} {retoma.modelo_celular}" (IMEI: {retoma.imei}) enviado al módulo de Arreglos.', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al enviar a arreglos: {str(e)}', 'danger')
+
+    return redirect(url_for('retomas_bp.arreglos'))
+
+
+@retomas_bp.route('/arreglos', methods=['GET'])
+@login_required
+def arreglos():
+    equipos_arreglo = Retoma.query.filter_by(estado='EN_ARREGLO').order_by(Retoma.fecha_recepcion.desc()).all()
+    total_en_arreglo = len(equipos_arreglo)
+    valor_base_arreglos = sum(float(r.valor_recibido or 0) for r in equipos_arreglo)
+    total_pendientes_retoma = Retoma.query.filter_by(estado='CUARENTENA').count()
+
+    return render_template(
+        'celulares/arreglos.html',
+        arreglos=equipos_arreglo,
+        total_en_arreglo=total_en_arreglo,
+        valor_base_arreglos=valor_base_arreglos,
+        total_pendientes_retoma=total_pendientes_retoma
     )
 
 
@@ -554,31 +1069,69 @@ def cuarentena():
 @admin_required
 def aprobar_retoma(id):
     retoma = Retoma.query.get_or_404(id)
-    if retoma.estado != 'CUARENTENA':
-        flash('Esta retoma ya fue procesada anteriormente.', 'warning')
+    if retoma.estado not in ['CUARENTENA', 'EN_ARREGLO']:
+        flash('Esta retoma ya fue ingresada a inventario anteriormente.', 'warning')
         return redirect(url_for('retomas_bp.cuarentena'))
 
-    costo_real = safe_float(request.form.get('costo_real', '').replace(',', '').replace('.', ''), float(retoma.valor_recibido or 0))
-    precio_minimo = safe_float(request.form.get('precio_minimo', '').replace(',', '').replace('.', ''), costo_real)
-    precio_sugerido = safe_float(request.form.get('precio_sugerido', '').replace(',', '').replace('.', ''), precio_minimo)
-    observaciones = request.form.get('observaciones', '').strip() or retoma.observaciones
+    venia_de_arreglo = (retoma.estado == 'EN_ARREGLO') or (request.form.get('origen') == 'arreglos')
+    valor_base = float(retoma.valor_recibido or 0)
+    sobrecosto_arreglo = safe_float(
+        (request.form.get('sobrecosto_arreglo') or '0').replace(',', '').replace('.', ''),
+        0.0
+    )
 
-    if precio_sugerido <= 0 or costo_real < 0:
-        flash('Debes definir un costo real y un precio sugerido válidos para aprobar la retoma.', 'danger')
-        return redirect(url_for('retomas_bp.cuarentena'))
+    # Si viene con sobrecosto de arreglo, sumamos valor_base + sobrecosto_arreglo; o tomamos costo_real si lo enviaron directo
+    costo_real_form = (request.form.get('costo_real') or '').replace(',', '').replace('.', '').strip()
+    if sobrecosto_arreglo > 0:
+        costo_real = valor_base + sobrecosto_arreglo
+    elif costo_real_form:
+        costo_real = safe_float(costo_real_form, valor_base)
+    else:
+        costo_real = valor_base
+
+    precio_minimo = safe_float(
+        (request.form.get('precio_minimo') or '').replace(',', '').replace('.', ''),
+        0.0
+    )
+    precio_sugerido = safe_float(
+        (request.form.get('precio_sugerido') or '').replace(',', '').replace('.', ''),
+        0.0
+    )
+    bateria_nueva = (request.form.get('bateria') or '').strip()
+    if bateria_nueva:
+        retoma.bateria = bateria_nueva
+
+    obs_input = (request.form.get('observaciones') or '').strip() or (retoma.observaciones or '')
+    if venia_de_arreglo:
+        etiqueta_arr = f"[ARREGLADO +${int(sobrecosto_arreglo):,}]".replace(',', '.') if sobrecosto_arreglo > 0 else "[ARREGLADO]"
+        if "[ARREGLADO" not in obs_input:
+            observaciones = f"{etiqueta_arr} {obs_input}".strip()
+        else:
+            observaciones = obs_input
+    else:
+        observaciones = obs_input or "Retoma ingresada directamente a inventario"
+
+    destino_retorno = url_for('retomas_bp.arreglos') if venia_de_arreglo else url_for('retomas_bp.cuarentena')
+
+    if precio_sugerido <= 0 or precio_minimo <= 0:
+        flash('Debes ingresar el Precio Mínimo y el Precio Sugerido de venta para ingresar el equipo al inventario.', 'danger')
+        return redirect(destino_retorno)
 
     try:
         # Reingreso de IMEI: Si fue vendido antes en la tienda, archivar el registro viejo como IMEI-OLD-X
         ok_imei, info_old = archivar_imei_existente_si_vendido(retoma.imei)
         if not ok_imei:
             flash(info_old, 'danger')
-            return redirect(url_for('retomas_bp.cuarentena'))
+            return redirect(destino_retorno)
 
         partes_nombre = [p for p in [retoma.marca, retoma.modelo_celular, retoma.memoria, retoma.color] if p]
         nombre_equipo = " ".join(partes_nombre) if partes_nombre else f"Celular Retoma {retoma.imei}"
         sku_retoma = f"RET-{retoma.imei}"[:50]
         if Product.query.filter_by(sku=sku_retoma).first():
             sku_retoma = f"RET-{datetime.now().strftime('%Y%m%d%H%M%S')}-{retoma.id}"[:50]
+
+        imagen_auto_ret = obtener_imagen_por_referencia(retoma.marca, retoma.modelo_celular, retoma.color)
+        tipo_origen_prov = "Retoma Arreglada" if venia_de_arreglo else "Retoma Cliente"
 
         nuevo_producto = Product(
             nombre=nombre_equipo,
@@ -596,8 +1149,9 @@ def aprobar_retoma(id):
             color=retoma.color,
             memoria=retoma.memoria,
             bateria=retoma.bateria,
-            proveedor=f"Retoma Cliente: {retoma.cliente_nombre or 'Mostrador'} ({retoma.cliente_documento or 'S/D'})",
-            observacion=observaciones
+            proveedor=f"{tipo_origen_prov}: {retoma.cliente_nombre or 'Mostrador'} ({retoma.cliente_documento or 'S/D'})",
+            observacion=observaciones,
+            imagen=imagen_auto_ret
         )
         db.session.add(nuevo_producto)
         db.session.flush()
@@ -611,30 +1165,32 @@ def aprobar_retoma(id):
         retoma.fecha_aprobacion = obtener_hora_bogota()
         retoma.product_id_generado = nuevo_producto.id
 
-        motivo_kardex = f"Retoma Aprobada #{retoma.id} | IMEI: {retoma.imei}"
+        motivo_kardex = f"Ingreso de Retoma #{retoma.id} | IMEI 1: {retoma.imei}"
+        if sobrecosto_arreglo > 0:
+            motivo_kardex += f" | Recibido: ${int(valor_base)} + Arreglo: ${int(sobrecosto_arreglo)} = Costo Total: ${int(costo_real)}"
         if info_old:
             motivo_kardex += f" (Reingreso histórico archivado como {info_old})"
 
         db.session.add(StockAdjustment(
             product_id=nuevo_producto.id,
             admin_id=current_user.id,
-            tipo_movimiento='Alta por Retoma Aprobada',
+            tipo_movimiento='Alta por Retoma / Arreglo Terminado' if venia_de_arreglo else 'Alta por Retoma Directa',
             motivo=motivo_kardex,
             stock_anterior=0,
             stock_nuevo=1
         ))
 
         db.session.commit()
-        msg = f'✅ Retoma aprobada. El equipo "{nombre_equipo}" (IMEI: {retoma.imei}) ingresó al inventario de Celulares como Usado.'
+        msg = f'✅ Equipo "{nombre_equipo}" (IMEI 1: {retoma.imei}) ingresado al Inventario de Celulares con Costo ${int(costo_real):,}, Mínimo ${int(precio_minimo):,} y Sugerido ${int(precio_sugerido):,}.'.replace(',', '.')
         if info_old:
-            msg += f' (El registro anterior vendido de este IMEI fue archivado como {info_old} conservando su trazabilidad).'
+            msg += f' (El registro anterior vendido de este IMEI fue archivado como {info_old}).'
         flash(msg, 'success')
 
     except Exception as e:
         db.session.rollback()
-        flash(f'Error al aprobar la retoma: {str(e)}', 'danger')
+        flash(f'Error al ingresar el equipo a inventario: {str(e)}', 'danger')
 
-    return redirect(url_for('retomas_bp.cuarentena'))
+    return redirect(destino_retorno)
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -702,10 +1258,14 @@ def clientes():
             'nombre_equipo': prod.nombre if prod else (detalle.nombre_manual or 'Celular'),
             'marca': prod.marca if prod else '',
             'modelo': prod.modelo_celular if prod else '',
+            'memoria': prod.memoria if prod else '',
+            'color': prod.color if prod else '',
             'estado_celular': prod.estado_celular if (prod and prod.estado_celular) else 'Nuevo',
             'imei': imei_limpio,
+            'imei2': prod.imei2 if (prod and prod.imei2) else '',
             'imei_raw': imei_equipo,
             'precio_venta': detalle.precio_venta_final,
+            'metodo_pago': venta.metodo_pago_display,
             'vendedor': venta.vendedor.nombre if venta.vendedor else 'Vendedor',
             'en_garantia': en_garantia,
             'dias_restantes_garantia': dias_restantes_garantia
@@ -713,6 +1273,26 @@ def clientes():
 
     clientes_agrupados = list(directorio_map.values())
     return render_template('celulares/clientes.html', clientes_agrupados=clientes_agrupados)
+
+
+@celulares_bp.route('/api/cliente/<path:documento>', methods=['GET'])
+@login_required
+def api_buscar_cliente_por_documento(documento):
+    """Permite autocompletar en Caja los datos de un cliente recurrente al digitar su Cédula/NIT."""
+    doc_clean = (documento or '').strip()
+    if not doc_clean:
+        return jsonify({'found': False}), 200
+    sc = SaleClient.query.filter_by(documento=doc_clean).order_by(SaleClient.id.desc()).first()
+    if not sc:
+        return jsonify({'found': False}), 200
+    return jsonify({
+        'found': True,
+        'documento': sc.documento,
+        'nombre': sc.nombre or '',
+        'telefono': sc.telefono or '',
+        'direccion': sc.direccion or '',
+        'email': sc.email or ''
+    }), 200
 
 
 # ══════════════════════════════════════════════════════════════════════════
@@ -784,15 +1364,25 @@ def trazabilidad():
     retomas_encontradas = []
 
     if imei_query:
-        # Buscar en Product tanto el IMEI exacto como sus versiones archivadas IMEI-OLD-X o variantes
+        # Buscar en Product tanto el IMEI 1 como IMEI 2 (incluyendo versiones archivadas -OLD-X)
         equipos_encontrados = Product.query.filter(
             or_(
                 Product.imei == imei_query,
                 Product.imei.ilike(f"{imei_query}-OLD-%"),
                 Product.imei.ilike(f"%{imei_query}%"),
-                Product.imei2 == imei_query
+                Product.imei2 == imei_query,
+                Product.imei2.ilike(f"%{imei_query}%")
             )
         ).order_by(Product.fecha_creacion.asc()).all()
+
+        # Si el usuario buscó por IMEI 2 o IMEI 1, recopilar todos los IMEIs hermanos de esos equipos para cruzar Retomas y Facturas
+        imeis_relacionados = {imei_query}
+        for eq in equipos_encontrados:
+            if eq.imei:
+                imeis_relacionados.add(re.sub(r'-OLD-\d+$', '', eq.imei))
+                imeis_relacionados.add(eq.imei)
+            if eq.imei2:
+                imeis_relacionados.add(eq.imei2)
 
         # También buscar en ProductVariant por si hay registros antiguos agrupados
         variantes_imei = ProductVariant.query.filter(ProductVariant.nombre_variante.ilike(f"%{imei_query}%")).all()
@@ -881,42 +1471,83 @@ def trazabilidad():
                     'detalle': f"Vendedor: {v.vendedor.nombre if (v and v.vendedor) else 'Cajero'} | Pago: {v.metodo_pago_display if v else 'Efectivo'} | {cli_info}"
                 })
 
-        # 6. Eventos de Retomas / Reingresos (Retoma)
+        # 6. Eventos de Retomas / Arreglos / Reingresos (Retoma)
+        condiciones_retoma = [
+            Retoma.imei.ilike(f"%{imei_query}%"),
+            Retoma.imei2.ilike(f"%{imei_query}%")
+        ]
+        for im_rel in imeis_relacionados:
+            if im_rel:
+                condiciones_retoma.append(Retoma.imei == im_rel)
+                condiciones_retoma.append(Retoma.imei2 == im_rel)
+
         retomas_encontradas = Retoma.query.filter(
-            or_(
-                Retoma.imei == imei_query,
-                Retoma.imei.ilike(f"%{imei_query}%"),
-                Retoma.imei2 == imei_query
-            )
+            or_(*condiciones_retoma)
         ).order_by(Retoma.fecha_recepcion.asc()).all()
 
         for r in retomas_encontradas:
+            estado_lbl = 'EN ARREGLOS' if r.estado == 'EN_ARREGLO' else ('INGRESADA A INVENTARIO' if r.estado == 'APROBADA' else 'PENDIENTE POR DEFINIR')
+            imei_dual_txt = f"IMEI 1: {r.imei}" + (f" | IMEI 2: {r.imei2}" if r.imei2 else "")
             eventos.append({
                 'fecha': r.fecha_recepcion or obtener_hora_bogota(),
-                'tipo': 'RETOMA / CUARENTENA',
+                'tipo': 'RETOMA RECIBIDA',
                 'icono': 'fa-rotate-left',
-                'color': 'danger',
-                'titulo': f"Recibido en Retoma ({r.marca} {r.modelo_celular}) - Estado: {r.estado}",
+                'color': 'warning',
+                'titulo': f"Recibido en Retoma ({r.marca} {r.modelo_celular}) - {estado_lbl}",
                 'detalle': (
-                    f"Valor descontado en caja: ${float(r.valor_recibido or 0):,.0f} | "
+                    f"{imei_dual_txt} | Valor recibido en caja: ${float(r.valor_recibido or 0):,.0f} | "
                     f"Recibido por: {r.usuario_recibe.nombre if r.usuario_recibe else 'Cajero'} | "
-                    f"Entregado por cliente: {r.cliente_nombre or 'N/A'} ({r.cliente_documento or 'S/D'})"
-                    + (f" | Ticket asociado: #{r.sale_id}" if r.sale_id else "")
+                    f"Cliente: {r.cliente_nombre or 'N/A'} ({r.cliente_documento or 'S/D'})"
+                    + (f" | Ticket: #{r.sale_id}" if r.sale_id else "")
+                    + (f" | Obs: {r.observaciones}" if r.observaciones else "")
                 )
             })
+            if r.estado == 'EN_ARREGLO' or (r.observaciones and '[ARREGLADO' in r.observaciones):
+                eventos.append({
+                    'fecha': r.fecha_aprobacion or r.fecha_recepcion or obtener_hora_bogota(),
+                    'tipo': 'MÓDULO ARREGLOS / SOPORTE',
+                    'icono': 'fa-screwdriver-wrench',
+                    'color': 'danger',
+                    'titulo': f"Paso por Taller / Arreglos ({r.marca} {r.modelo_celular})",
+                    'detalle': f"Detalle del arreglo: {r.observaciones or 'Reparación general'} | Costo final con arreglo: ${float(r.costo_real or r.valor_recibido or 0):,.0f}"
+                })
             if r.estado == 'APROBADA' and r.fecha_aprobacion:
                 eventos.append({
                     'fecha': r.fecha_aprobacion,
-                    'tipo': 'RETOMA APROBADA (REINGRESO)',
+                    'tipo': 'RETOMA INGRESADA A INVENTARIO',
                     'icono': 'fa-circle-check',
                     'color': 'success',
-                    'titulo': f"Retoma Aprobada e Incorporada a Stock Usado",
+                    'titulo': f"Retoma Incorporada a Stock de Celulares",
                     'detalle': (
-                        f"Aprobada por: {r.usuario_aprueba.nombre if r.usuario_aprueba else 'Admin'} | "
-                        f"Costo Real asignado: ${float(r.costo_real or 0):,.0f} | "
-                        f"Precio Sugerido: ${float(r.precio_sugerido or 0):,.0f}"
+                        f"Ingresada por: {r.usuario_aprueba.nombre if r.usuario_aprueba else 'Admin'} | "
+                        f"Costo Final: ${float(r.costo_real or 0):,.0f} | "
+                        f"Mínimo: ${float(r.precio_minimo or 0):,.0f} | "
+                        f"Sugerido: ${float(r.precio_sugerido or 0):,.0f}"
                     )
                 })
+
+        # 7. Eventos de Cuentas Externos y Abonos a Proveedor (ProviderInvoice / ProviderPayment)
+        if product_ids:
+            from models import ProviderInvoice, ProviderPayment
+            facturas_prov = ProviderInvoice.query.filter(ProviderInvoice.product_id.in_(product_ids)).order_by(ProviderInvoice.fecha_creacion.asc()).all()
+            for fp in facturas_prov:
+                eventos.append({
+                    'fecha': fp.fecha_creacion or obtener_hora_bogota(),
+                    'tipo': 'CUENTA PROVEEDOR EXTERNO',
+                    'icono': 'fa-file-invoice-dollar',
+                    'color': 'dark',
+                    'titulo': f"Cuenta por Pagar a Proveedor: {fp.proveedor} (${float(fp.monto_costo or 0):,.0f})",
+                    'detalle': f"Concepto: {fp.concepto} | Estado de pago: {fp.estado}" + (f" | Pagado el: {fp.fecha_pago.strftime('%d/%m/%Y %H:%M')}" if fp.fecha_pago else "")
+                })
+                for ab in fp.abonos:
+                    eventos.append({
+                        'fecha': ab.fecha_abono or obtener_hora_bogota(),
+                        'tipo': 'ABONO A PROVEEDOR EXTERNO',
+                        'icono': 'fa-hand-holding-dollar',
+                        'color': 'success',
+                        'titulo': f"Abono registrado a {ab.proveedor} por ${float(ab.monto or 0):,.0f}",
+                        'detalle': f"Método: {ab.metodo_pago.upper()} | Obs: {ab.observacion or 'Sin nota'}" + (" | Con foto de comprobante adjunta" if ab.comprobante_imagen else "")
+                    })
 
         # Ordenar línea de tiempo cronológicamente
         eventos.sort(key=lambda x: x['fecha'] or datetime.min)

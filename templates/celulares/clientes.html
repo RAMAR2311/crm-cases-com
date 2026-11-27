@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Directorio Clientes de Celulares - cases.com{% endblock %}
+{% block title %}Directorio y Perfiles de Clientes - cases.com{% endblock %}
 
 {% block content %}
 {% set total_clientes = (clientes_agrupados|length) if (clientes_agrupados is defined and clientes_agrupados) else 0 %}
@@ -8,20 +8,20 @@
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
         <div class="d-flex align-items-center gap-2">
-            <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 44px; height: 44px; background: rgba(37, 99, 235, 0.12); color: #2563EB;">
-                <i class="fa-solid fa-users fs-4"></i>
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle shadow-xs" style="width: 44px; height: 44px; background: #FFF1F5; color: #E11D48;">
+                <i class="fa-solid fa-address-book fs-4"></i>
             </span>
             <div>
-                <h2 class="fw-bold text-brand-black m-0 lh-1">Directorio de Clientes de Celulares</h2>
-                <small class="text-muted">Agrupado por documento (MinTIC / SIC) con historial de equipos comprados, IMEIs y estado de garantías</small>
+                <h2 class="fw-bold text-brand-black m-0 lh-1">Directorio y Perfiles de Clientes</h2>
+                <small class="text-muted">Historial de compras por cliente (Cédula, Nombre, Celular y Dirección), equipos adquiridos y visualización de tickets</small>
             </div>
         </div>
     </div>
     <div class="d-flex align-items-center gap-2">
         <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-bold">
-            <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
+            <i class="fa-solid fa-mobile-screen-button me-1"></i> Inventario Celulares
         </a>
-        <a href="{{ url_for('celulares_bp.historial_ventas') }}" class="btn btn-outline-primary rounded-pill px-3 fw-bold">
+        <a href="{{ url_for('celulares_bp.historial_ventas') }}" class="btn btn-blue rounded-pill px-3 fw-bold">
             <i class="fa-solid fa-clock-rotate-left me-1"></i> Historial Ventas
         </a>
     </div>
@@ -30,21 +30,25 @@
 <!-- Barra de Resumen y Búsqueda -->
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4">
-        <div class="card border-0 rounded-4 shadow-sm p-3 h-100 bg-white d-flex flex-row align-items-center justify-content-between">
-            <div>
-                <span class="text-uppercase fw-bold text-muted small">Clientes Únicos (Por Cédula)</span>
-                <h3 class="fw-bolder text-dark mb-0 mt-1">{{ total_clientes }}</h3>
+        <div class="card kpi-card-elevated kpi-accent-pink p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-1">
+                <span class="kpi-label">Clientes Registrados</span>
+                <span class="kpi-icon-elevated kpi-icon-pink">
+                    <i class="fa-solid fa-users"></i>
+                </span>
             </div>
-            <span class="p-3 rounded-circle bg-light text-primary fs-4">
-                <i class="fa-solid fa-address-card"></i>
-            </span>
+            <h3 class="kpi-value text-brand-black mb-0">{{ total_clientes }} <span class="fs-6 text-muted fw-semibold">perfiles</span></h3>
+            <small class="kpi-subtext">Agrupados por Cédula / NIT</small>
         </div>
     </div>
     <div class="col-12 col-md-8">
-        <div class="card border-0 rounded-4 shadow-sm p-3 h-100 bg-white d-flex justify-content-center">
-            <div class="input-group">
-                <span class="input-group-text bg-light border-0 ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                <input type="text" id="buscadorClientes" class="form-control border-0 bg-light" placeholder="Buscar por Cédula/NIT, Nombre, Teléfono, Correo o IMEI...">
+        <div class="card card-custom border-0 rounded-4 shadow-sm p-4 h-100 bg-white d-flex justify-content-center">
+            <label class="form-label fw-bold text-brand-black small mb-2">
+                <i class="fa-solid fa-magnifying-glass text-brand-pink me-1"></i> Buscar Cliente en el Directorio
+            </label>
+            <div class="input-group input-group-lg border rounded-pill overflow-hidden shadow-xs">
+                <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" id="buscadorClientes" class="form-control border-0 bg-white shadow-none" placeholder="Buscar por Cédula, Nombre, Celular, Dirección o IMEI...">
             </div>
         </div>
     </div>
@@ -53,14 +57,14 @@
 <!-- Tabla de Clientes Agrupados -->
 <div class="card card-custom border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="table-responsive">
-        <table class="table table-hover align-middle mb-0" id="tablaClientes">
-            <thead class="table-light">
-                <tr class="text-muted small text-uppercase">
-                    <th class="ps-4">Cliente / Documento</th>
-                    <th>Contacto & Dirección (MinTIC/SIC)</th>
-                    <th class="text-center">Equipos Comprados</th>
-                    <th class="text-end">Total Invertido</th>
-                    <th class="text-center pe-4">Historial y Garantías</th>
+        <table class="table table-hover table-custom align-middle mb-0" id="tablaClientes">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">CLIENTE / CÉDULA</th>
+                    <th>CELULAR & DIRECCIÓN</th>
+                    <th class="text-center">COMPRAS REALIZADAS</th>
+                    <th class="text-end">TOTAL INVERTIDO</th>
+                    <th class="text-center pe-4">PERFIL & TICKETS</th>
                 </tr>
             </thead>
             <tbody>
@@ -68,102 +72,154 @@
                 <tr>
                     <td class="ps-4">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm" style="width: 42px; height: 42px; background: linear-gradient(135deg, #F43F5E 0%, #BE123C 100%);">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm" style="width: 44px; height: 44px; background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%); flex-shrink: 0;">
                                 {{ c.nombre[:1]|upper if c.nombre else 'C' }}
                             </div>
                             <div>
-                                <div class="fw-bold text-dark">{{ c.nombre }}</div>
+                                <div class="fw-bold text-brand-black fs-6">{{ c.nombre }}</div>
                                 <div class="small text-muted font-monospace">
-                                    <i class="fa-regular fa-id-card me-1"></i>CC/NIT: <strong>{{ c.documento }}</strong>
+                                    <i class="fa-regular fa-id-card me-1 text-brand-pink"></i>CC/NIT: <strong>{{ c.documento }}</strong>
                                 </div>
                             </div>
                         </div>
                     </td>
                     <td>
                         <div class="d-flex align-items-center gap-2 mb-1">
-                            <span class="fw-semibold text-secondary small"><i class="fa-solid fa-phone text-muted me-1"></i>{{ c.telefono or 'N/A' }}</span>
-                            {% if c.telefono %}
-                            <a href="https://wa.me/57{{ c.telefono|replace(' ', '')|replace('-', '') }}" target="_blank" class="badge rounded-pill text-white text-decoration-none px-2 py-1" style="background: #25D366;">
-                                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                            <span class="fw-bold text-dark small"><i class="fa-solid fa-mobile-screen text-brand-pink me-1"></i>{{ c.telefono or 'N/A' }}</span>
+                            {% if c.telefono and c.telefono != 'N/A' %}
+                            <a href="https://wa.me/57{{ c.telefono|replace(' ', '')|replace('-', '') }}" target="_blank" class="badge rounded-pill text-white text-decoration-none px-2.5 py-1" style="background: #16A34A; font-size: 0.68rem;">
+                                <i class="fa-brands fa-whatsapp"></i> Chat
                             </a>
                             {% endif %}
                         </div>
                         <div class="small text-muted">
-                            {% if c.direccion %}<span class="me-2"><i class="fa-solid fa-location-dot me-1"></i>{{ c.direccion }}</span>{% endif %}
-                            {% if c.email %}<span><i class="fa-regular fa-envelope me-1"></i>{{ c.email }}</span>{% endif %}
-                            {% if not c.direccion and not c.email %}<span class="text-muted">Sin dirección/correo adicional</span>{% endif %}
+                            <i class="fa-solid fa-location-dot text-secondary me-1"></i>{{ c.direccion if c.direccion else 'Sin dirección registrada' }}
+                            {% if c.email %}<span class="ms-2">· <i class="fa-regular fa-envelope me-1"></i>{{ c.email }}</span>{% endif %}
                         </div>
                     </td>
                     <td class="text-center">
-                        <span class="badge badge-soft-blue rounded-pill px-3 py-1.5 fw-bold">
-                            <i class="fa-solid fa-mobile-screen-button me-1"></i> {{ c.equipos|length }} equipo{{ 's' if c.equipos|length != 1 else '' }}
+                        <span class="badge badge-soft-blue rounded-pill px-3 py-2 fw-bold">
+                            <i class="fa-solid fa-bag-shopping me-1"></i> {{ c.equipos|length }} compra{{ 's' if c.equipos|length != 1 else '' }}
                         </span>
                     </td>
-                    <td class="text-end font-monospace fw-bolder text-success">
+                    <td class="text-end font-monospace fw-bolder text-success fs-6">
                         ${{ (c.total_compras or 0)|cop }}
                     </td>
                     <td class="text-center pe-4">
-                        <button type="button" class="btn btn-sm btn-blue rounded-pill px-3 fw-bold" data-bs-toggle="modal" data-bs-target="#modalHistorialCliente{{ loop.index }}">
-                            <i class="fa-solid fa-shield-halved me-1"></i> Ver Equipos ({{ c.equipos|length }})
+                        <button type="button" class="btn btn-sm btn-pink rounded-pill px-3 py-2 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalPerfilCliente{{ loop.index }}">
+                            <i class="fa-solid fa-user-tag me-1"></i> Ver Perfil y Tickets
                         </button>
 
-                        <!-- Modal Historial por Cliente -->
-                        <div class="modal fade text-start" id="modalHistorialCliente{{ loop.index }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered modal-lg">
-                                <div class="modal-content border-0 shadow-lg rounded-4">
-                                    <div class="modal-header border-0 bg-light">
-                                        <div>
-                                            <h5 class="modal-title fw-bold text-brand-black mb-0">
-                                                <i class="fa-solid fa-user-check text-primary me-2"></i>{{ c.nombre }} (CC: {{ c.documento }})
-                                            </h5>
-                                            <small class="text-muted">Tel: {{ c.telefono }} {% if c.direccion %}| Dir: {{ c.direccion }}{% endif %} {% if c.email %}| Email: {{ c.email }}{% endif %}</small>
+                        <!-- Modal Perfil Completo del Cliente y sus Tickets -->
+                        <div class="modal fade text-start" id="modalPerfilCliente{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered modal-xl">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-bottom p-4" style="background: linear-gradient(135deg, #FFF1F5 0%, #F8FAFC 100%);">
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white shadow-sm fs-4" style="width: 56px; height: 56px; background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%);">
+                                                {{ c.nombre[:1]|upper if c.nombre else 'C' }}
+                                            </div>
+                                            <div>
+                                                <span class="badge badge-soft-pink rounded-pill px-2.5 py-1 mb-1" style="font-size: 0.68rem;">PERFIL DE CLIENTE</span>
+                                                <h5 class="modal-title fw-bolder text-brand-black mb-0">{{ c.nombre }}</h5>
+                                            </div>
                                         </div>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body p-4">
-                                        <div class="table-responsive">
-                                            <table class="table table-sm align-middle">
+                                        <!-- Ficha de Datos Personales del Cliente -->
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-6 col-md-3">
+                                                <div class="p-3 rounded-3 bg-light border h-100">
+                                                    <small class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.68rem;">Cédula / NIT</small>
+                                                    <span class="fw-bolder text-brand-black font-monospace fs-6">{{ c.documento }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-6 col-md-3">
+                                                <div class="p-3 rounded-3 bg-light border h-100">
+                                                    <small class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.68rem;">Celular / WhatsApp</small>
+                                                    <span class="fw-bolder text-brand-black fs-6">{{ c.telefono or 'N/A' }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-md-3">
+                                                <div class="p-3 rounded-3 bg-light border h-100">
+                                                    <small class="text-muted fw-bold text-uppercase d-block" style="font-size: 0.68rem;">Dirección</small>
+                                                    <span class="fw-semibold text-dark small">{{ c.direccion or 'No registrada' }}</span>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-md-3">
+                                                <div class="p-3 rounded-3 border h-100" style="background: #ECFDF5; border-color: #A7F3D0 !important;">
+                                                    <small class="text-success fw-bold text-uppercase d-block" style="font-size: 0.68rem;">Total Compras ({{ c.equipos|length }})</small>
+                                                    <span class="fw-bolder text-success font-monospace fs-5">${{ (c.total_compras or 0)|cop }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <h6 class="fw-bolder text-brand-black mb-3">
+                                            <i class="fa-solid fa-receipt text-brand-pink me-2"></i>Historial de Compras y Tickets del Cliente
+                                        </h6>
+                                        <div class="table-responsive rounded-3 border">
+                                            <table class="table table-hover align-middle mb-0">
                                                 <thead class="table-light small text-uppercase">
                                                     <tr>
-                                                        <th>Fecha</th>
-                                                        <th>Equipo</th>
-                                                        <th>IMEI / Serial</th>
-                                                        <th>Estado Garantía</th>
-                                                        <th class="text-end">Precio</th>
-                                                        <th class="text-center">Ticket</th>
+                                                        <th class="ps-3">Fecha Compra</th>
+                                                        <th>Equipo Adquirido</th>
+                                                        <th>IMEI 1 / IMEI 2</th>
+                                                        <th>Garantía</th>
+                                                        <th>Pago</th>
+                                                        <th class="text-end">Valor</th>
+                                                        <th class="text-center pe-3">Ticket / Recibo</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {% for eq in c.equipos %}
                                                     <tr>
-                                                        <td>
-                                                            <div class="fw-bold">{{ eq.fecha.strftime('%d/%m/%Y') if eq.fecha else '-' }}</div>
-                                                            <small class="text-muted">{{ eq.vendedor }}</small>
+                                                        <td class="ps-3">
+                                                            <div class="fw-bold text-dark">{{ eq.fecha.strftime('%d/%m/%Y') if eq.fecha else '-' }}</div>
+                                                            <small class="text-muted">{{ eq.fecha.strftime('%H:%M') if eq.fecha else '' }} · {{ eq.vendedor }}</small>
                                                         </td>
                                                         <td>
-                                                            <div class="fw-bold">{{ eq.nombre_equipo }}</div>
-                                                            <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">{{ eq.estado_celular }}</span>
+                                                            <div class="fw-bold text-brand-black">{{ eq.nombre_equipo }}</div>
+                                                            <div class="d-flex flex-wrap gap-1 mt-1">
+                                                                <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">{{ eq.estado_celular }}</span>
+                                                                {% if eq.memoria %}<span class="badge bg-light text-dark border" style="font-size: 0.65rem;">{{ eq.memoria }}</span>{% endif %}
+                                                                {% if eq.color %}<span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">{{ eq.color }}</span>{% endif %}
+                                                            </div>
                                                         </td>
-                                                        <td class="font-monospace fw-bold">
-                                                            <a href="{{ url_for('celulares_bp.trazabilidad', imei=eq.imei) }}" class="text-decoration-none">{{ eq.imei }}</a>
+                                                        <td>
+                                                            <div class="font-monospace fw-bold small">
+                                                                <a href="{{ url_for('celulares_bp.trazabilidad', imei=eq.imei) }}" class="text-decoration-none text-primary">
+                                                                    IMEI 1: {{ eq.imei }}
+                                                                </a>
+                                                            </div>
+                                                            {% if eq.imei2 %}
+                                                            <div class="font-monospace text-muted" style="font-size: 0.72rem;">IMEI 2: {{ eq.imei2 }}</div>
+                                                            {% endif %}
                                                         </td>
                                                         <td>
                                                             {% if eq.en_garantia %}
-                                                                <span class="badge badge-soft-success rounded-pill px-2 py-1" style="font-size: 0.7rem;">
-                                                                    <i class="fa-solid fa-shield-check me-1"></i>Activa ({{ eq.dias_restantes_garantia }} días rest.)
+                                                                <span class="badge badge-soft-success rounded-pill px-2.5 py-1" style="font-size: 0.7rem;">
+                                                                    <i class="fa-solid fa-shield-check me-1"></i>Activa ({{ eq.dias_restantes_garantia }}d)
                                                                 </span>
                                                             {% else %}
-                                                                <span class="badge bg-light text-muted border rounded-pill px-2 py-1" style="font-size: 0.7rem;">
-                                                                    Garantía Expirada
+                                                                <span class="badge bg-light text-muted border rounded-pill px-2.5 py-1" style="font-size: 0.7rem;">
+                                                                    Finalizada
                                                                 </span>
                                                             {% endif %}
                                                         </td>
-                                                        <td class="text-end font-monospace fw-bold text-success">
+                                                        <td>
+                                                            <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                                                                {{ eq.metodo_pago or 'Efectivo' }}
+                                                            </span>
+                                                        </td>
+                                                        <td class="text-end font-monospace fw-bolder text-brand-black">
                                                             ${{ (eq.precio_venta or 0)|cop }}
                                                         </td>
-                                                        <td class="text-center">
-                                                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=eq.sale_id) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-0.5">
-                                                                #{{ eq.sale_id }}
+                                                        <td class="text-center pe-3">
+                                                            <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=eq.sale_id) }}" target="_blank"
+                                                               class="btn btn-sm rounded-pill px-3 py-1.5 fw-bold shadow-xs"
+                                                               style="background: #FFF1F5; color: #BE185D; border: 1px solid #FBCFE8;">
+                                                                <i class="fa-solid fa-receipt me-1"></i> Ver Ticket #{{ "%05d"|format(eq.sale_id) }}
                                                             </a>
                                                         </td>
                                                     </tr>
@@ -171,6 +227,9 @@
                                                 </tbody>
                                             </table>
                                         </div>
+                                    </div>
+                                    <div class="modal-footer bg-light border-top">
+                                        <button type="button" class="btn btn-secondary rounded-pill px-4 fw-bold" data-bs-dismiss="modal">Cerrar Perfil</button>
                                     </div>
                                 </div>
                             </div>
@@ -181,7 +240,7 @@
                 <tr>
                     <td colspan="5" class="text-center py-5 text-muted">
                         <i class="fa-solid fa-users fa-3x mb-3 text-secondary opacity-50 d-block"></i>
-                        <h6 class="fw-bold">No hay clientes de celulares registrados aún</h6>
+                        <h6 class="fw-bold">No hay clientes registrados aún</h6>
                     </td>
                 </tr>
                 {% endfor %}

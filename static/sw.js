@@ -1,6 +1,7 @@
-const CACHE_NAME = 'cases-app-v4';
+const CACHE_NAME = 'cases-app-v5';
 const ASSETS_TO_CACHE = [
     '/static/manifest.json',
+    '/static/js/celulares_catalogo.js?v=10',
     '/static/img/cases.png?v=3',
     '/static/img/icons/icon-192x192.png?v=3',
     '/static/img/icons/icon-512x512.png?v=3',

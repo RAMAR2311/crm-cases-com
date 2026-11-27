@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Vales de Personal - cases.com{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bolder text-brand-black m-0">
+            <i class="fa-solid fa-receipt text-brand-pink me-2"></i>Módulo de Vales y Adelantos
+        </h2>
+        <small class="text-muted">Registra vales entregados a vendedores con su valor, método de entrega, comprobante fotográfico e historial detallado</small>
+    </div>
+    <div>
+        <button type="button" class="btn btn-pink rounded-pill px-4 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalNuevoVale">
+            <i class="fa-solid fa-plus me-1.5"></i> + Registrar Nuevo Vale
+        </button>
+    </div>
+</div>
+
+<!-- Tarjetas KPI de Vales -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Total Vales Entregados</span>
+                <span class="kpi-icon-elevated kpi-icon-rose"><i class="fa-solid fa-receipt"></i></span>
+            </div>
+            <h3 class="kpi-value text-brand-black">${{ (total_vales or 0)|cop }}</h3>
+            <small class="kpi-subtext">{{ vales|length }} vale(s) en la vista actual</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-emerald p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Entregados en Efectivo</span>
+                <span class="kpi-icon-elevated kpi-icon-emerald"><i class="fa-solid fa-money-bill-wave"></i></span>
+            </div>
+            <h3 class="kpi-value text-success">${{ (total_efectivo or 0)|cop }}</h3>
+            <small class="kpi-subtext">Salidas de efectivo por vales</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-blue p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Entregados por Medios Digitales</span>
+                <span class="kpi-icon-elevated kpi-icon-blue"><i class="fa-solid fa-mobile-screen-button"></i></span>
+            </div>
+            <h3 class="kpi-value" style="color: #0284C7;">${{ (total_digital or 0)|cop }}</h3>
+            <small class="kpi-subtext">Nequi, Bancolombia y Daviplata</small>
+        </div>
+    </div>
+</div>
+
+<!-- Resumen Acumulado por Vendedor (Clic para filtrar su historial) -->
+{% if current_user.rol == 'admin' and resumen_vendedores %}
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm rounded-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2 px-1">
+        <span class="fw-bold text-brand-black small text-uppercase">
+            <i class="fa-solid fa-users text-brand-pink me-1"></i> Acumulado de Vales por Vendedor (Clic para ver su historial)
+        </span>
+        {% if vendedor_filtro %}
+        <a href="{{ url_for('vales_bp.index') }}" class="small text-decoration-none fw-bold text-danger">
+            <i class="fa-solid fa-xmark me-1"></i>Ver todos los vendedores
+        </a>
+        {% endif %}
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        {% for rv in resumen_vendedores %}
+        <a href="{{ url_for('vales_bp.index', vendedor_id=rv.vendedor_id) }}"
+           class="text-decoration-none p-2 px-3 rounded-3 border d-flex align-items-center gap-3 {% if vendedor_filtro == rv.vendedor_id %}bg-dark text-white border-dark{% else %}bg-light text-dark{% endif %}">
+            <div>
+                <div class="fw-bold small"><i class="fa-solid fa-user-tag me-1"></i>{{ rv.nombre }}</div>
+                <div style="font-size: 0.75rem;">
+                    <span class="{% if vendedor_filtro == rv.vendedor_id %}text-warning{% else %}text-danger{% endif %} fw-bolder">Total: ${{ rv.total|cop }}</span>
+                    · <span class="{% if vendedor_filtro == rv.vendedor_id %}text-light{% else %}text-muted{% endif %}">{{ rv.cantidad }} vale(s)</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Barra de Filtros del Historial de Vales -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm rounded-4">
+    <form method="GET" action="{{ url_for('vales_bp.index') }}" class="row g-2 align-items-end">
+        {% if current_user.rol == 'admin' %}
+        <div class="col-12 col-md-3">
+            <label class="form-label fw-bold small text-muted mb-1">Filtrar por Vendedor</label>
+            <select name="vendedor_id" class="form-select bg-light border-0 fw-semibold">
+                <option value="">👤 Todos los vendedores</option>
+                {% for u in vendedores_lista %}
+                <option value="{{ u.id }}" {% if vendedor_filtro == u.id %}selected{% endif %}>{{ u.nombre }} ({{ u.rol|capitalize }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="col-6 col-md-3">
+            <label class="form-label fw-bold small text-muted mb-1">Método de Entrega</label>
+            <select name="metodo_pago" class="form-select bg-light border-0 fw-semibold">
+                <option value="">💳 Todos los métodos</option>
+                <option value="efectivo" {% if metodo_filtro == 'efectivo' %}selected{% endif %}>💵 Efectivo</option>
+                <option value="nequi" {% if metodo_filtro == 'nequi' %}selected{% endif %}>📱 Nequi</option>
+                <option value="bancolombia" {% if metodo_filtro == 'bancolombia' %}selected{% endif %}>🏦 Bancolombia</option>
+                <option value="daviplata" {% if metodo_filtro == 'daviplata' %}selected{% endif %}>📱 Daviplata</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label fw-bold small text-muted mb-1">Desde</label>
+            <input type="date" name="fecha_inicio" value="{{ fecha_inicio or '' }}" class="form-control bg-light border-0 fw-semibold">
+        </div>
+        <div class="col-6 col-md-2">
+            <label class="form-label fw-bold small text-muted mb-1">Hasta</label>
+            <input type="date" name="fecha_fin" value="{{ fecha_fin or '' }}" class="form-control bg-light border-0 fw-semibold">
+        </div>
+        <div class="col-6 col-md-2 d-flex gap-1">
+            <button type="submit" class="btn btn-dark rounded-pill fw-bold flex-grow-1">Filtrar</button>
+            {% if vendedor_filtro or metodo_filtro or fecha_inicio or fecha_fin %}
+            <a href="{{ url_for('vales_bp.index') }}" class="btn btn-light border rounded-pill px-3" title="Limpiar filtros">
+                <i class="fa-solid fa-xmark"></i>
+            </a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<!-- Tabla Historial de Vales -->
+<div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0 align-middle">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4">ID / FECHA</th>
+                    <th>VENDEDOR ASOCIADO</th>
+                    <th>MÉTODO EN QUE SE ENTREGÓ</th>
+                    <th>MOTIVO / OBSERVACIÓN</th>
+                    <th class="text-end">VALOR DEL VALE</th>
+                    <th class="text-center">COMPROBANTE</th>
+                    {% if current_user.rol == 'admin' %}
+                    <th class="text-center pe-4">ACCIÓN</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for v in vales %}
+                <tr>
+                    <td class="ps-4">
+                        <span class="badge bg-light text-dark border fw-bold">#{{ v.id }}</span>
+                        <div class="fw-bold text-dark mt-0.5">{{ v.fecha_vale.strftime('%d/%m/%Y') if v.fecha_vale else '-' }}</div>
+                        <small class="text-muted">{{ v.fecha_vale.strftime('%I:%M %p') if v.fecha_vale else '' }}</small>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="rounded-circle d-inline-flex align-items-center justify-content-center"
+                                  style="width: 34px; height: 34px; background: #FFF1F5; color: #BE185D;">
+                                <i class="fa-solid fa-user-check"></i>
+                            </span>
+                            <div>
+                                <div class="fw-bolder text-brand-black">{{ v.vendedor.nombre if v.vendedor else 'Vendedor' }}</div>
+                                <small class="text-muted" style="font-size: 0.72rem;">
+                                    Registrado por: {{ v.registrado_por.nombre if v.registrado_por else 'Admin' }}
+                                </small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if v.metodo_pago == 'efectivo' %}
+                        <span class="badge badge-soft-success rounded-pill px-3 py-1.5 text-uppercase">
+                            <i class="fa-solid fa-money-bill-wave me-1"></i> Efectivo
+                        </span>
+                        {% elif v.metodo_pago == 'nequi' %}
+                        <span class="badge rounded-pill px-3 py-1.5 text-uppercase fw-bold" style="background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE;">
+                            <i class="fa-solid fa-mobile-screen me-1"></i> Nequi
+                        </span>
+                        {% elif v.metodo_pago == 'bancolombia' %}
+                        <span class="badge badge-soft-warning rounded-pill px-3 py-1.5 text-uppercase">
+                            <i class="fa-solid fa-building-columns me-1"></i> Bancolombia
+                        </span>
+                        {% elif v.metodo_pago == 'daviplata' %}
+                        <span class="badge badge-soft-danger rounded-pill px-3 py-1.5 text-uppercase">
+                            <i class="fa-solid fa-mobile-retro me-1"></i> Daviplata
+                        </span>
+                        {% else %}
+                        <span class="badge bg-light text-dark border rounded-pill px-3 py-1.5 text-uppercase">{{ v.metodo_pago }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="text-secondary small">{{ v.observacion or 'Vale / Adelanto de nómina' }}</span>
+                        {% if v.expense_id %}
+                        <div>
+                            <span class="badge bg-light text-success border mt-1" style="font-size: 0.68rem;">
+                                <i class="fa-solid fa-file-circle-check me-1"></i>Gasto Diario #{{ v.expense_id }} ({{ v.metodo_pago|capitalize }})
+                            </span>
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="text-end font-monospace fw-bolder text-danger" style="font-size: 1rem;">
+                        ${{ (v.monto or 0)|cop }}
+                    </td>
+                    <td class="text-center">
+                        {% if v.comprobante_imagen %}
+                        <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-3 py-1 fw-bold"
+                                data-bs-toggle="modal" data-bs-target="#modalComprobanteVale{{ v.id }}">
+                            <i class="fa-solid fa-image me-1"></i> Ver Comprobante
+                        </button>
+
+                        <!-- Modal Ver Foto del Comprobante del Vale -->
+                        <div class="modal fade" id="modalComprobanteVale{{ v.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 bg-dark text-white">
+                                        <h6 class="modal-title fw-bold">
+                                            <i class="fa-solid fa-receipt text-warning me-2"></i>Comprobante Vale #{{ v.id }} · {{ v.vendedor.nombre if v.vendedor else '' }} (${{ (v.monto or 0)|cop }})
+                                        </h6>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body p-3 text-center bg-light">
+                                        <img src="{{ url_for('static', filename='uploads/' + v.comprobante_imagen) }}"
+                                             alt="Comprobante Vale #{{ v.id }}"
+                                             class="img-fluid rounded-3 shadow-sm border"
+                                             style="max-height: 72vh; object-fit: contain;">
+                                        <div class="mt-2 small text-muted">
+                                            Vendedor: <strong>{{ v.vendedor.nombre if v.vendedor else '' }}</strong> ·
+                                            Método: <strong class="text-uppercase">{{ v.metodo_pago }}</strong> ·
+                                            Fecha: {{ v.fecha_vale.strftime('%d/%m/%Y %I:%M %p') if v.fecha_vale else '' }}
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer border-0 bg-white justify-content-between">
+                                        <a href="{{ url_for('static', filename='uploads/' + v.comprobante_imagen) }}" target="_blank" class="btn btn-sm btn-outline-dark rounded-pill px-3 fw-bold">
+                                            <i class="fa-solid fa-up-right-from-square me-1"></i> Abrir imagen completa
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cerrar</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">Sin adjunto</span>
+                        {% endif %}
+                    </td>
+                    {% if current_user.rol == 'admin' %}
+                    <td class="text-center pe-4">
+                        <form method="POST" action="{{ url_for('vales_bp.eliminar_vale', id=v.id) }}" class="d-inline"
+                              onsubmit="return confirm('¿Seguro que deseas eliminar este vale de ${{ (v.monto or 0)|cop }}?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-light border rounded-circle text-danger" style="width: 34px; height: 34px;" title="Eliminar Vale">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </form>
+                    </td>
+                    {% endif %}
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="{% if current_user.rol == 'admin' %}7{% else %}6{% endif %}" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-receipt fs-1 mb-3 text-brand-pink d-block"></i>
+                        <h6 class="fw-bold text-dark">No hay vales registrados con los filtros seleccionados</h6>
+                        <p class="small mb-0">Haz clic en <strong>+ Registrar Nuevo Vale</strong> para asociar un vale a un vendedor y adjuntar su comprobante.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Modal Registrar Nuevo Vale -->
+<div class="modal fade" id="modalNuevoVale" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%);">
+                <h5 class="modal-title fw-bold">
+                    <i class="fa-solid fa-receipt me-2"></i>Registrar Nuevo Vale a Vendedor
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('vales_bp.index') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">1. Vendedor Asociado <span class="text-danger">*</span></label>
+                        {% if current_user.rol == 'admin' %}
+                        <select name="vendedor_id" class="form-select fw-bold" required>
+                            <option value="">-- Selecciona el Vendedor --</option>
+                            {% for u in vendedores_lista %}
+                            <option value="{{ u.id }}">👤 {{ u.nombre }} ({{ u.rol|capitalize }})</option>
+                            {% endfor %}
+                        </select>
+                        {% else %}
+                        <input type="hidden" name="vendedor_id" value="{{ current_user.id }}">
+                        <input type="text" class="form-control bg-light fw-bold" value="{{ current_user.nombre }}" readonly>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-7">
+                            <label class="form-label fw-bold small text-danger">2. Valor del Vale ($) <span class="text-danger">*</span></label>
+                            <input type="number" step="1" min="1" name="monto" class="form-control fw-bolder border-danger text-danger fs-5" placeholder="Ej: 50000" required>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label fw-bold small">3. Método de Entrega <span class="text-danger">*</span></label>
+                            <select name="metodo_pago" class="form-select fw-bold" required>
+                                <option value="efectivo">💵 Efectivo</option>
+                                <option value="nequi">📱 Nequi</option>
+                                <option value="bancolombia">🏦 Bancolombia</option>
+                                <option value="daviplata">📱 Daviplata</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-3">
+                        <div class="col-5">
+                            <label class="form-label fw-bold small text-muted">Fecha del Vale</label>
+                            <input type="date" name="fecha_vale" value="{{ hoy }}" class="form-control fw-semibold">
+                        </div>
+                        <div class="col-7">
+                            <label class="form-label fw-bold small text-muted">Motivo / Observación</label>
+                            <input type="text" name="observacion" class="form-control" placeholder="Ej: Vale adelanto quincena">
+                        </div>
+                    </div>
+
+                    <div class="mb-0">
+                        <label class="form-label fw-bold small text-primary">
+                            <i class="fa-solid fa-camera me-1"></i>4. Adjuntar Comprobante (Foto o Captura)
+                        </label>
+                        <input type="file" name="comprobante" class="form-control" accept="image/*">
+                        <small class="text-muted">Sube la captura de transferencia o foto del recibo firmado del vale.</small>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-pink rounded-pill px-4 fw-bold shadow-sm">
+                        <i class="fa-solid fa-check me-1"></i> Guardar Vale
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

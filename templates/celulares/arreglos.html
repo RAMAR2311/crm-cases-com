@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Arreglos de Celulares - cases.com{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bolder text-brand-black m-0">
+            <i class="fa-solid fa-screwdriver-wrench text-danger me-2"></i>Módulo de Arreglos de Celulares
+        </h2>
+        <small class="text-muted">Valida cuando entreguen el equipo arreglado, registra qué sobrecosto tuvo el arreglo para sumarlo al costo y define su precio de venta para ingresarlo a Inventario</small>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('retomas_bp.cuarentena') }}" class="btn btn-outline-warning text-dark rounded-pill px-3.5 fw-bold shadow-xs">
+            <i class="fa-solid fa-rotate-left me-1"></i> Volver a Retomas ({{ total_pendientes_retoma or 0 }})
+        </a>
+        <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-outline-dark rounded-pill px-3.5 fw-bold shadow-xs">
+            <i class="fa-solid fa-mobile-screen-button me-1"></i> Inventario Celulares
+        </a>
+    </div>
+</div>
+
+<!-- KPIs de Arreglos -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Equipos en Arreglo</span>
+                <span class="kpi-icon-elevated kpi-icon-rose">
+                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value text-brand-black">{{ total_en_arreglo or 0 }} <span class="fs-6 text-muted fw-semibold">en taller</span></h3>
+            <small class="kpi-subtext">Pendientes por recibir arreglados</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-steel p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Costo Base en Taller</span>
+                <span class="kpi-icon-elevated kpi-icon-steel">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value text-brand-black">${{ (valor_base_arreglos or 0)|cop }}</h3>
+            <small class="kpi-subtext">Suma del valor recibido antes del arreglo</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-amber p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Retomas por Revisar</span>
+                <span class="kpi-icon-elevated kpi-icon-amber">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value" style="color: #B45309;">{{ total_pendientes_retoma or 0 }} <span class="fs-6 text-muted fw-semibold">pendientes</span></h3>
+            <small class="kpi-subtext"><a href="{{ url_for('retomas_bp.cuarentena') }}" class="text-decoration-none fw-bold" style="color: #B45309;">Ver Retomas pendientes →</a></small>
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de Equipos en Arreglos -->
+<div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
+    <div class="table-responsive">
+        <table class="table table-hover table-custom mb-0 align-middle">
+            <thead class="bg-light">
+                <tr>
+                    <th class="ps-4" style="min-width: 130px;">FECHA INGRESO</th>
+                    <th style="min-width: 210px;">EQUIPO</th>
+                    <th style="min-width: 155px;">IMEI 1</th>
+                    <th style="min-width: 155px;">IMEI 2</th>
+                    <th style="min-width: 240px;">OBSERVACIÓN / ARREGLO SOLICITADO</th>
+                    <th class="text-end" style="min-width: 135px;">VALOR BASE RETOMA</th>
+                    <th class="text-center pe-4" style="min-width: 220px;">VALIDAR ENTREGA</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in arreglos %}
+                <tr>
+                    <td class="ps-4">
+                        <div class="fw-bold text-dark">{{ r.fecha_recepcion.strftime('%d/%m/%Y') if r.fecha_recepcion else '-' }}</div>
+                        <small class="text-muted">{{ r.fecha_recepcion.strftime('%H:%M') if r.fecha_recepcion else '' }}</small>
+                        {% if r.cliente_nombre %}
+                        <small class="d-block text-secondary">Retoma: {{ r.cliente_nombre }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="fw-bolder text-brand-black" style="font-size: 0.95rem;">{{ r.marca }} {{ r.modelo_celular }}</div>
+                        <div class="d-flex flex-wrap gap-1 mt-1">
+                            {% if r.memoria %}<span class="badge bg-white text-dark border fw-bold" style="font-size: 0.68rem;">{{ r.memoria }}</span>{% endif %}
+                            {% if r.color %}<span class="badge bg-light text-secondary border" style="font-size: 0.68rem;">{{ r.color }}</span>{% endif %}
+                            {% if r.bateria %}<span class="badge rounded-pill px-2" style="background: #ECFDF5; color: #047857; border: 1px solid #A7F3D0; font-size: 0.68rem;">Bat: {{ r.bateria }}</span>{% endif %}
+                        </div>
+                    </td>
+                    <!-- IMEI 1 -->
+                    <td>
+                        <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 bg-light border font-monospace fw-bold text-dark" style="font-size: 0.8rem;">
+                            <i class="fa-solid fa-barcode text-brand-pink"></i>
+                            <span>{{ r.imei }}</span>
+                        </div>
+                    </td>
+                    <!-- IMEI 2 -->
+                    <td>
+                        {% if r.imei2 %}
+                        <div class="d-inline-flex align-items-center gap-1.5 px-2.5 py-1 rounded-3 bg-light border font-monospace fw-semibold text-secondary" style="font-size: 0.8rem;">
+                            <i class="fa-solid fa-barcode text-muted"></i>
+                            <span>{{ r.imei2 }}</span>
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="p-2.5 rounded-3" style="background: #FEF2F2; border: 1px solid #FECACA; color: #991B1B; font-size: 0.82rem;">
+                            <i class="fa-solid fa-wrench me-1"></i>
+                            <strong>{{ r.observaciones or 'Sin detalle especificado' }}</strong>
+                        </div>
+                    </td>
+                    <td class="text-end font-monospace fw-bolder text-brand-black" style="font-size: 0.95rem;">
+                        ${{ (r.valor_recibido or 0)|cop }}
+                    </td>
+                    <td class="text-center pe-4">
+                        {% if current_user.rol == 'admin' %}
+                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3.5 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRecibirArreglado{{ r.id }}">
+                            <i class="fa-solid fa-circle-check me-1"></i> Entregado Arreglado → Inventario
+                        </button>
+
+                        <!-- Modal Validar Entrega de Arreglo, Sumar Sobrecosto y Asignar Precio de Venta -->
+                        <div class="modal fade text-start" id="modalRecibirArreglado{{ r.id }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+                                    <div class="modal-header border-0 text-white" style="background: linear-gradient(135deg, #059669 0%, #047857 100%);">
+                                        <h5 class="modal-title fw-bold">
+                                            <i class="fa-solid fa-screwdriver-wrench me-2"></i>Validar Arreglo y Pasar a Inventario
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <form method="POST" action="{{ url_for('retomas_bp.aprobar_retoma', id=r.id) }}">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <input type="hidden" name="origen" value="arreglos">
+                                        <div class="modal-body p-4">
+                                            <!-- Resumen del equipo -->
+                                            <div class="p-3 rounded-3 bg-light border mb-3">
+                                                <div class="fw-bolder text-dark fs-6">{{ r.marca }} {{ r.modelo_celular }} {{ r.memoria or '' }} {{ r.color or '' }}</div>
+                                                <div class="small text-muted font-monospace mt-1">
+                                                    IMEI 1: <strong>{{ r.imei }}</strong>
+                                                    {% if r.imei2 %} · IMEI 2: <strong>{{ r.imei2 }}</strong>{% endif %}
+                                                </div>
+                                                <div class="small text-danger mt-1">
+                                                    <i class="fa-solid fa-wrench me-1"></i>Arreglo realizado: <strong>{{ r.observaciones }}</strong>
+                                                </div>
+                                            </div>
+
+                                            <!-- Calculadora en vivo: Valor Base + Sobrecosto Arreglo = Nuevo Costo Total -->
+                                            <div class="p-3 rounded-4 mb-3" style="background: #F8FAFC; border: 1.5px solid #CBD5E1;">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <span class="small fw-bold text-muted">1. Valor Recibido (Retoma):</span>
+                                                    <span class="font-monospace fw-bold text-dark">${{ (r.valor_recibido or 0)|cop }}</span>
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label fw-bold small text-danger mb-1">
+                                                        2. + Sobrecosto del Arreglo ($) <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input type="number" step="1" min="0" name="sobrecosto_arreglo"
+                                                        class="form-control fw-bolder border-danger text-danger"
+                                                        placeholder="Ej: 150000 (0 si no tuvo costo)"
+                                                        value="0"
+                                                        oninput="recalcularCostoArreglo({{ r.id }}, {{ (r.valor_recibido or 0)|float }})"
+                                                        required>
+                                                </div>
+                                                <div class="pt-2 border-top d-flex justify-content-between align-items-center">
+                                                    <span class="small fw-bolder text-brand-black text-uppercase">= Costo Final en Inventario:</span>
+                                                    <span class="font-monospace fw-bolder fs-5 text-brand-black" id="costoTotalLabel{{ r.id }}">
+                                                        ${{ (r.valor_recibido or 0)|cop }}
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <!-- Precios de Venta -->
+                                            <div class="row g-3 mb-3">
+                                                <div class="col-6">
+                                                    <label class="form-label fw-bold small" style="color: #BE185D;">3. Precio Mínimo Venta ($) <span class="text-danger">*</span></label>
+                                                    <input type="number" step="1" min="1" name="precio_minimo" class="form-control fw-bolder fs-6" style="color: #BE185D; border-color: #FBCFE8;" placeholder="Ej: 1650000" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label fw-bold small text-success">4. Precio Sugerido Venta ($) <span class="text-danger">*</span></label>
+                                                    <input type="number" step="1" min="1" name="precio_sugerido" class="form-control fw-bolder border-success text-success fs-6" placeholder="Ej: 1800000" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="row g-2">
+                                                <div class="col-4">
+                                                    <label class="form-label fw-bold small text-muted">% Batería Actual</label>
+                                                    <input type="text" name="bateria" class="form-control" value="{{ r.bateria or '' }}" placeholder="Ej: 100%">
+                                                </div>
+                                                <div class="col-8">
+                                                    <label class="form-label fw-bold small text-muted">Observación Final</label>
+                                                    <input type="text" name="observaciones" class="form-control" value="{{ r.observaciones or '' }}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer border-0 bg-light">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                                                <i class="fa-solid fa-box-open me-1"></i> Sumar Costo e Ingresar a Inventario
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        {% else %}
+                        <span class="text-muted small">Solo Admin</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-screwdriver-wrench fs-1 mb-3 text-danger opacity-50 d-block"></i>
+                        <h6 class="fw-bold text-dark">No hay celulares en Arreglos en este momento</h6>
+                        <p class="small mb-0">Desde el módulo de <strong>Retomas</strong> puedes enviar cualquier equipo recibido a <strong>Arreglos</strong> indicando qué se le va a reparar.</p>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function recalcularCostoArreglo(id, valorBase) {
+    const modal = document.getElementById('modalRecibirArreglado' + id);
+    if (!modal) return;
+    const inp = modal.querySelector('input[name="sobrecosto_arreglo"]');
+    const sobrecosto = parseFloat(inp?.value || '0') || 0;
+    const total = (parseFloat(valorBase) || 0) + sobrecosto;
+    const lbl = document.getElementById('costoTotalLabel' + id);
+    if (lbl) {
+        lbl.textContent = new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(total);
+    }
+}
+</script>
+{% endblock %}

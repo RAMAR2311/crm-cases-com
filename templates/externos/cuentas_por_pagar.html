@@ -6,88 +6,154 @@
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div>
         <h2 class="fw-bolder text-brand-black m-0">
-            <i class="fa-solid fa-file-invoice-dollar text-danger me-2"></i>Cuentas por Pagar (Productos Externos Vendidos)
+            <i class="fa-solid fa-file-invoice-dollar text-danger me-2"></i>Cuentas por Pagar a Proveedores Externos
         </h2>
-        <small class="text-muted">Deudas generadas automáticamente por el valor de costo cada vez que se vende un producto externo en Caja</small>
+        <small class="text-muted">Directorio de proveedores externos y acceso directo al <strong>Estado de
+                Cuenta</strong> con facturas asociadas, saldo pendiente y abonos con comprobante</small>
     </div>
     <div class="d-flex gap-2">
-        <a href="{{ url_for('externos_bp.index') }}" class="btn btn-outline-dark rounded-pill px-3 fw-bold">Celulares Externos</a>
-        <a href="{{ url_for('externos_bp.accesorios') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-bold">Accesorios Externos</a>
+        <a href="{{ url_for('externos_bp.index') }}" class="btn btn-outline-dark rounded-pill px-3.5 fw-bold">
+            <i class="fa-solid fa-mobile-screen-button me-1"></i> Cel Externos
+        </a>
+        <a href="{{ url_for('externos_bp.accesorios') }}" class="btn btn-outline-secondary rounded-pill px-3.5 fw-bold">
+            <i class="fa-solid fa-headphones me-1"></i> Acc Externos
+        </a>
     </div>
 </div>
 
+<!-- KPIs Globales de Deuda y Pagos -->
 <div class="row g-3 mb-4">
-    <div class="col-12 col-md-6">
-        <div class="card card-custom p-3 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(254, 226, 226, 0.55) 0%, #FFFFFF 70%);">
-            <span class="text-uppercase fw-bold text-muted small">Total Pendiente por Pagar a Proveedores</span>
-            <h3 class="fw-bolder text-danger mt-1 mb-0">${{ (total_pendiente or 0)|cop }}</h3>
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-rose p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Saldo Total por Pagar a Proveedores</span>
+                <span class="kpi-icon-elevated kpi-icon-rose"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+            </div>
+            <h3 class="kpi-value text-danger">${{ (total_pendiente or 0)|cop }}</h3>
+            <small class="kpi-subtext">Deuda activa total con proveedores externos</small>
         </div>
     </div>
-    <div class="col-12 col-md-6">
-        <div class="card card-custom p-3 border-0 shadow-sm" style="background: radial-gradient(120% 120% at 100% 0%, rgba(16, 185, 129, 0.2) 0%, #FFFFFF 70%);">
-            <span class="text-uppercase fw-bold text-muted small">Total Liquidado / Pagado</span>
-            <h3 class="fw-bolder text-success mt-1 mb-0">${{ (total_pagado or 0)|cop }}</h3>
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-emerald p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Total Abonado / Pagado</span>
+                <span class="kpi-icon-elevated kpi-icon-emerald"><i class="fa-solid fa-circle-check"></i></span>
+            </div>
+            <h3 class="kpi-value text-success">${{ (total_pagado or 0)|cop }}</h3>
+            <small class="kpi-subtext">Total entregado en abonos y pagos</small>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card kpi-card-elevated kpi-accent-blue p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Proveedores Registrados</span>
+                <span class="kpi-icon-elevated kpi-icon-blue"><i class="fa-solid fa-building-user"></i></span>
+            </div>
+            <h3 class="kpi-value text-brand-black">{{ resumen_proveedores|length }} <span
+                    class="fs-6 text-muted fw-semibold">proveedores</span></h3>
+            <small class="kpi-subtext">Con estado de cuenta individual</small>
         </div>
     </div>
 </div>
 
-<div class="d-flex gap-2 mb-3">
-    <a href="{{ url_for('externos_bp.cuentas_por_pagar', estado='PENDIENTE') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if estado == 'PENDIENTE' %}btn-danger text-white{% else %}btn-light border{% endif %}">Pendientes</a>
-    <a href="{{ url_for('externos_bp.cuentas_por_pagar', estado='PAGADO') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if estado == 'PAGADO' %}btn-success text-white{% else %}btn-light border{% endif %}">Pagadas</a>
-    <a href="{{ url_for('externos_bp.cuentas_por_pagar', estado='TODAS') }}" class="btn btn-sm rounded-pill px-3 fw-bold {% if estado == 'TODAS' %}btn-dark text-white{% else %}btn-light border{% endif %}">Todas</a>
-</div>
-
-<div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
+<!-- TABLA PRINCIPAL: PROVEEDORES EXTERNOS Y SU ESTADO DE CUENTA -->
+<div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4 mb-4">
+    <div class="p-3 px-4 bg-light border-bottom d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <div>
+            <h6 class="fw-bolder text-brand-black m-0">
+                <i class="fa-solid fa-building-user text-brand-pink me-2"></i>Proveedores Externos y Estado de Cuenta
+            </h6>
+            <small class="text-muted">Entra al <strong>Estado de Cuenta</strong> de cada proveedor para ver sus facturas
+                asociadas, saldo actual y registrar abonos con foto del comprobante</small>
+        </div>
+    </div>
     <div class="table-responsive">
         <table class="table table-hover table-custom mb-0 align-middle">
             <thead class="bg-light">
                 <tr>
-                    <th class="ps-4">FECHA VENTA</th>
-                    <th>PROVEEDOR EXTERNO</th>
-                    <th>CONCEPTO / PRODUCTO VENDIDO</th>
-                    <th>TICKET</th>
-                    <th class="text-end">MONTO COSTO</th>
+                    <th class="ps-4">PROVEEDOR EXTERNO</th>
+                    <th class="text-center">FACTURAS ASOCIADAS</th>
+                    <th class="text-center">ABONOS REALIZADOS</th>
+                    <th class="text-end">TOTAL FACTURADO</th>
+                    <th class="text-end">TOTAL ABONADO</th>
+                    <th class="text-end">SALDO PENDIENTE</th>
                     <th class="text-center">ESTADO</th>
-                    <th class="text-center pe-4">ACCIÓN</th>
+                    <th class="text-center pe-4">ESTADO DE CUENTA</th>
                 </tr>
             </thead>
             <tbody>
-                {% for c in cuentas %}
+                {% for rp in resumen_proveedores %}
                 <tr>
-                    <td class="ps-4">
-                        <div class="fw-bold text-dark">{{ c.fecha_creacion.strftime('%d/%m/%Y %H:%M') if c.fecha_creacion else '-' }}</div>
+                    <td class="ps-4 py-3">
+                        <div class="d-flex align-items-center gap-2.5">
+                            <span class="rounded-3 d-inline-flex align-items-center justify-content-center"
+                                style="width: 38px; height: 38px; background: #EFF6FF; color: #0284C7;">
+                                <i class="fa-solid fa-building-user"></i>
+                            </span>
+                            <div>
+                                <a href="{{ url_for('externos_bp.estado_cuenta_proveedor', proveedor=rp.proveedor) }}"
+                                    class="fw-bolder text-brand-black text-decoration-none" style="font-size: 0.96rem;">
+                                    {{ rp.proveedor }}
+                                </a>
+                                {% if rp.ultima_actividad %}
+                                <small class="text-muted d-block" style="font-size: 0.72rem;">
+                                    Último mov: {{ rp.ultima_actividad.strftime('%d/%m/%Y %H:%M') }}
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
                     </td>
-                    <td><span class="fw-bold text-primary">{{ c.proveedor }}</span></td>
-                    <td>{{ c.concepto }}</td>
-                    <td>
-                        {% if c.sale_id %}
-                        <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=c.sale_id) }}" target="_blank" class="badge bg-light text-dark border text-decoration-none">Ticket #{{ c.sale_id }}</a>
-                        {% else %}-{% endif %}
-                    </td>
-                    <td class="text-end font-monospace fw-bolder text-danger">${{ (c.monto_costo or 0)|cop }}</td>
                     <td class="text-center">
-                        {% if c.estado == 'PENDIENTE' %}
-                            <span class="badge badge-soft-danger rounded-pill px-3 py-1">PENDIENTE</span>
+                        <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1 fw-bold">
+                            {{ rp.facturas_count }} factura(s)
+                        </span>
+                        {% if rp.facturas_pendientes > 0 %}
+                        <small class="text-danger fw-bold d-block mt-0.5" style="font-size: 0.7rem;">
+                            {{ rp.facturas_pendientes }} pendiente(s)
+                        </small>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1 fw-semibold">
+                            {{ rp.abonos_count }} abono(s)
+                        </span>
+                    </td>
+                    <td class="text-end font-monospace fw-bold text-secondary">
+                        ${{ (rp.total_facturado or 0)|cop }}
+                    </td>
+                    <td class="text-end font-monospace fw-bold text-success">
+                        ${{ (rp.total_abonado or 0)|cop }}
+                    </td>
+                    <td class="text-end font-monospace fw-bolder {% if rp.saldo_pendiente > 0 %}text-danger{% else %}text-muted{% endif %}"
+                        style="font-size: 0.98rem;">
+                        ${{ (rp.saldo_pendiente or 0)|cop }}
+                    </td>
+                    <td class="text-center">
+                        {% if rp.saldo_pendiente > 0 %}
+                        <span class="badge badge-soft-danger rounded-pill px-3 py-1.5">
+                            <i class="fa-solid fa-circle-exclamation me-1"></i> CON SALDO
+                        </span>
                         {% else %}
-                            <span class="badge badge-soft-success rounded-pill px-3 py-1">PAGADO</span>
+                        <span class="badge badge-soft-success rounded-pill px-3 py-1.5">
+                            <i class="fa-solid fa-circle-check me-1"></i> AL DÍA
+                        </span>
                         {% endif %}
                     </td>
                     <td class="text-center pe-4">
-                        {% if c.estado == 'PENDIENTE' and current_user.rol == 'admin' %}
-                        <form method="POST" action="{{ url_for('externos_bp.pagar_cuenta_proveedor', id=c.id) }}" class="d-inline" onsubmit="return confirm('¿Marcar esta obligación como PAGADA al proveedor?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                            <button type="submit" class="btn btn-sm btn-success rounded-pill px-3 fw-bold">
-                                <i class="fa-solid fa-check me-1"></i> Marcar Pagado
-                            </button>
-                        </form>
-                        {% else %}
-                        <span class="text-muted small">{{ c.fecha_pago.strftime('%d/%m/%Y') if c.fecha_pago else '-' }}</span>
-                        {% endif %}
+                        <a href="{{ url_for('externos_bp.estado_cuenta_proveedor', proveedor=rp.proveedor) }}"
+                            class="btn btn-sm btn-dark rounded-pill px-3.5 py-1.5 fw-bold shadow-xs">
+                            <i class="fa-solid fa-file-invoice-dollar text-warning me-1"></i> Ver Estado de Cuenta
+                        </a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">No hay cuentas por pagar en este estado.</td>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-building-user fs-1 mb-2 text-brand-pink d-block"></i>
+                        <h6 class="fw-bold text-dark">Aún no hay proveedores externos con cuentas registradas</h6>
+                        <p class="small mb-0">Al registrar un Cel Ext. o Acc Ext. desde Caja o desde los módulos de
+                            Externos, aparecerá aquí su Estado de Cuenta.</p>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>

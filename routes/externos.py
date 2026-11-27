@@ -1,10 +1,12 @@
+import os
 from datetime import datetime
 from decimal import Decimal
 import pytz
-from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify
+from werkzeug.utils import secure_filename
+from flask import Blueprint, render_template, request, redirect, url_for, flash, jsonify, current_app
 from flask_login import login_required, current_user
 from sqlalchemy import or_
-from models import db, Product, StockAdjustment, ProviderInvoice
+from models import db, Product, StockAdjustment, ProviderInvoice, ProviderPayment
 from decorators import admin_required
 from utils import safe_int, safe_float
 
@@ -15,6 +17,32 @@ def obtener_hora_bogota():
     return datetime.now(pytz.timezone('America/Bogota')).replace(tzinfo=None)
 
 
+def obtener_proveedores_registrados():
+    """Retorna la lista ordenada de todos los proveedores externos registrados en productos o cuentas por pagar."""
+    provs = set()
+    try:
+        for (p_nom,) in db.session.query(Product.proveedor).filter(Product.proveedor.isnot(None)).distinct().all():
+            if p_nom and p_nom.strip() and not p_nom.strip().lower().startswith('retoma'):
+                provs.add(p_nom.strip())
+        for (i_nom,) in db.session.query(ProviderInvoice.proveedor).filter(ProviderInvoice.proveedor.isnot(None)).distinct().all():
+            if i_nom and i_nom.strip() and not i_nom.strip().lower().startswith('retoma'):
+                provs.add(i_nom.strip())
+    except Exception:
+        pass
+    return sorted(provs, key=lambda x: x.lower())
+
+
+def _resolver_proveedor_form(form):
+    sel = (form.get('proveedor_select') or '').strip()
+    nuevo = (form.get('proveedor_nuevo') or '').strip()
+    directo = (form.get('proveedor') or '').strip()
+    if sel and sel != '__nuevo__':
+        return sel
+    if nuevo:
+        return nuevo
+    return directo
+
+
 # ══════════════════════════════════════════════════════════════════════════
 # 1.2 PRODUCTOS EXTERNOS - CELULARES (/externos/)
 # ══════════════════════════════════════════════════════════════════════════
@@ -23,7 +51,7 @@ def obtener_hora_bogota():
 @login_required
 def index():
     if request.method == 'POST':
-        proveedor = request.form.get('proveedor', '').strip()
+        proveedor = _resolver_proveedor_form(request.form)
         imei = request.form.get('imei', '').strip() or None
         imei2 = request.form.get('imei2', '').strip() or None
         marca = request.form.get('marca', '').strip()
@@ -39,7 +67,7 @@ def index():
         precio_sugerido = safe_float(request.form.get('precio_sugerido', '0').replace(',', '').replace('.', ''), precio_minimo)
 
         if not proveedor:
-            flash('El nombre del proveedor externo es obligatorio.', 'danger')
+            flash('Debes seleccionar un proveedor existente o escribir el nombre del nuevo proveedor.', 'danger')
             return redirect(url_for('externos_bp.index'))
 
         if not marca or not modelo_celular:
@@ -53,7 +81,8 @@ def index():
                 flash(msg_imei, 'danger')
                 return redirect(url_for('externos_bp.index'))
 
-        ahora_str = obtener_hora_bogota().strftime('%Y%m%d%H%M%S')
+        ahora_obj = obtener_hora_bogota()
+        ahora_str = ahora_obj.strftime('%Y%m%d%H%M%S')
         sku_ext = f"EXT-{ahora_str}"
         if Product.query.filter_by(sku=sku_ext).first():
             sku_ext = f"EXT-{ahora_str}-{Product.query.count() + 1}"[:50]
@@ -89,12 +118,25 @@ def index():
                 product_id=nuevo.id,
                 admin_id=current_user.id,
                 tipo_movimiento='Ingreso Celular Externo (Consignación)',
-                motivo=f"Proveedor: {proveedor} | SKU: {sku_ext}",
+                motivo=f"Proveedor: {proveedor} | SKU: {sku_ext}" + (f" | IMEI 1: {imei}" if imei else "") + (f" | IMEI 2: {imei2}" if imei2 else ""),
                 stock_anterior=0,
                 stock_nuevo=1
             ))
+            # Registrar ingreso de deuda con el proveedor en Cuentas Externos para control de pago
+            if precio_costo > 0:
+                imei_info = f" | IMEI: {imei}" + (f" / {imei2}" if imei2 else "") if imei else ""
+                db.session.add(ProviderInvoice(
+                    proveedor=proveedor,
+                    product_id=nuevo.id,
+                    sale_id=None,
+                    usuario_id=current_user.id,
+                    concepto=f"Ingreso Cel Ext.: {nombre_ext} ({sku_ext}){imei_info}",
+                    monto_costo=Decimal(str(precio_costo)),
+                    estado='PENDIENTE',
+                    fecha_creacion=ahora_obj
+                ))
             db.session.commit()
-            flash(f'Celular externo "{nombre_ext}" ({sku_ext}) del proveedor "{proveedor}" registrado con éxito.', 'success')
+            flash(f'Celular externo "{nombre_ext}" ({sku_ext}) del proveedor "{proveedor}" registrado con su cuenta por pagar.', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al registrar celular externo: {str(e)}', 'danger')
@@ -114,25 +156,36 @@ def index():
                 Product.nombre.ilike(term),
                 Product.sku.ilike(term),
                 Product.imei.ilike(term),
+                Product.imei2.ilike(term),
                 Product.proveedor.ilike(term),
                 Product.marca.ilike(term),
                 Product.modelo_celular.ilike(term)
             )
         )
 
-    celulares_externos = query.order_by(Product.cantidad_stock.desc(), Product.fecha_creacion.desc()).all()
-    disponibles_count = sum(1 for c in celulares_externos if (c.cantidad_stock or 0) > 0)
-    costo_consignacion = sum(float(c.precio_costo or 0) * (c.cantidad_stock or 0) for c in celulares_externos if (c.cantidad_stock or 0) > 0)
-    proveedores_activos = len(set(c.proveedor for c in celulares_externos if c.proveedor and (c.cantidad_stock or 0) > 0))
+    celulares_externos = query.order_by(Product.fecha_creacion.desc()).all()
+    disponibles_count = len(celulares_externos)
+    costo_consignacion = sum(float(c.precio_costo or 0) for c in celulares_externos)
+    proveedores_activos = len(set(c.proveedor for c in celulares_externos if c.proveedor))
+
+    # Mapear facturas de proveedor y ventas asociadas a cada celular externo
+    facturas_map = {}
+    for inv in ProviderInvoice.query.all():
+        if inv.product_id:
+            facturas_map[inv.product_id] = inv
+
     deuda_pendiente_total = sum(float(inv.monto_costo or 0) for inv in ProviderInvoice.query.filter_by(estado='PENDIENTE').all())
+    proveedores_registrados = obtener_proveedores_registrados()
 
     return render_template(
         'externos/celulares.html',
         celulares_externos=celulares_externos,
+        facturas_map=facturas_map,
         disponibles_count=disponibles_count,
         costo_consignacion=costo_consignacion,
         proveedores_activos=proveedores_activos,
         deuda_pendiente_total=deuda_pendiente_total,
+        proveedores_registrados=proveedores_registrados,
         q=q
     )
 
@@ -145,7 +198,7 @@ def index():
 @login_required
 def accesorios():
     if request.method == 'POST':
-        proveedor = request.form.get('proveedor', '').strip()
+        proveedor = _resolver_proveedor_form(request.form)
         nombre = request.form.get('nombre', '').strip()
         cantidad_stock = safe_int(request.form.get('cantidad_stock', '1'), 1)
         precio_costo = safe_float(request.form.get('precio_costo', '0').replace(',', '').replace('.', ''), 0.0)
@@ -157,17 +210,19 @@ def accesorios():
             flash('El nombre del accesorio y el proveedor son obligatorios.', 'danger')
             return redirect(url_for('externos_bp.accesorios'))
 
-        ahora_str = obtener_hora_bogota().strftime('%Y%m%d%H%M%S')
+        ahora_obj = obtener_hora_bogota()
+        ahora_str = ahora_obj.strftime('%Y%m%d%H%M%S')
         sku_ext = f"EXTACC-{ahora_str}"
         if Product.query.filter_by(sku=sku_ext).first():
             sku_ext = f"EXTACC-{ahora_str}-{Product.query.count() + 1}"[:50]
 
+        cant_final = max(1, cantidad_stock)
         nuevo = Product(
             nombre=nombre,
             sku=sku_ext,
             tipo_inventario='externos',
             subtipo_externo='accesorio',
-            cantidad_stock=max(1, cantidad_stock),
+            cantidad_stock=cant_final,
             precio_costo=precio_costo,
             precio_minimo=precio_minimo,
             precio_sugerido=precio_sugerido,
@@ -186,8 +241,19 @@ def accesorios():
                 stock_anterior=0,
                 stock_nuevo=nuevo.cantidad_stock
             ))
+            if precio_costo > 0:
+                db.session.add(ProviderInvoice(
+                    proveedor=proveedor,
+                    product_id=nuevo.id,
+                    sale_id=None,
+                    usuario_id=current_user.id,
+                    concepto=f"Ingreso Acc Ext.: {cant_final}x {nombre} ({sku_ext})",
+                    monto_costo=Decimal(str(precio_costo)) * cant_final,
+                    estado='PENDIENTE',
+                    fecha_creacion=ahora_obj
+                ))
             db.session.commit()
-            flash(f'Accesorio externo "{nombre}" ({sku_ext}) del proveedor "{proveedor}" registrado con éxito.', 'success')
+            flash(f'Accesorio externo "{nombre}" ({sku_ext}) del proveedor "{proveedor}" registrado con su cuenta por pagar.', 'success')
         except Exception as e:
             db.session.rollback()
             flash(f'Error al registrar accesorio externo: {str(e)}', 'danger')
@@ -210,15 +276,26 @@ def accesorios():
             )
         )
 
-    accesorios_externos = query.order_by(Product.cantidad_stock.desc(), Product.fecha_creacion.desc()).all()
-    unidades_disponibles = sum((a.cantidad_stock or 0) for a in accesorios_externos if (a.cantidad_stock or 0) > 0)
-    costo_consignacion = sum(float(a.precio_costo or 0) * (a.cantidad_stock or 0) for a in accesorios_externos if (a.cantidad_stock or 0) > 0)
+    accesorios_externos = query.order_by(Product.fecha_creacion.desc()).all()
+    unidades_disponibles = len(accesorios_externos)
+    costo_consignacion = sum(float(a.precio_costo or 0) for a in accesorios_externos)
+
+    facturas_map = {}
+    for inv in ProviderInvoice.query.all():
+        if inv.product_id:
+            facturas_map[inv.product_id] = inv
+
+    deuda_pendiente_total = sum(float(inv.monto_costo or 0) for inv in ProviderInvoice.query.filter_by(estado='PENDIENTE').all())
+    proveedores_registrados = obtener_proveedores_registrados()
 
     return render_template(
         'externos/accesorios.html',
         accesorios_externos=accesorios_externos,
+        facturas_map=facturas_map,
         unidades_disponibles=unidades_disponibles,
         costo_consignacion=costo_consignacion,
+        deuda_pendiente_total=deuda_pendiente_total,
+        proveedores_registrados=proveedores_registrados,
         q=q
     )
 
@@ -335,6 +412,7 @@ def api_nuevo_desde_caja():
     marca = (data.get('marca') or '').strip()
     modelo_celular = (data.get('modelo_celular') or '').strip()
     imei = (data.get('imei') or '').strip() or None
+    imei2 = (data.get('imei2') or '').strip() or None
     color = (data.get('color') or '').strip() or None
     memoria = (data.get('memoria') or '').strip() or None
     cantidad = max(1, safe_int(data.get('cantidad'), 1))
@@ -370,6 +448,11 @@ def api_nuevo_desde_caja():
         sku_ext = f"{sku_ext}-{Product.query.count() + 1}"[:50]
 
     try:
+        imagen_auto_ext = None
+        if subtipo == 'celular':
+            from routes.celulares import obtener_imagen_por_referencia
+            imagen_auto_ext = obtener_imagen_por_referencia(marca, modelo_celular, color)
+
         nuevo = Product(
             nombre=nombre,
             sku=sku_ext,
@@ -380,12 +463,14 @@ def api_nuevo_desde_caja():
             precio_minimo=precio_minimo if precio_minimo > 0 else precio_costo,
             precio_sugerido=precio_venta,
             imei=imei if subtipo == 'celular' else None,
+            imei2=imei2 if subtipo == 'celular' else None,
             marca=marca or None,
             modelo_celular=modelo_celular or None,
             color=color,
             memoria=memoria,
             proveedor=proveedor,
-            observacion='Creado en caliente desde Caja POS'
+            observacion='Creado en caliente desde Caja POS',
+            imagen=imagen_auto_ext
         )
         db.session.add(nuevo)
         db.session.flush()
@@ -398,6 +483,18 @@ def api_nuevo_desde_caja():
             stock_anterior=0,
             stock_nuevo=cantidad
         ))
+        if precio_costo > 0:
+            tipo_label = 'Cel Ext.' if subtipo == 'celular' else f'Acc Ext. ({cantidad}x)'
+            db.session.add(ProviderInvoice(
+                proveedor=proveedor,
+                product_id=nuevo.id,
+                sale_id=None,
+                usuario_id=current_user.id,
+                concepto=f"{tipo_label}: {nombre} ({sku_ext})",
+                monto_costo=Decimal(str(precio_costo)) * cantidad,
+                estado='PENDIENTE',
+                fecha_creacion=obtener_hora_bogota()
+            ))
         db.session.commit()
 
         return jsonify({
@@ -410,6 +507,7 @@ def api_nuevo_desde_caja():
                 'subtipo_externo': nuevo.subtipo_externo,
                 'proveedor': nuevo.proveedor,
                 'imei': nuevo.imei,
+                'imei2': nuevo.imei2,
                 'cantidad_stock': nuevo.cantidad_stock,
                 'cantidad': cantidad,
                 'precio_costo': float(nuevo.precio_costo),
@@ -425,28 +523,216 @@ def api_nuevo_desde_caja():
 
 
 # ══════════════════════════════════════════════════════════════════════════
-# CUENTAS POR PAGAR A PROVEEDORES EXTERNOS (/externos/cuentas_por_pagar)
+# CUENTAS POR PAGAR Y ESTADO DE CUENTA DE PROVEEDORES EXTERNOS
 # ══════════════════════════════════════════════════════════════════════════
+
+def _recalcular_facturas_proveedor(proveedor_nombre):
+    """
+    Sincroniza el estado de las facturas de un proveedor según sus abonos directos
+    y abonos generales a la cuenta del proveedor (FIFO sobre facturas más antiguas).
+    """
+    facturas = ProviderInvoice.query.filter_by(proveedor=proveedor_nombre).order_by(ProviderInvoice.fecha_creacion.asc()).all()
+    abonos_generales = ProviderPayment.query.filter_by(proveedor=proveedor_nombre, invoice_id=None).order_by(ProviderPayment.fecha_abono.asc()).all()
+    bolsa_general = sum(float(a.monto or 0) for a in abonos_generales)
+
+    ahora = obtener_hora_bogota()
+    for f in facturas:
+        costo = float(f.monto_costo or 0)
+        abonado_directo = sum(float(a.monto or 0) for a in f.abonos)
+        # Si estaba marcada como PAGADO antes de existir la tabla de abonos y no tiene abonos, respetarla
+        if f.estado == 'PAGADO' and not f.abonos and bolsa_general <= 0:
+            continue
+
+        restante = max(0.0, costo - abonado_directo)
+        aplicado_general = min(restante, bolsa_general)
+        bolsa_general -= aplicado_general
+        nuevo_restante = max(0.0, restante - aplicado_general)
+
+        if nuevo_restante <= 0.5:
+            f.estado = 'PAGADO'
+            if not f.fecha_pago:
+                f.fecha_pago = ahora
+        elif (abonado_directo + aplicado_general) > 0:
+            f.estado = 'PARCIAL'
+        else:
+            f.estado = 'PENDIENTE'
+
 
 @externos_bp.route('/cuentas_por_pagar', methods=['GET'])
 @login_required
 def cuentas_por_pagar():
     estado = request.args.get('estado', 'PENDIENTE').strip()
+    proveedor_filtro = request.args.get('proveedor', '').strip()
+
+    todas_cuentas = ProviderInvoice.query.order_by(ProviderInvoice.fecha_creacion.desc()).all()
+    todos_abonos = ProviderPayment.query.order_by(ProviderPayment.fecha_abono.desc()).all()
+
+    # Agrupar estado de cuenta por proveedor
+    resumen_map = {}
+    for p_reg in obtener_proveedores_registrados():
+        resumen_map[p_reg] = {
+            'proveedor': p_reg,
+            'total_facturado': 0.0,
+            'total_abonado': 0.0,
+            'saldo_pendiente': 0.0,
+            'facturas_count': 0,
+            'facturas_pendientes': 0,
+            'abonos_count': 0,
+            'ultima_actividad': None
+        }
+
+    for c in todas_cuentas:
+        p_nom = (c.proveedor or 'Sin Proveedor').strip()
+        if p_nom not in resumen_map:
+            resumen_map[p_nom] = {
+                'proveedor': p_nom,
+                'total_facturado': 0.0,
+                'total_abonado': 0.0,
+                'saldo_pendiente': 0.0,
+                'facturas_count': 0,
+                'facturas_pendientes': 0,
+                'abonos_count': 0,
+                'ultima_actividad': None
+            }
+        monto_f = float(c.monto_costo or 0)
+        resumen_map[p_nom]['total_facturado'] += monto_f
+        resumen_map[p_nom]['facturas_count'] += 1
+        if c.estado != 'PAGADO':
+            resumen_map[p_nom]['facturas_pendientes'] += 1
+        # Si fue marcada como PAGADO antes sin registro en ProviderPayment, sumar ese pago histórico
+        if c.estado == 'PAGADO' and not c.abonos:
+            resumen_map[p_nom]['total_abonado'] += monto_f
+        if c.fecha_creacion and (not resumen_map[p_nom]['ultima_actividad'] or c.fecha_creacion > resumen_map[p_nom]['ultima_actividad']):
+            resumen_map[p_nom]['ultima_actividad'] = c.fecha_creacion
+
+    for ab in todos_abonos:
+        p_nom = (ab.proveedor or 'Sin Proveedor').strip()
+        if p_nom not in resumen_map:
+            resumen_map[p_nom] = {
+                'proveedor': p_nom,
+                'total_facturado': 0.0,
+                'total_abonado': 0.0,
+                'saldo_pendiente': 0.0,
+                'facturas_count': 0,
+                'facturas_pendientes': 0,
+                'abonos_count': 0,
+                'ultima_actividad': None
+            }
+        resumen_map[p_nom]['total_abonado'] += float(ab.monto or 0)
+        resumen_map[p_nom]['abonos_count'] += 1
+        if ab.fecha_abono and (not resumen_map[p_nom]['ultima_actividad'] or ab.fecha_abono > resumen_map[p_nom]['ultima_actividad']):
+            resumen_map[p_nom]['ultima_actividad'] = ab.fecha_abono
+
+    for p_nom, datos in resumen_map.items():
+        datos['saldo_pendiente'] = max(0.0, datos['total_facturado'] - datos['total_abonado'])
+        datos['pendiente'] = datos['saldo_pendiente']
+        datos['pagado'] = datos['total_abonado']
+        datos['items_pendientes'] = datos['facturas_pendientes']
+
+    resumen_proveedores = sorted(resumen_map.values(), key=lambda x: (-x['saldo_pendiente'], -x['total_facturado'], x['proveedor'].lower()))
+
+    total_pendiente = sum(rp['saldo_pendiente'] for rp in resumen_proveedores)
+    total_pagado = sum(rp['total_abonado'] for rp in resumen_proveedores)
+
     query = ProviderInvoice.query
-    if estado and estado != 'TODAS':
-        query = query.filter_by(estado=estado)
+    if estado == 'PENDIENTE':
+        query = query.filter(ProviderInvoice.estado.in_(['PENDIENTE', 'PARCIAL']))
+    elif estado == 'PAGADO':
+        query = query.filter_by(estado='PAGADO')
+    if proveedor_filtro:
+        query = query.filter_by(proveedor=proveedor_filtro)
 
     cuentas = query.order_by(ProviderInvoice.fecha_creacion.desc()).all()
-    total_pendiente = sum(float(c.monto_costo or 0) for c in ProviderInvoice.query.filter_by(estado='PENDIENTE').all())
-    total_pagado = sum(float(c.monto_costo or 0) for c in ProviderInvoice.query.filter_by(estado='PAGADO').all())
 
     return render_template(
         'externos/cuentas_por_pagar.html',
         cuentas=cuentas,
         estado=estado,
+        proveedor_filtro=proveedor_filtro,
+        resumen_proveedores=resumen_proveedores,
+        proveedores_registrados=obtener_proveedores_registrados(),
         total_pendiente=total_pendiente,
         total_pagado=total_pagado
     )
+
+
+@externos_bp.route('/estado_cuenta/<path:proveedor>', methods=['GET'])
+@login_required
+def estado_cuenta_proveedor(proveedor):
+    prov_clean = (proveedor or '').strip()
+    facturas = ProviderInvoice.query.filter_by(proveedor=prov_clean).order_by(ProviderInvoice.fecha_creacion.desc()).all()
+    abonos = ProviderPayment.query.filter_by(proveedor=prov_clean).order_by(ProviderPayment.fecha_abono.desc()).all()
+
+    total_facturado = sum(float(f.monto_costo or 0) for f in facturas)
+    # Sumar abonos registrados + facturas antiguas que se marcaron PAGADO sin abono asociado
+    pagos_antiguos_sin_abono = sum(float(f.monto_costo or 0) for f in facturas if f.estado == 'PAGADO' and not f.abonos)
+    total_abonado = sum(float(a.monto or 0) for a in abonos) + pagos_antiguos_sin_abono
+    saldo_pendiente = max(0.0, total_facturado - total_abonado)
+
+    facturas_pendientes = [f for f in facturas if f.estado != 'PAGADO']
+
+    return render_template(
+        'externos/estado_cuenta_proveedor.html',
+        proveedor=prov_clean,
+        facturas=facturas,
+        facturas_pendientes=facturas_pendientes,
+        abonos=abonos,
+        total_facturado=total_facturado,
+        total_abonado=total_abonado,
+        saldo_pendiente=saldo_pendiente
+    )
+
+
+@externos_bp.route('/estado_cuenta/abonar', methods=['POST'])
+@login_required
+@admin_required
+def registrar_abono_proveedor():
+    proveedor = (request.form.get('proveedor') or '').strip()
+    invoice_id_raw = (request.form.get('invoice_id') or '').strip()
+    monto = safe_float((request.form.get('monto') or '0').replace(',', '').replace('.', ''), 0.0)
+    metodo_pago = (request.form.get('metodo_pago') or 'transferencia').strip()
+    observacion = (request.form.get('observacion') or '').strip() or None
+
+    if not proveedor or monto <= 0:
+        flash('Debes ingresar un monto de abono válido mayor a $0.', 'danger')
+        return redirect(request.referrer or url_for('externos_bp.cuentas_por_pagar'))
+
+    invoice_id = safe_int(invoice_id_raw, 0) if invoice_id_raw else None
+    if invoice_id == 0:
+        invoice_id = None
+
+    comprobante_filename = None
+    if 'comprobante' in request.files:
+        file = request.files['comprobante']
+        if file and file.filename != '':
+            ext = os.path.splitext(secure_filename(file.filename))[1].lower() or '.jpg'
+            comprobante_filename = f"abono_prov_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            os.makedirs(upload_folder, exist_ok=True)
+            file.save(os.path.join(upload_folder, comprobante_filename))
+
+    try:
+        nuevo_abono = ProviderPayment(
+            proveedor=proveedor,
+            invoice_id=invoice_id,
+            usuario_id=current_user.id,
+            monto=Decimal(str(monto)),
+            metodo_pago=metodo_pago,
+            comprobante_imagen=comprobante_filename,
+            observacion=observacion,
+            fecha_abono=obtener_hora_bogota()
+        )
+        db.session.add(nuevo_abono)
+        db.session.flush()
+
+        _recalcular_facturas_proveedor(proveedor)
+        db.session.commit()
+        flash(f'✅ Abono de ${monto:,.0f} registrado exitosamente en el Estado de Cuenta de "{proveedor}".', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al registrar el abono: {str(e)}', 'danger')
+
+    return redirect(url_for('externos_bp.estado_cuenta_proveedor', proveedor=proveedor))
 
 
 @externos_bp.route('/cuentas_por_pagar/pagar/<int:id>', methods=['POST'])
@@ -456,15 +742,40 @@ def pagar_cuenta_proveedor(id):
     cuenta = ProviderInvoice.query.get_or_404(id)
     if cuenta.estado == 'PAGADO':
         flash('Esta cuenta ya estaba marcada como pagada.', 'info')
-        return redirect(url_for('externos_bp.cuentas_por_pagar'))
+        return redirect(request.referrer or url_for('externos_bp.cuentas_por_pagar'))
+
+    saldo = cuenta.saldo_pendiente
+    metodo_pago = (request.form.get('metodo_pago') or 'efectivo').strip()
+    observacion = (request.form.get('observacion') or f'Pago total factura #{cuenta.id}').strip()
+
+    comprobante_filename = None
+    if 'comprobante' in request.files:
+        file = request.files['comprobante']
+        if file and file.filename != '':
+            ext = os.path.splitext(secure_filename(file.filename))[1].lower() or '.jpg'
+            comprobante_filename = f"pago_prov_{cuenta.id}_{datetime.now().strftime('%Y%m%d%H%M%S')}{ext}"
+            upload_folder = current_app.config['UPLOAD_FOLDER']
+            os.makedirs(upload_folder, exist_ok=True)
+            file.save(os.path.join(upload_folder, comprobante_filename))
 
     try:
+        if saldo > 0:
+            db.session.add(ProviderPayment(
+                proveedor=cuenta.proveedor,
+                invoice_id=cuenta.id,
+                usuario_id=current_user.id,
+                monto=Decimal(str(saldo)),
+                metodo_pago=metodo_pago,
+                comprobante_imagen=comprobante_filename,
+                observacion=observacion,
+                fecha_abono=obtener_hora_bogota()
+            ))
         cuenta.estado = 'PAGADO'
         cuenta.fecha_pago = obtener_hora_bogota()
         db.session.commit()
-        flash(f'✅ Pago al proveedor "{cuenta.proveedor}" por ${float(cuenta.monto_costo):,.0f} registrado exitosamente.', 'success')
+        flash(f'✅ Pago al proveedor "{cuenta.proveedor}" por ${float(saldo or cuenta.monto_costo):,.0f} registrado en su Estado de Cuenta.', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'Error al registrar el pago: {str(e)}', 'danger')
 
-    return redirect(url_for('externos_bp.cuentas_por_pagar'))
+    return redirect(request.referrer or url_for('externos_bp.cuentas_por_pagar'))

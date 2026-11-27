@@ -35,29 +35,41 @@ def calcular_totales_dia(ventas_del_dia):
     return total_efectivo, total_transferencia
 
 def procesar_unidades_ch(ventas):
+    """
+    Calcula las unidades CHx15, CHx10, etc. EXCLUSIVAMENTE para el inventario de Accesorios (Tienda).
+    Ignora por completo cualquier celular propio, celular externo o producto de bodega.
+    """
     desglose = []
     total_general_ch = Decimal('0')
     
     for v in ventas:
+        if getattr(v, 'tipo_venta', 'general') == 'celulares':
+            continue
         for detalle in v.detalles:
-            nombre = ""
+            # Solo procesar productos del inventario de Accesorios ('tienda') o accesorios externos
             if detalle.producto:
-                nombre = detalle.producto.nombre
+                t_inv = (detalle.producto.tipo_inventario or 'tienda').lower()
+                sub_ext = (detalle.producto.subtipo_externo or '').lower()
+                if t_inv == 'celulares' or t_inv == 'bodega' or (t_inv == 'externos' and sub_ext == 'celular'):
+                    continue
+                nombre = detalle.producto.nombre or ""
             elif detalle.nombre_manual:
                 nombre = detalle.nombre_manual
+            else:
+                continue
                 
             subcategoria = ""
             if detalle.variante:
-                subcategoria = detalle.variante.nombre_variante
+                subcategoria = detalle.variante.nombre_variante or ""
             
-            # Buscar el patrón 'CH', opcionalmente con espacio y/o 'x', seguido de un número
-            match_nombre = re.search(r'CH\s*x?(\d+)', nombre, re.IGNORECASE)
-            match_sub = re.search(r'CH\s*x?(\d+)', subcategoria, re.IGNORECASE)
+            # Buscar el patrón 'CH', opcionalmente con espacio y/o 'x', seguido de un número (ej. CHx15, CHx10)
+            match_nombre = re.search(r'\bCH\s*x?\s*(\d+)\b', nombre, re.IGNORECASE) or re.search(r'CH\s*x?(\d+)', nombre, re.IGNORECASE)
+            match_sub = re.search(r'\bCH\s*x?\s*(\d+)\b', subcategoria, re.IGNORECASE) or re.search(r'CH\s*x?(\d+)', subcategoria, re.IGNORECASE)
             
             valor_extraido = None
             error_formato = False
             
-            # Prioridad: nombre del producto
+            # Prioridad: nombre del producto o subcategoría
             if match_nombre:
                 try:
                     valor_extraido = int(match_nombre.group(1))
@@ -69,8 +81,8 @@ def procesar_unidades_ch(ventas):
                 except ValueError:
                     error_formato = True
             else:
-                # Si se detecta 'CH' pero no hay un número válido después
-                if re.search(r'CH', nombre, re.IGNORECASE) or re.search(r'CH', subcategoria, re.IGNORECASE):
+                # Si se detecta la sigla 'CH' aislada pero sin número válido después
+                if re.search(r'\bCH\b', nombre, re.IGNORECASE) or re.search(r'\bCH\b', subcategoria, re.IGNORECASE):
                     error_formato = True
             
             if valor_extraido is not None:

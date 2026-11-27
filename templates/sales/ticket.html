@@ -552,7 +552,10 @@
                         <span class="prod-meta">Variante: {{ detalle.variante.nombre_variante }}</span>
                         {% endif %}
                         {% if detalle.producto and detalle.producto.imei %}
-                        <span class="prod-meta">IMEI: {{ detalle.producto.imei }}</span>
+                        <span class="prod-meta">IMEI 1: {{ detalle.producto.imei }}</span>
+                        {% if detalle.producto.imei2 %}
+                        <span class="prod-meta">IMEI 2: {{ detalle.producto.imei2 }}</span>
+                        {% endif %}
                         {% elif detalle.producto and detalle.producto.sku %}
                         <span class="prod-meta">Ref: {{ detalle.producto.sku }}</span>
                         {% endif %}

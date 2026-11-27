@@ -7,29 +7,36 @@
     <div class="col-12 col-lg-10 col-xl-9">
         <!-- Encabezado de la Sección -->
         <div class="text-center mb-4">
-            <span class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2" style="width: 56px; height: 56px; background: rgba(225, 29, 72, 0.12); color: #E11D48;">
+            <span class="d-inline-flex align-items-center justify-content-center rounded-circle mb-2"
+                style="width: 56px; height: 56px; background: rgba(225, 29, 72, 0.12); color: #E11D48;">
                 <i class="fa-solid fa-cash-register fs-3"></i>
             </span>
             <h2 class="fw-bold text-brand-black mb-1">Cierre Diario y Arqueo de Caja</h2>
-            <p class="text-muted small">Consolidación de ingresos en efectivo, transferencias bancarias y balance físico en caja</p>
+            <p class="text-muted small">Consolidación de ingresos en efectivo, transferencias bancarias y balance físico
+                en caja</p>
         </div>
 
         <!-- Seleccionador de Fecha -->
         <div class="card card-custom p-3 p-md-4 mb-4 border-0 shadow-sm rounded-4 bg-white">
-            <form id="fechaForm" action="{{ url_for('arqueo_bp.nuevo') }}" method="GET" class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
+            <form id="fechaForm" action="{{ url_for('arqueo_bp.nuevo') }}" method="GET"
+                class="d-flex flex-column flex-sm-row align-items-center justify-content-between gap-3">
                 <div class="d-flex align-items-center gap-2">
                     <i class="fa-regular fa-calendar-days text-brand-pink fs-5"></i>
                     <label for="fecha" class="fw-bold text-brand-black m-0">Fecha del Arqueo:</label>
                 </div>
                 <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
-                    <input type="date" id="fecha" name="fecha" value="{{ fecha }}" class="form-control rounded-pill px-3 shadow-none border bg-light" onchange="this.form.submit()" required>
-                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold" style="display:none;">Consultar</button>
+                    <input type="date" id="fecha" name="fecha" value="{{ fecha }}"
+                        class="form-control rounded-pill px-3 shadow-none border bg-light" onchange="this.form.submit()"
+                        required>
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold"
+                        style="display:none;">Consultar</button>
                 </div>
             </form>
         </div>
 
         {% if arqueo_existente %}
-        <div class="card border-0 rounded-4 shadow-sm p-4 text-center mb-4" style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-left: 5px solid #F59E0B !important;">
+        <div class="card border-0 rounded-4 shadow-sm p-4 text-center mb-4"
+            style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-left: 5px solid #F59E0B !important;">
             <div class="mb-3">
                 <span class="p-3 rounded-circle bg-warning bg-opacity-25 text-warning fs-3 d-inline-block">
                     <i class="fa-solid fa-lock"></i>
@@ -37,14 +44,20 @@
             </div>
             <h5 class="fw-bold text-dark mb-2">Caja del Día Cerrada</h5>
             <p class="text-secondary mb-3">
-                La caja del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{ arqueo_existente.cajero.nombre if arqueo_existente.cajero else 'Usuario' }}</strong>. No se puede volver a cerrar.
+                La caja del día <strong>{{ fecha }}</strong> ya fue cerrada por <strong>{{
+                    arqueo_existente.cajero.nombre if arqueo_existente.cajero else 'Usuario' }}</strong>. No se puede
+                volver a cerrar.
             </p>
             <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
-                <a href="{{ url_for('arqueo_bp.reporte', fecha_inicio=fecha, fecha_fin=fecha) }}" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
+                <a href="{{ url_for('arqueo_bp.reporte', fecha_inicio=fecha, fecha_fin=fecha) }}"
+                    class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">
                     <i class="fa-solid fa-file-invoice me-1"></i> Ver Reporte del Cierre
                 </a>
                 {% if current_user.rol == 'admin' %}
-                <form action="{{ url_for('arqueo_bp.anular', id=arqueo_existente.id, fecha_inicio=fecha, fecha_fin=fecha) }}" method="POST" class="d-inline" onsubmit="return confirm('¿Estás seguro de anular el cierre de caja del día {{ fecha }}? La caja se reabrirá para poder guardar un nuevo arqueo.');">
+                <form
+                    action="{{ url_for('arqueo_bp.anular', id=arqueo_existente.id, fecha_inicio=fecha, fecha_fin=fecha) }}"
+                    method="POST" class="d-inline"
+                    onsubmit="return confirm('¿Estás seguro de anular el cierre de caja del día {{ fecha }}? La caja se reabrirá para poder guardar un nuevo arqueo.');">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <button type="submit" class="btn btn-outline-danger rounded-pill px-4 fw-bold">
                         <i class="fa-solid fa-arrow-rotate-left me-1"></i> Anular Cierre (Reabrir)
@@ -61,92 +74,119 @@
             <div class="row g-4 mb-4">
                 <!-- Columna Izquierda: Datos del Sistema -->
                 <div class="col-12 col-md-6">
-                    <div class="card card-custom p-4 h-100 border-0 shadow-sm rounded-4 bg-white d-flex flex-column justify-content-between">
+                    <div
+                        class="card card-custom p-4 h-100 border-0 shadow-sm rounded-4 bg-white d-flex flex-column justify-content-between">
                         <div>
                             <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
                                 <h5 class="fw-bold text-brand-black m-0">
                                     <i class="fa-solid fa-calculator text-brand-pink me-2"></i> Datos del Sistema
                                 </h5>
-                                <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill small">Automático</span>
+                                <span
+                                    class="badge bg-light text-secondary border px-2 py-1 rounded-pill small">Automático</span>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label class="form-label text-muted small fw-bold text-uppercase mb-1">
-                                    <i class="fa-solid fa-money-bill-wave text-success me-1"></i> Total Ventas en Efectivo
+                                    <i class="fa-solid fa-money-bill-wave text-success me-1"></i> Total Ventas en
+                                    Efectivo
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-0 fw-bold text-success">$</span>
-                                    <input type="text" id="total_efectivo_visual" class="form-control fw-bolder text-success fs-5 bg-white border-0" value="{{ (total_efectivo)|cop }}" readonly disabled>
+                                    <input type="text" id="total_efectivo_visual"
+                                        class="form-control fw-bolder text-success fs-5 bg-white border-0"
+                                        value="{{ (total_efectivo)|cop }}" readonly disabled>
                                 </div>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label text-muted small fw-bold text-uppercase mb-1">
-                                    <i class="fa-solid fa-mobile-screen text-primary me-1"></i> Total Medios Digitales / Bancos
+                                    <i class="fa-solid fa-mobile-screen text-primary me-1"></i> Total Medios Digitales /
+                                    Bancos
                                 </label>
                                 <div class="input-group">
                                     <span class="input-group-text bg-white border-0 fw-bold text-primary">$</span>
-                                    <input type="text" id="total_transferencia_visual" class="form-control fw-bolder text-primary fs-5 bg-white border-0" value="{{ (total_transferencia)|cop }}" readonly disabled>
+                                    <input type="text" id="total_transferencia_visual"
+                                        class="form-control fw-bolder text-primary fs-5 bg-white border-0"
+                                        value="{{ (total_transferencia)|cop }}" readonly disabled>
                                 </div>
                             </div>
 
                             <!-- Venta Neta Total (Venta + Banco) -->
-                            <div class="p-3 rounded-4 mb-3 text-center shadow-sm" style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border-left: 4px solid #10B981 !important;">
-                                <span class="d-block mb-1 fw-bold text-uppercase" style="color: #065F46; font-size: 0.75rem; letter-spacing: 0.5px;">
+                            <div class="p-3 rounded-4 mb-3 text-center shadow-sm"
+                                style="background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%); border-left: 4px solid #10B981 !important;">
+                                <span class="d-block mb-1 fw-bold text-uppercase"
+                                    style="color: #065F46; font-size: 0.75rem; letter-spacing: 0.5px;">
                                     <i class="fa-solid fa-chart-line me-1"></i> Venta Neta + Banco
                                 </span>
                                 <h3 class="fw-bolder mb-1" style="color: #047857;">
-                                    ${{ (total_efectivo|float + total_transferencia|float - total_general_ch|float - total_celulares|float - (gastos_automaticos|float if gastos_automaticos else 0.0))|cop }}
+                                    ${{ (total_efectivo|float + total_transferencia|float - total_general_ch|float -
+                                    total_celulares|float - (gastos_automaticos|float if gastos_automaticos else
+                                    0.0))|cop }}
                                 </h3>
-                                <small class="text-muted d-block" style="font-size: 0.7rem;">(Efectivo + Bancos) &minus; CH &minus; Celulares &minus; Gastos</small>
+                                <small class="text-muted d-block" style="font-size: 0.7rem;">(Efectivo + Bancos) &minus;
+                                    CH &minus; Celulares &minus; Gastos</small>
                             </div>
 
                             <!-- Deducciones informativas -->
                             <div class="d-flex flex-column gap-2">
-                                <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border bg-light" style="font-size: 0.85rem;">
-                                    <span class="text-secondary fw-semibold"><i class="fa-solid fa-tags me-2 text-brand-pink"></i> Unidades CH detectadas:</span>
+                                <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border bg-light"
+                                    style="font-size: 0.85rem;">
+                                    <span class="text-secondary fw-semibold"><i
+                                            class="fa-solid fa-tags me-2 text-brand-pink"></i> Unidades CH
+                                        detectadas:</span>
                                     <strong class="text-dark">${{ (total_general_ch)|cop }}</strong>
                                 </div>
-                                <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border bg-light" style="font-size: 0.85rem;">
-                                    <span class="text-secondary fw-semibold"><i class="fa-solid fa-mobile-screen-button me-2 text-primary"></i> Venta de Celulares:</span>
+                                <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 border bg-light"
+                                    style="font-size: 0.85rem;">
+                                    <span class="text-secondary fw-semibold"><i
+                                            class="fa-solid fa-mobile-screen-button me-2 text-primary"></i> Venta de
+                                        Celulares:</span>
                                     <strong class="text-dark">${{ (total_celulares)|cop }}</strong>
                                 </div>
                             </div>
                         </div>
 
                         <!-- Tarjeta Destacada: Efectivo Esperado en Caja -->
-                        <div class="card border-0 rounded-4 p-3 text-center shadow-sm mt-3" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border-left: 5px solid #E11D48 !important;">
-                            <span class="text-uppercase fw-bold small d-block mb-1" style="color: #9F1239; font-size: 0.75rem; letter-spacing: 0.5px;">
+                        <div class="card border-0 rounded-4 p-3 text-center shadow-sm mt-3"
+                            style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border-left: 5px solid #E11D48 !important;">
+                            <span class="text-uppercase fw-bold small d-block mb-1"
+                                style="color: #9F1239; font-size: 0.75rem; letter-spacing: 0.5px;">
                                 <i class="fa-solid fa-coins me-1"></i> Efectivo Físico Esperado en Caja
                             </span>
                             <h2 class="fw-bolder mb-1" style="color: #881337;">
                                 $ <span id="efectivo_esperado">0</span>
                             </h2>
-                            <small class="text-muted d-block" style="font-size: 0.7rem;">(Base + Efectivo) &minus; Gastos &minus; CH &minus; Celulares</small>
+                            <small class="text-muted d-block" style="font-size: 0.7rem;">(Base + Efectivo) &minus;
+                                Gastos &minus; CH &minus; Celulares</small>
                         </div>
                     </div>
                 </div>
 
                 <!-- Columna Derecha: Ingresos de Cajero -->
                 <div class="col-12 col-md-6">
-                    <div class="card card-custom p-4 h-100 border-0 shadow-sm rounded-4 bg-white d-flex flex-column justify-content-between">
+                    <div
+                        class="card card-custom p-4 h-100 border-0 shadow-sm rounded-4 bg-white d-flex flex-column justify-content-between">
                         <div>
                             <div class="d-flex align-items-center justify-content-between border-bottom pb-2 mb-3">
                                 <h5 class="fw-bold text-brand-black m-0">
                                     <i class="fa-solid fa-user-pen text-brand-pink me-2"></i> Ingreso Manual del Cajero
                                 </h5>
-                                <span class="badge bg-light text-secondary border px-2 py-1 rounded-pill small">Validación</span>
+                                <span
+                                    class="badge bg-light text-secondary border px-2 py-1 rounded-pill small">Validación</span>
                             </div>
-                            
+
                             <div class="mb-3">
                                 <label for="base_inicial" class="form-label fw-bold text-dark small mb-1">
                                     Base Inicial en Efectivo <span class="text-danger">*</span>
                                 </label>
                                 <div class="input-group shadow-none">
                                     <span class="input-group-text bg-light border-0 fw-bold text-muted">$</span>
-                                    <input type="number" step="1" min="0" id="base_inicial" name="base_inicial" class="form-control border-0 bg-light fw-bold fs-6" placeholder="Ej: 100000" required>
+                                    <input type="number" step="1" min="0" id="base_inicial" name="base_inicial"
+                                        class="form-control border-0 bg-light fw-bold fs-6" placeholder="Ej: 100000"
+                                        required>
                                 </div>
-                                <div class="form-text small text-muted">Monto con el que inició la caja al abrir el turno.</div>
+                                <div class="form-text small text-muted">Monto con el que inició la caja al abrir el
+                                    turno.</div>
                             </div>
 
                             <div class="mb-3">
@@ -155,9 +195,12 @@
                                 </label>
                                 <div class="input-group shadow-none">
                                     <span class="input-group-text bg-light border-0 fw-bold text-danger">$-</span>
-                                    <input type="number" step="1" min="0" id="gastos_del_dia" name="gastos_del_dia" class="form-control border-0 bg-light fw-bold text-danger fs-6" value="{{ gastos_automaticos|int if gastos_automaticos else 0 }}" readonly>
+                                    <input type="number" step="1" min="0" id="gastos_del_dia" name="gastos_del_dia"
+                                        class="form-control border-0 bg-light fw-bold text-danger fs-6"
+                                        value="{{ gastos_automaticos|int if gastos_automaticos else 0 }}" readonly>
                                 </div>
-                                <small class="form-text text-muted">Suma automática de los gastos registrados hoy.</small>
+                                <small class="form-text text-muted">Suma automática de los gastos registrados
+                                    hoy.</small>
                             </div>
 
                             <div class="mb-3">
@@ -166,14 +209,20 @@
                                 </label>
                                 <div class="input-group shadow-none">
                                     <span class="input-group-text bg-light border-0 fw-bold text-success">$</span>
-                                    <input type="number" step="1" min="0" id="efectivo_fisico_contado" name="efectivo_fisico_contado" class="form-control border-0 bg-light fw-bold fs-6" placeholder="Dinero físico contado en cajón" required>
+                                    <input type="number" step="1" min="0" id="efectivo_fisico_contado"
+                                        name="efectivo_fisico_contado"
+                                        class="form-control border-0 bg-light fw-bold fs-6"
+                                        placeholder="Dinero físico contado en cajón" required>
                                 </div>
-                                <small class="form-text text-muted">Billetes y monedas contados físicamente al cerrar.</small>
+                                <small class="form-text text-muted">Billetes y monedas contados físicamente al
+                                    cerrar.</small>
                             </div>
 
                             <!-- Indicador en Vivo de Diferencia (Faltante / Sobrante) -->
-                            <div id="box_diferencia_efectivo" class="p-3 rounded-4 mb-3 text-center border" style="background: #F8FAFC;">
-                                <span class="text-uppercase fw-bold small d-block mb-1 text-muted" id="label_diferencia_efectivo" style="font-size: 0.72rem;">
+                            <div id="box_diferencia_efectivo" class="p-3 rounded-4 mb-3 text-center border"
+                                style="background: #F8FAFC;">
+                                <span class="text-uppercase fw-bold small d-block mb-1 text-muted"
+                                    id="label_diferencia_efectivo" style="font-size: 0.72rem;">
                                     Diferencia de Efectivo (Faltante / Sobrante)
                                 </span>
                                 <h4 class="fw-bolder mb-0" id="valor_diferencia_efectivo">$ 0</h4>
@@ -183,14 +232,18 @@
                                 <label for="observaciones_gastos" class="form-label fw-bold text-dark small mb-1">
                                     Observaciones o Novedades de Caja
                                 </label>
-                                <textarea id="observaciones_gastos" name="observaciones_gastos" rows="2" class="form-control bg-light border-0" placeholder="Anota cualquier descuadre, detalle de gasto o justificación relevante..."></textarea>
+                                <textarea id="observaciones_gastos" name="observaciones_gastos" rows="2"
+                                    class="form-control bg-light border-0"
+                                    placeholder="Anota cualquier descuadre, detalle de gasto o justificación relevante..."></textarea>
                             </div>
                         </div>
 
-                        <div class="alert p-3 rounded-4 border-0 mb-0" style="background: #F8FAFC; border: 1px dashed #CBD5E1 !important;">
+                        <div class="alert p-3 rounded-4 border-0 mb-0"
+                            style="background: #F8FAFC; border: 1px dashed #CBD5E1 !important;">
                             <small class="text-muted d-block">
                                 <i class="fa-solid fa-circle-info text-primary me-1"></i>
-                                Al guardar este arqueo, el sistema congelará las transacciones del día para generar el reporte contable auditado.
+                                Al guardar este arqueo, el sistema congelará las transacciones del día para generar el
+                                reporte contable auditado.
                             </small>
                         </div>
                     </div>
@@ -203,18 +256,19 @@
                     <h5 class="fw-bold text-brand-black m-0">
                         <i class="fa-solid fa-receipt text-danger me-2"></i> Detalle de Gastos del Día
                     </h5>
-                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-1 rounded-pill fw-bold">
+                    <span
+                        class="badge bg-danger bg-opacity-10 text-danger border border-danger px-3 py-1 rounded-pill fw-bold">
                         Total Gastos: ${{ (gastos_automaticos)|cop }}
                     </span>
                 </div>
-                
+
                 <div class="table-responsive">
                     <table class="table table-bordered table-sm fw-semibold mb-0 table-hover align-middle">
                         <thead class="table-light text-center text-uppercase" style="font-size: 0.78rem;">
                             <tr>
                                 <th width="10%">ID</th>
                                 <th width="15%">Hora</th>
-                                <th width="18%">Tipo / Categoría</th>
+
                                 <th width="15%">Método Pago</th>
                                 <th>Descripción / Concepto</th>
                                 <th width="16%" class="text-end text-danger">Monto</th>
@@ -223,21 +277,26 @@
                         <tbody style="font-size: 0.85rem;">
                             {% for g in gastos_del_dia_lista %}
                             <tr>
-                                <td class="text-center text-secondary fw-bold">#{{ "%04d"|format(g.id) if g.id is number else g.id }}</td>
-                                <td class="text-center text-muted">{{ g.fecha_gasto.strftime('%H:%M') if g.fecha_gasto else '-' }}</td>
+                                <td class="text-center text-secondary fw-bold">#{{ "%04d"|format(g.id) if g.id is number
+                                    else g.id }}</td>
+                                <td class="text-center text-muted">{{ g.fecha_gasto.strftime('%H:%M') if g.fecha_gasto
+                                    else '-' }}</td>
                                 <td class="text-center">
                                     {% if g.categoria == 'Pago Prod. Externo' %}
-                                        <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-2 py-1">
-                                            <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Prod. Externo
-                                        </span>
+                                    <span
+                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-2 py-1">
+                                        <i class="fa-solid fa-arrow-right-arrow-left me-1"></i> Prod. Externo
+                                    </span>
                                     {% else %}
-                                        <span class="badge bg-light text-dark border rounded-pill px-2 py-1">
-                                            {{ g.categoria or g.tipo_gasto }}
-                                        </span>
+                                    <span class="badge bg-light text-dark border rounded-pill px-2 py-1">
+                                        {{ g.categoria or g.tipo_gasto }}
+                                    </span>
                                     {% endif %}
                                 </td>
                                 <td class="text-center">
-                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-1 text-uppercase" style="font-size: 0.75rem;">
+                                    <span
+                                        class="badge bg-light text-secondary border rounded-pill px-2 py-1 text-uppercase"
+                                        style="font-size: 0.75rem;">
                                         {{ g.metodo_pago or 'Efectivo' }}
                                     </span>
                                 </td>
@@ -246,7 +305,8 @@
                             </tr>
                             {% else %}
                             <tr>
-                                <td colspan="6" class="text-center text-muted p-3">No hay gastos registrados en esta fecha.</td>
+                                <td colspan="6" class="text-center text-muted p-3">No hay gastos registrados en esta
+                                    fecha.</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -256,7 +316,8 @@
 
             <!-- Botón de Envío -->
             <div class="d-grid mt-4">
-                <button type="submit" class="btn btn-lg rounded-pill py-3 fw-bold text-white shadow-sm" style="background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%); border: none; letter-spacing: 0.5px;">
+                <button type="submit" class="btn btn-lg rounded-pill py-3 fw-bold text-white shadow-sm"
+                    style="background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%); border: none; letter-spacing: 0.5px;">
                     <i class="fa-solid fa-lock me-2"></i> Cerrar Caja y Guardar Arqueo del Día
                 </button>
             </div>
@@ -266,62 +327,62 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const totalEfectivo = parseInt("{{ total_efectivo|int if total_efectivo else 0 }}", 10) || 0;
-    const totalCH = parseInt("{{ total_general_ch|int if total_general_ch else 0 }}", 10) || 0;
-    const totalCelulares = parseInt("{{ total_celulares|int if total_celulares else 0 }}", 10) || 0;
-    
-    const inputBaseInicial = document.getElementById("base_inicial");
-    const inputGastos = document.getElementById("gastos_del_dia");
-    const inputFisicoContado = document.getElementById("efectivo_fisico_contado");
-    const spanEsperado = document.getElementById("efectivo_esperado");
-    const boxDif = document.getElementById("box_diferencia_efectivo");
-    const labelDif = document.getElementById("label_diferencia_efectivo");
-    const valorDif = document.getElementById("valor_diferencia_efectivo");
+    document.addEventListener("DOMContentLoaded", function () {
+        const totalEfectivo = parseInt("{{ total_efectivo|int if total_efectivo else 0 }}", 10) || 0;
+        const totalCH = parseInt("{{ total_general_ch|int if total_general_ch else 0 }}", 10) || 0;
+        const totalCelulares = parseInt("{{ total_celulares|int if total_celulares else 0 }}", 10) || 0;
 
-    const formatoCOP = (num) => Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        const inputBaseInicial = document.getElementById("base_inicial");
+        const inputGastos = document.getElementById("gastos_del_dia");
+        const inputFisicoContado = document.getElementById("efectivo_fisico_contado");
+        const spanEsperado = document.getElementById("efectivo_esperado");
+        const boxDif = document.getElementById("box_diferencia_efectivo");
+        const labelDif = document.getElementById("label_diferencia_efectivo");
+        const valorDif = document.getElementById("valor_diferencia_efectivo");
 
-    function calcularEsperado() {
-        if(!inputBaseInicial || !spanEsperado) return;
-        const base = parseFloat(inputBaseInicial.value) || 0;
-        const gastos = parseFloat(inputGastos.value) || 0;
-        const contado = parseFloat(inputFisicoContado ? inputFisicoContado.value : 0) || 0;
+        const formatoCOP = (num) => Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
-        const esperado = (base + totalEfectivo) - gastos - totalCH - totalCelulares;
-        spanEsperado.textContent = formatoCOP(esperado);
+        function calcularEsperado() {
+            if (!inputBaseInicial || !spanEsperado) return;
+            const base = parseFloat(inputBaseInicial.value) || 0;
+            const gastos = parseFloat(inputGastos.value) || 0;
+            const contado = parseFloat(inputFisicoContado ? inputFisicoContado.value : 0) || 0;
 
-        if (inputFisicoContado && valorDif) {
-            const diff = contado - esperado;
-            if (!inputFisicoContado.value) {
-                boxDif.style.background = "#F8FAFC";
-                labelDif.textContent = "Ingresa el conteo físico para calcular diferencia";
-                valorDif.textContent = "$ 0";
-                valorDif.className = "fw-bolder mb-0 text-muted";
-            } else if (Math.round(diff) === 0) {
-                boxDif.style.background = "#ECFDF5";
-                labelDif.textContent = "✅ Caja Cuadrada Exacta";
-                valorDif.textContent = "$ 0";
-                valorDif.className = "fw-bolder mb-0 text-success";
-            } else if (diff > 0) {
-                boxDif.style.background = "#EFF6FF";
-                labelDif.textContent = "➕ Sobrante en Caja";
-                valorDif.textContent = "+ $" + formatoCOP(diff);
-                valorDif.className = "fw-bolder mb-0 text-primary";
-            } else {
-                boxDif.style.background = "#FEF2F2";
-                labelDif.textContent = "⚠️ Faltante en Caja";
-                valorDif.textContent = "- $" + formatoCOP(Math.abs(diff));
-                valorDif.className = "fw-bolder mb-0 text-danger";
+            const esperado = (base + totalEfectivo) - gastos - totalCH - totalCelulares;
+            spanEsperado.textContent = formatoCOP(esperado);
+
+            if (inputFisicoContado && valorDif) {
+                const diff = contado - esperado;
+                if (!inputFisicoContado.value) {
+                    boxDif.style.background = "#F8FAFC";
+                    labelDif.textContent = "Ingresa el conteo físico para calcular diferencia";
+                    valorDif.textContent = "$ 0";
+                    valorDif.className = "fw-bolder mb-0 text-muted";
+                } else if (Math.round(diff) === 0) {
+                    boxDif.style.background = "#ECFDF5";
+                    labelDif.textContent = "✅ Caja Cuadrada Exacta";
+                    valorDif.textContent = "$ 0";
+                    valorDif.className = "fw-bolder mb-0 text-success";
+                } else if (diff > 0) {
+                    boxDif.style.background = "#EFF6FF";
+                    labelDif.textContent = "➕ Sobrante en Caja";
+                    valorDif.textContent = "+ $" + formatoCOP(diff);
+                    valorDif.className = "fw-bolder mb-0 text-primary";
+                } else {
+                    boxDif.style.background = "#FEF2F2";
+                    labelDif.textContent = "⚠️ Faltante en Caja";
+                    valorDif.textContent = "- $" + formatoCOP(Math.abs(diff));
+                    valorDif.className = "fw-bolder mb-0 text-danger";
+                }
             }
         }
-    }
 
-    if(inputBaseInicial) {
-        inputBaseInicial.addEventListener("input", calcularEsperado);
-        if(inputGastos) inputGastos.addEventListener("input", calcularEsperado);
-        if(inputFisicoContado) inputFisicoContado.addEventListener("input", calcularEsperado);
-        calcularEsperado(); // Cálculo inicial
-    }
-});
+        if (inputBaseInicial) {
+            inputBaseInicial.addEventListener("input", calcularEsperado);
+            if (inputGastos) inputGastos.addEventListener("input", calcularEsperado);
+            if (inputFisicoContado) inputFisicoContado.addEventListener("input", calcularEsperado);
+            calcularEsperado(); // Cálculo inicial
+        }
+    });
 </script>
 {% endblock %}

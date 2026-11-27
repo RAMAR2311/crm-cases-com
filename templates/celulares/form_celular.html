@@ -25,12 +25,12 @@
                 </h6>
                 <div class="row g-3 mb-4">
                     <div class="col-md-4">
-                        <label class="form-label fw-bold">IMEI Principal (15 dígitos) <span class="text-danger">*</span></label>
-                        <input type="text" name="imei" class="form-control font-monospace fw-bold" value="{{ celular.imei if (celular and celular.imei) else '' }}" placeholder="Escanea o digita el IMEI..." required autofocus>
+                        <label class="form-label fw-bold">IMEI 1 (Principal - 15 dígitos) <span class="text-danger">*</span></label>
+                        <input type="text" name="imei" class="form-control font-monospace fw-bold" value="{{ celular.imei if (celular and celular.imei) else '' }}" placeholder="Escanea o digita el IMEI 1..." required autofocus>
                     </div>
                     <div class="col-md-4">
-                        <label class="form-label fw-bold">IMEI 2 / Dual SIM (Opcional)</label>
-                        <input type="text" name="imei2" class="form-control font-monospace" value="{{ celular.imei2 if (celular and celular.imei2) else '' }}" placeholder="Opcional">
+                        <label class="form-label fw-bold text-muted">IMEI 2 (Opcional - Vacío en Tablet / Watch)</label>
+                        <input type="text" name="imei2" class="form-control font-monospace" value="{{ celular.imei2 if (celular and celular.imei2) else '' }}" placeholder="Opcional (Dejar vacío si solo tiene 1 IMEI)">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-bold">Condición / Estado <span class="text-danger">*</span></label>
@@ -42,24 +42,30 @@
                 </div>
 
                 <h6 class="fw-bold text-uppercase text-muted small mb-3 border-bottom pb-2">
-                    <i class="fa-solid fa-microchip me-1 text-brand-blue"></i> 2. Especificaciones Técnicas y Proveedor
+                    <i class="fa-solid fa-microchip me-1 text-brand-blue"></i> 2. Especificaciones Técnicas y Proveedor (Lista Estandarizada)
                 </h6>
+                <input type="hidden" name="marca" id="formcel_marca_hidden" value="{{ celular.marca if (celular and celular.marca) else '' }}">
+                <input type="hidden" name="modelo_celular" id="formcel_modelo_hidden" value="{{ celular.modelo_celular if (celular and celular.modelo_celular) else '' }}">
                 <div class="row g-3 mb-4">
                     <div class="col-md-3">
                         <label class="form-label fw-bold">Marca <span class="text-danger">*</span></label>
-                        <input type="text" name="marca" class="form-control" value="{{ celular.marca if (celular and celular.marca) else '' }}" placeholder="Ej: Apple, Samsung, Xiaomi" required>
+                        <select id="formcel_marca_select" class="form-select fw-bold" required></select>
+                        <input type="text" id="formcel_marca_custom" class="form-control form-control-sm mt-1 d-none" placeholder="Escribir marca...">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label fw-bold">Modelo <span class="text-danger">*</span></label>
-                        <input type="text" name="modelo_celular" class="form-control" value="{{ celular.modelo_celular if (celular and celular.modelo_celular) else '' }}" placeholder="Ej: iPhone 15 Pro Max" required>
+                        <label class="form-label fw-bold">Referencia / Modelo <span class="text-danger">*</span></label>
+                        <select id="formcel_modelo_select" class="form-select fw-bold" required>
+                            <option value="">-- Primero elija Marca --</option>
+                        </select>
+                        <input type="text" id="formcel_modelo_custom" class="form-control form-control-sm mt-1 d-none" placeholder="Escribir referencia...">
                     </div>
                     <div class="col-md-2">
-                        <label class="form-label fw-bold">Memoria / RAM</label>
-                        <input type="text" name="memoria" class="form-control" value="{{ celular.memoria if (celular and celular.memoria) else '' }}" placeholder="Ej: 256GB">
+                        <label class="form-label fw-bold">Capacidad / RAM</label>
+                        <select name="memoria" id="formcel_memoria_select" class="form-select"></select>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label fw-bold">Color</label>
-                        <input type="text" name="color" class="form-control" value="{{ celular.color if (celular and celular.color) else '' }}" placeholder="Ej: Titanio">
+                        <select name="color" id="formcel_color_select" class="form-select"></select>
                     </div>
                     <div class="col-md-2">
                         <label class="form-label fw-bold">% Batería</label>
@@ -109,4 +115,16 @@
         </div>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.initSelectorCelular) {
+        window.initSelectorCelular('formcel', {
+            marca: {{ (celular.marca if (celular and celular.marca) else '')|tojson }},
+            modelo: {{ (celular.modelo_celular if (celular and celular.modelo_celular) else '')|tojson }},
+            memoria: {{ (celular.memoria if (celular and celular.memoria) else '')|tojson }},
+            color: {{ (celular.color if (celular and celular.color) else '')|tojson }}
+        });
+    }
+});
+</script>
 {% endblock %}

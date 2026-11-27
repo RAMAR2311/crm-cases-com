@@ -355,16 +355,49 @@ class ProviderInvoice(db.Model):
     usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     concepto = db.Column(db.String(255), nullable=False)
     monto_costo = db.Column(db.Numeric(10, 2), nullable=False)
-    estado = db.Column(db.String(30), nullable=False, default='PENDIENTE') # 'PENDIENTE', 'PAGADO'
+    estado = db.Column(db.String(30), nullable=False, default='PENDIENTE') # 'PENDIENTE', 'PARCIAL', 'PAGADO'
     fecha_creacion = db.Column(db.DateTime, default=obtener_hora_bogota)
     fecha_pago = db.Column(db.DateTime, nullable=True)
 
     producto = db.relationship('Product', backref='cuentas_por_pagar_externo', lazy=True)
     venta = db.relationship('Sale', backref='cuentas_por_pagar_externo', lazy=True)
     usuario = db.relationship('User', backref='cuentas_externos_registradas', lazy=True)
+    abonos = db.relationship('ProviderPayment', backref='factura', lazy=True, cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super(ProviderInvoice, self).__init__(**kwargs)
+
+    @property
+    def total_abonado(self):
+        if self.abonos:
+            return sum((float(a.monto or 0) for a in self.abonos), 0.0)
+        if self.estado == 'PAGADO':
+            return float(self.monto_costo or 0)
+        return 0.0
+
+    @property
+    def saldo_pendiente(self):
+        return max(0.0, float(self.monto_costo or 0) - self.total_abonado)
+
+
+class ProviderPayment(db.Model):
+    """Abonos y pagos realizados a proveedores externos con soporte de imagen de comprobante."""
+    __tablename__ = 'provider_payments'
+
+    id = db.Column(db.Integer, primary_key=True)
+    proveedor = db.Column(db.String(150), nullable=False, index=True)
+    invoice_id = db.Column(db.Integer, db.ForeignKey('provider_invoices.id'), nullable=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    monto = db.Column(db.Numeric(10, 2), nullable=False)
+    metodo_pago = db.Column(db.String(50), nullable=False, default='transferencia') # 'efectivo', 'nequi', 'bancolombia', 'daviplata'
+    comprobante_imagen = db.Column(db.String(255), nullable=True)
+    observacion = db.Column(db.String(255), nullable=True)
+    fecha_abono = db.Column(db.DateTime, default=obtener_hora_bogota)
+
+    usuario = db.relationship('User', backref='abonos_proveedores_externos', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(ProviderPayment, self).__init__(**kwargs)
 
 class Expense(db.Model):
     __tablename__ = 'expenses'
@@ -382,6 +415,28 @@ class Expense(db.Model):
 
     def __init__(self, **kwargs):
         super(Expense, self).__init__(**kwargs)
+
+
+class Vale(db.Model):
+    """Módulo de Vales / Adelantos asociados a un vendedor con método de entrega, comprobante fotográfico y gasto diario automático."""
+    __tablename__ = 'vales'
+
+    id = db.Column(db.Integer, primary_key=True)
+    vendedor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    registrado_por_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    expense_id = db.Column(db.Integer, db.ForeignKey('expenses.id'), nullable=True)
+    monto = db.Column(db.Numeric(10, 2), nullable=False)
+    metodo_pago = db.Column(db.String(50), nullable=False, default='efectivo') # 'efectivo', 'nequi', 'bancolombia', 'daviplata'
+    comprobante_imagen = db.Column(db.String(255), nullable=True)
+    observacion = db.Column(db.String(255), nullable=True)
+    fecha_vale = db.Column(db.DateTime, default=obtener_hora_bogota, index=True)
+
+    vendedor = db.relationship('User', foreign_keys=[vendedor_id], backref='vales_recibidos', lazy=True)
+    registrado_por = db.relationship('User', foreign_keys=[registrado_por_id], backref='vales_entregados', lazy=True)
+    gasto_asociado = db.relationship('Expense', foreign_keys=[expense_id], backref='vale_origen', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(Vale, self).__init__(**kwargs)
 
 class Cliente(db.Model):
     __tablename__ = 'clientes'

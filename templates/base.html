@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
@@ -7,7 +8,7 @@
     <!-- Favicon y PWA -->
     <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/cases.png', v=3) }}">
     <link rel="manifest" href="{{ url_for('static', filename='manifest.json', v=3) }}">
-    
+
     <!-- Meta tags para iOS y PWA Nativa -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,13 +20,15 @@
     <!-- Google Fonts: Plus Jakarta Sans (UI/Lectura) & Outfit (Títulos/Branding) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
 
     <!-- Bootstrap 5 CDN -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FontAwesome 6 -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    
+
     <style>
         /* ══════════════════════════════════════════════════════════════
            SISTEMA DE DISEÑO PREMIUM - PALETA 50% NEUTRO / 30% PLATEADO / 20% ROSADO
@@ -90,19 +93,43 @@
         }
 
         /* Jerarquía Tipográfica de Títulos */
-        h1, h2, h3, h4, .font-heading, .navbar-brand {
+        h1,
+        h2,
+        h3,
+        h4,
+        .font-heading,
+        .navbar-brand {
             font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
             letter-spacing: -0.02em;
             color: var(--brand-black);
         }
 
         /* Utilidades de Marca */
-        .bg-brand-blue { background: var(--silver-gradient) !important; color: var(--brand-black); }
-        .bg-brand-pink { background-color: var(--brand-pink) !important; color: var(--brand-black); }
-        .bg-brand-white { background-color: var(--brand-white) !important; }
-        .text-brand-black { color: var(--brand-black) !important; }
-        .text-brand-pink { color: #E11D48 !important; }
-        .text-brand-blue { color: #334155 !important; }
+        .bg-brand-blue {
+            background: var(--silver-gradient) !important;
+            color: var(--brand-black);
+        }
+
+        .bg-brand-pink {
+            background-color: var(--brand-pink) !important;
+            color: var(--brand-black);
+        }
+
+        .bg-brand-white {
+            background-color: var(--brand-white) !important;
+        }
+
+        .text-brand-black {
+            color: var(--brand-black) !important;
+        }
+
+        .text-brand-pink {
+            color: #E11D48 !important;
+        }
+
+        .text-brand-blue {
+            color: #334155 !important;
+        }
 
         /* ══════════════════════════════════════════════════════════════
            NAVBAR PLATEADA METÁLICA CON FILETE DE ACENTO ROSADO (20%)
@@ -119,7 +146,7 @@
             z-index: 1030;
             transition: all 0.25s ease;
         }
-        
+
         .navbar-custom .navbar-brand {
             font-weight: 800;
             color: var(--brand-black);
@@ -127,6 +154,7 @@
             letter-spacing: -0.5px;
             transition: transform 0.2s ease;
         }
+
         .navbar-custom .navbar-brand:hover {
             transform: scale(1.02);
         }
@@ -137,6 +165,7 @@
             margin-left: 1rem;
             transition: opacity 0.2s;
         }
+
         .navbar-custom .nav-link:hover {
             opacity: 0.75;
         }
@@ -154,12 +183,15 @@
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: 0 4px 12px rgba(244, 151, 182, 0.38);
         }
-        .btn-pink:hover, .btn-pink:focus {
+
+        .btn-pink:hover,
+        .btn-pink:focus {
             background: linear-gradient(135deg, #F497B6 0%, #EC749D 100%);
             color: var(--brand-black);
             transform: translateY(-2px);
             box-shadow: 0 6px 16px rgba(244, 151, 182, 0.55);
         }
+
         .btn-pink:active {
             transform: translateY(0);
         }
@@ -174,13 +206,16 @@
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
         }
-        .btn-blue:hover, .btn-blue:focus {
+
+        .btn-blue:hover,
+        .btn-blue:focus {
             background: linear-gradient(135deg, #E2E8F0 0%, #CBD5E1 100%);
             color: var(--brand-black);
             border-color: #94A3B8;
             transform: translateY(-2px);
             box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
         }
+
         .btn-blue:active {
             transform: translateY(0);
         }
@@ -195,6 +230,7 @@
             box-shadow: 0 10px 26px -6px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
             transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
         }
+
         .card-custom:hover {
             box-shadow: 0 18px 36px -8px rgba(15, 23, 42, 0.14), 0 6px 14px -3px rgba(15, 23, 42, 0.07);
             border-color: #94A3B8;
@@ -209,30 +245,37 @@
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
             overflow: hidden;
         }
+
         .kpi-card-elevated:hover {
             transform: translateY(-4px);
             box-shadow: 0 20px 38px -8px rgba(15, 23, 42, 0.18), 0 8px 16px -4px rgba(15, 23, 42, 0.09) !important;
         }
+
         .kpi-accent-blue {
             background: linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 55%, #E0F2FE 100%) !important;
             border-left: 6px solid #0284C7 !important;
         }
+
         .kpi-accent-steel {
             background: linear-gradient(145deg, #FFFFFF 0%, #F1F5F9 52%, #E2E8F0 100%) !important;
             border-left: 6px solid #1E293B !important;
         }
+
         .kpi-accent-emerald {
             background: linear-gradient(145deg, #FFFFFF 0%, #F0FDF4 55%, #D1FAE5 100%) !important;
             border-left: 6px solid #059669 !important;
         }
+
         .kpi-accent-pink {
             background: linear-gradient(145deg, #FFFFFF 0%, #FFF1F5 55%, #FCE7F3 100%) !important;
             border-left: 6px solid #E11D48 !important;
         }
+
         .kpi-accent-amber {
             background: linear-gradient(145deg, #FFFFFF 0%, #FFFBEB 55%, #FEF3C7 100%) !important;
             border-left: 6px solid #D97706 !important;
         }
+
         .kpi-icon-elevated {
             width: 48px;
             height: 48px;
@@ -244,26 +287,32 @@
             color: #FFFFFF;
             flex-shrink: 0;
         }
+
         .kpi-icon-blue {
             background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
             box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.45);
         }
+
         .kpi-icon-steel {
             background: linear-gradient(135deg, #334155 0%, #0F172A 100%);
             box-shadow: 0 8px 16px -4px rgba(15, 23, 42, 0.4);
         }
+
         .kpi-icon-emerald {
             background: linear-gradient(135deg, #10B981 0%, #047857 100%);
             box-shadow: 0 8px 16px -4px rgba(5, 150, 105, 0.45);
         }
+
         .kpi-icon-pink {
             background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%);
             box-shadow: 0 8px 16px -4px rgba(225, 29, 72, 0.45);
         }
+
         .kpi-icon-amber {
             background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
             box-shadow: 0 8px 16px -4px rgba(217, 119, 6, 0.45);
         }
+
         .kpi-label {
             font-size: 0.74rem;
             font-weight: 800;
@@ -271,6 +320,7 @@
             letter-spacing: 0.7px;
             color: #475569;
         }
+
         .kpi-value {
             font-family: 'Outfit', sans-serif;
             font-size: 2.05rem;
@@ -279,6 +329,7 @@
             margin: 0.15rem 0;
             line-height: 1.15;
         }
+
         .kpi-subtext {
             font-size: 0.78rem;
             font-weight: 600;
@@ -297,6 +348,7 @@
             border-spacing: 0;
             width: 100%;
         }
+
         .table-custom thead th {
             color: #334155;
             background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
@@ -308,17 +360,21 @@
             padding: 1.1rem 1rem;
             white-space: nowrap;
         }
+
         .table-custom tbody tr {
             transition: background-color 0.15s ease;
         }
+
         .table-custom tbody tr:hover {
             background-color: #F8FAFC !important;
         }
+
         .table-custom tbody td {
             padding: 1.15rem 1rem;
             vertical-align: middle;
             border-bottom: 1px solid #EEF2F6;
         }
+
         .table-custom tbody tr:last-child td {
             border-bottom: none;
         }
@@ -332,24 +388,28 @@
             border: 1px solid #FBCFE8;
             font-weight: 700;
         }
+
         .badge-soft-blue {
             background-color: var(--silver-100);
             color: #1E293B;
             border: 1px solid var(--silver-300);
             font-weight: 700;
         }
+
         .badge-soft-success {
             background-color: #ECFDF5;
             color: #065F46;
             border: 1px solid #A7F3D0;
             font-weight: 700;
         }
+
         .badge-soft-warning {
             background-color: #FFFBEB;
             color: #92400E;
             border: 1px solid #FDE68A;
             font-weight: 700;
         }
+
         .badge-soft-danger {
             background-color: #FEF2F2;
             color: #991B1B;
@@ -364,6 +424,7 @@
             border-top-right-radius: 24px;
             border-bottom-right-radius: 24px;
         }
+
         .sidebar-section-header {
             font-size: 0.68rem;
             font-weight: 800;
@@ -374,6 +435,7 @@
             display: flex;
             align-items: center;
         }
+
         .sidebar-icon-badge {
             width: 32px;
             height: 32px;
@@ -386,6 +448,7 @@
             flex-shrink: 0;
             transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
+
         .offcanvas-body .nav-link {
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
             border-radius: 12px;
@@ -394,34 +457,83 @@
             font-weight: 600;
             padding: 0.5rem 0.65rem;
         }
+
         .offcanvas-body .nav-link:hover {
             background-color: var(--brand-pink-subtle);
             transform: translateX(3px);
             color: #BE185D !important;
             border-left: 3px solid #E11D48 !important;
         }
+
         .offcanvas-body .nav-link:hover .sidebar-icon-badge {
             transform: scale(1.1);
         }
+
         .offcanvas-header {
             border-bottom: 1px solid var(--silver-200);
         }
 
         /* Inputs y Focus Rings (Acento Rosado 20%) */
-        .form-control:focus, .form-select:focus {
+        .form-control:focus,
+        .form-select:focus {
             border-color: #F472B6;
             box-shadow: 0 0 0 0.25rem var(--brand-pink-focus);
         }
+
+        /* ══════════════════════════════════════════════════════════════
+           ADAPTABILIDAD RESPONSIVA: CELULAR, TABLET, COMPUTADOR Y PWA
+           ══════════════════════════════════════════════════════════════ */
+        .table-responsive {
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 767.98px) {
+            body {
+                overflow-x: hidden;
+            }
+            .navbar-custom {
+                padding: 0.65rem 0.5rem;
+            }
+            .brand-logo-pill {
+                padding: 0.2rem 0.65rem !important;
+            }
+            .brand-logo-pill img {
+                height: 30px !important;
+            }
+            .brand-logo-pill span {
+                font-size: 1.15rem !important;
+            }
+            h2 {
+                font-size: 1.3rem !important;
+            }
+            .kpi-card-elevated {
+                padding: 1rem !important;
+            }
+            .kpi-value {
+                font-size: 1.45rem !important;
+            }
+            .modal-dialog {
+                margin: 0.5rem;
+            }
+            /* Evita zoom automático en iOS Safari / PWA al tocar inputs */
+            input.form-control,
+            select.form-select,
+            textarea.form-control {
+                font-size: 16px !important;
+            }
+        }
     </style>
 </head>
+
 <body>
     <!-- Navbar cases.com -->
     <nav class="navbar navbar-custom mb-4 position-relative">
         <div class="container-fluid px-3 d-flex justify-content-between align-items-center">
-            
+
             {% if current_user.is_authenticated %}
             <!-- Botón Hamburguesa (Izquierda) -->
-            <button class="navbar-toggler border-0 shadow-none p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
+            <button class="navbar-toggler border-0 shadow-none p-2" type="button" data-bs-toggle="offcanvas"
+                data-bs-target="#offcanvasNavbar" aria-controls="offcanvasNavbar">
                 <i class="fa-solid fa-bars fs-3 text-brand-black"></i>
             </button>
             {% else %}
@@ -430,37 +542,53 @@
             {% endif %}
 
             <!-- Brand Logo (Centro) -->
-            <a class="navbar-brand d-flex align-items-center m-0 position-absolute start-50 translate-middle-x px-3 py-1 rounded-pill brand-logo-pill" href="{{ url_for('index') }}" style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); border: 1.5px solid #CBD5E1; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07), 0 0 0 2px rgba(249, 200, 211, 0.45); text-decoration: none;">
-                <img src="{{ url_for('static', filename='img/cases.png', v=3) }}" alt="cases.com" style="height: 42px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.08));" class="me-2">
-                <span class="fw-extrabold text-brand-black" style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; letter-spacing: -0.5px; line-height: 1;">cases<span style="color: #E11D48; font-weight: 800;">.com</span></span>
+            <a class="navbar-brand d-flex align-items-center m-0 position-absolute start-50 translate-middle-x px-3 py-1 rounded-pill brand-logo-pill"
+                href="{{ url_for('index') }}"
+                style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); border: 1.5px solid #CBD5E1; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07), 0 0 0 2px rgba(249, 200, 211, 0.45); text-decoration: none;">
+                <img src="{{ url_for('static', filename='img/cases.png', v=3) }}" alt="cases.com"
+                    style="height: 42px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.08));"
+                    class="me-2">
+                <span class="fw-extrabold text-brand-black"
+                    style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; letter-spacing: -0.5px; line-height: 1;">cases<span
+                        style="color: #E11D48; font-weight: 800;">.com</span></span>
             </a>
 
             <!-- Icono redondo en la parte superior derecha de estado del Servidor (Solo Admin) -->
             <div class="d-flex align-items-center gap-2">
                 {% if current_user.is_authenticated and current_user.rol == 'admin' and pago_servidor %}
-                    {% if pago_servidor.estado in ['pagado', 'al_dia'] or pago_servidor.es_exento %}
-                        <button type="button" class="btn btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark" style="background-color: #d1e7dd; color: #0f5132;" data-bs-toggle="modal" data-bs-target="#modalPagoServidor" title="Zenic: Al día - Clic para ver detalles">
-                            <i class="fa-solid fa-check me-1"></i> Zenic: Al día
-                        </button>
-                    {% elif pago_servidor.estado == 'preventivo' %}
-                        <button type="button" class="btn btn-warning text-dark btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark" data-bs-toggle="modal" data-bs-target="#modalPagoServidor" title="Pago de servidor preventivo">
-                            <i class="fa-solid fa-clock small text-dark"></i>
-                            <span class="d-none d-sm-inline ms-1 small">Por Vencer</span>
-                        </button>
-                    {% elif pago_servidor.estado == 'hoy' %}
-                        <button type="button" class="btn btn-danger text-white btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark" data-bs-toggle="modal" data-bs-target="#modalPagoServidor" title="Vence Hoy">
-                            <i class="fa-solid fa-bell small text-white"></i>
-                            <span class="d-none d-sm-inline ms-1 small">Vence Hoy</span>
-                        </button>
-                    {% elif pago_servidor.estado in ['gabela', 'vencido'] %}
-                        <button type="button" class="btn btn-danger btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark" data-bs-toggle="modal" data-bs-target="#modalPagoServidor" title="Servidor vencido - Clic para pagar">
-                            <i class="fa-solid fa-triangle-exclamation small text-white"></i>
-                            <span class="d-none d-sm-inline ms-1 text-white small">Vencido</span>
-                        </button>
-                    {% endif %}
+                {% if pago_servidor.estado in ['pagado', 'al_dia'] or pago_servidor.es_exento %}
+                <button type="button"
+                    class="btn btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark"
+                    style="background-color: #d1e7dd; color: #0f5132;" data-bs-toggle="modal"
+                    data-bs-target="#modalPagoServidor" title="Zenic: Al día - Clic para ver detalles">
+                    <i class="fa-solid fa-check me-1"></i> Zenic: Al día
+                </button>
+                {% elif pago_servidor.estado == 'preventivo' %}
+                <button type="button"
+                    class="btn btn-warning text-dark btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark"
+                    data-bs-toggle="modal" data-bs-target="#modalPagoServidor" title="Pago de servidor preventivo">
+                    <i class="fa-solid fa-clock small text-dark"></i>
+                    <span class="d-none d-sm-inline ms-1 small">Por Vencer</span>
+                </button>
+                {% elif pago_servidor.estado == 'hoy' %}
+                <button type="button"
+                    class="btn btn-danger text-white btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark"
+                    data-bs-toggle="modal" data-bs-target="#modalPagoServidor" title="Vence Hoy">
+                    <i class="fa-solid fa-bell small text-white"></i>
+                    <span class="d-none d-sm-inline ms-1 small">Vence Hoy</span>
+                </button>
+                {% elif pago_servidor.estado in ['gabela', 'vencido'] %}
+                <button type="button"
+                    class="btn btn-danger btn-sm rounded-pill px-3 py-1 fw-bold shadow-sm d-flex align-items-center gap-1 border border-dark"
+                    data-bs-toggle="modal" data-bs-target="#modalPagoServidor"
+                    title="Servidor vencido - Clic para pagar">
+                    <i class="fa-solid fa-triangle-exclamation small text-white"></i>
+                    <span class="d-none d-sm-inline ms-1 text-white small">Vencido</span>
+                </button>
+                {% endif %}
                 {% else %}
-                    <!-- Spacer derecho para equilibrar flex -->
-                    <div style="width: 40px;"></div>
+                <!-- Spacer derecho para equilibrar flex -->
+                <div style="width: 40px;"></div>
                 {% endif %}
             </div>
         </div>
@@ -468,380 +596,491 @@
 
     {% if current_user.is_authenticated %}
     <!-- Offcanvas Menú Lateral (Sidebar) -->
-    <div class="offcanvas offcanvas-start border-0 shadow-lg" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="width: 320px;">
-        <div class="offcanvas-header p-3 border-bottom position-relative" style="background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 72%, rgba(249, 200, 211, 0.35) 100%);">
+    <div class="offcanvas offcanvas-start border-0 shadow-lg" tabindex="-1" id="offcanvasNavbar"
+        aria-labelledby="offcanvasNavbarLabel" style="width: 320px;">
+        <div class="offcanvas-header p-3 border-bottom position-relative"
+            style="background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 72%, rgba(249, 200, 211, 0.35) 100%);">
             <div class="d-flex align-items-center gap-3">
-                <div class="rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 46px; height: 46px; border: 2.5px solid var(--brand-pink);">
+                <div class="rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm"
+                    style="width: 46px; height: 46px; border: 2.5px solid var(--brand-pink);">
                     <i class="fa-solid fa-user text-brand-black fs-5"></i>
                 </div>
                 <div>
-                    <h6 class="fw-bold text-brand-black mb-0" style="font-family: 'Outfit', sans-serif; font-size: 1.05rem;">{{ current_user.nombre or (current_user.rol | capitalize) }}</h6>
+                    <h6 class="fw-bold text-brand-black mb-0"
+                        style="font-family: 'Outfit', sans-serif; font-size: 1.05rem;">{{ current_user.nombre or
+                        (current_user.rol | capitalize) }}</h6>
                     <div class="d-flex align-items-center gap-2 mt-0.5">
-                        <span class="badge badge-soft-pink px-2 py-0.5 rounded-pill small fw-bold text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">{{ current_user.rol }}</span>
-                        <span class="text-muted" style="font-size: 0.7rem;"><i class="fa-solid fa-circle text-success me-1" style="font-size: 0.45rem;"></i>Activo</span>
+                        <span class="badge badge-soft-pink px-2 py-0.5 rounded-pill small fw-bold text-uppercase"
+                            style="font-size: 0.65rem; letter-spacing: 0.5px;">{{ current_user.rol }}</span>
+                        <span class="text-muted" style="font-size: 0.7rem;"><i
+                                class="fa-solid fa-circle text-success me-1"
+                                style="font-size: 0.45rem;"></i>Activo</span>
                     </div>
                 </div>
             </div>
-            <button type="button" class="btn-close shadow-none p-2 rounded-circle bg-white bg-opacity-75" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+            <button type="button" class="btn-close shadow-none p-2 rounded-circle bg-white bg-opacity-75"
+                data-bs-dismiss="offcanvas" aria-label="Close"></button>
         </div>
         <div class="offcanvas-body d-flex flex-column p-0" style="overflow-y: auto;">
             <div class="w-100 px-3 py-2 flex-grow-1">
                 {% if current_user.rol == 'admin' %}
-                    <!-- SECCIÓN: PRINCIPAL -->
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/admin/dashboard">
-                                <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-chart-pie"></i></span>
-                                <span>Dashboard</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/sales/ventas_hoy">
-                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-calendar-day"></i></span>
-                                <span>Ventas del Día</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: PRINCIPAL -->
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/admin/dashboard">
+                            <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i
+                                    class="fa-solid fa-chart-pie"></i></span>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/sales/ventas_hoy">
+                            <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i
+                                    class="fa-solid fa-calendar-day"></i></span>
+                            <span>Ventas del Día</span>
+                        </a>
+                    </li>
+                </ul>
 
-                    <!-- SECCIÓN: CANALES DE VENTA & STOCK -->
-                    <div class="sidebar-section-header mt-1">
-                        <i class="fa-solid fa-store me-1.5 text-muted"></i> Puntos de Venta & Stock
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <!-- Caja Única (Caja Visual) -->
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/sales/caja_visual">
-                                <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #E11D48;"><i class="fa-solid fa-cash-register"></i></span>
-                                <span>Caja</span>
-                            </a>
-                        </li>
+                <!-- SECCIÓN: CANALES DE VENTA & STOCK -->
+                <div class="sidebar-section-header mt-1">
+                    <i class="fa-solid fa-store me-1.5 text-muted"></i> Puntos de Venta & Stock
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <!-- Caja Única (Caja Visual) -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/sales/caja_visual">
+                            <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #E11D48;"><i
+                                    class="fa-solid fa-cash-register"></i></span>
+                            <span>Caja</span>
+                        </a>
+                    </li>
 
-                        <!-- Accesorios -->
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseInventario" role="button" aria-expanded="false" aria-controls="collapseInventario">
-                                <div class="d-flex align-items-center">
-                                    <span class="sidebar-icon-badge" style="background: #DCFCE7; color: #16A34A;"><i class="fa-solid fa-boxes-stacked"></i></span>
-                                    <span>Accesorios</span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down small text-muted"></i>
-                            </a>
-                            <div class="collapse" id="collapseInventario">
-                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #86EFAC !important;">
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="/inventory"><i class="fa-solid fa-box-open text-success me-2" style="width:18px;"></i> Inventario</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('externos_bp.accesorios') }}"><i class="fa-solid fa-headphones text-info me-2" style="width:18px;"></i> Acc Ext.</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('inventory_bp.historial_ajustes') }}"><i class="fa-solid fa-sliders text-secondary me-2" style="width:18px;"></i> Kardex</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="/sales/catalogo"><i class="fa-solid fa-book-open text-brand-pink me-2" style="width:18px;"></i> Catálogo</a>
-                                    </li>
-                                </ul>
+                    <!-- Catálogo General (Accesorios y Celulares) junto con Caja -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/sales/catalogo">
+                            <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i
+                                    class="fa-solid fa-book-open"></i></span>
+                            <span>Catálogo</span>
+                        </a>
+                    </li>
+
+                    <!-- Accesorios -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse"
+                            href="#collapseInventario" role="button" aria-expanded="false"
+                            aria-controls="collapseInventario">
+                            <div class="d-flex align-items-center">
+                                <span class="sidebar-icon-badge" style="background: #DCFCE7; color: #16A34A;"><i
+                                        class="fa-solid fa-boxes-stacked"></i></span>
+                                <span>Accesorios</span>
                             </div>
-                        </li>
+                            <i class="fa-solid fa-chevron-down small text-muted"></i>
+                        </a>
+                        <div class="collapse" id="collapseInventario">
+                            <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2"
+                                style="border-color: #86EFAC !important;">
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5" href="/inventory"><i
+                                            class="fa-solid fa-box-open text-success me-2" style="width:18px;"></i>
+                                        Inventario Accesorios</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5" href="{{ url_for('externos_bp.accesorios') }}"><i
+                                            class="fa-solid fa-headphones text-info me-2" style="width:18px;"></i> Acc
+                                        Externos</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5"
+                                        href="{{ url_for('inventory_bp.historial_ajustes') }}"><i
+                                            class="fa-solid fa-timeline text-secondary me-2" style="width:18px;"></i>
+                                        Trazabilidad</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
 
-                        <!-- Celulares -->
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseCelulares" role="button" aria-expanded="false" aria-controls="collapseCelulares">
-                                <div class="d-flex align-items-center">
-                                    <span class="sidebar-icon-badge" style="background: #E0F2FE; color: #0284C7;"><i class="fa-solid fa-mobile-screen-button"></i></span>
-                                    <span>Celulares</span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down small text-muted"></i>
-                            </a>
-                            <div class="collapse" id="collapseCelulares">
-                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #7DD3FC !important;">
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.inventario') }}"><i class="fa-solid fa-mobile-screen-button text-brand-blue me-2" style="width:18px;"></i> Inventario</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('externos_bp.index') }}"><i class="fa-solid fa-mobile-retro text-info me-2" style="width:18px;"></i> Cel Ext.</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('retomas_bp.cuarentena') }}"><i class="fa-solid fa-rotate-left text-warning me-2" style="width:18px;"></i> Retomas</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.trazabilidad') }}"><i class="fa-solid fa-timeline text-primary me-2" style="width:18px;"></i> Trazabilidad</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.historial_ventas') }}"><i class="fa-solid fa-clock-rotate-left text-brand-pink me-2" style="width:18px;"></i> Historial</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.clientes') }}"><i class="fa-solid fa-users text-success me-2" style="width:18px;"></i> Clientes</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.arqueo_nuevo') }}"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:18px;"></i> Arqueo</a>
-                                    </li>
-                                </ul>
+                    <!-- Celulares -->
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse"
+                            href="#collapseCelulares" role="button" aria-expanded="false"
+                            aria-controls="collapseCelulares">
+                            <div class="d-flex align-items-center">
+                                <span class="sidebar-icon-badge" style="background: #E0F2FE; color: #0284C7;"><i
+                                        class="fa-solid fa-mobile-screen-button"></i></span>
+                                <span>Celulares</span>
                             </div>
-                        </li>
-                    </ul>
+                            <i class="fa-solid fa-chevron-down small text-muted"></i>
+                        </a>
+                        <div class="collapse" id="collapseCelulares">
+                            <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2"
+                                style="border-color: #7DD3FC !important;">
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.inventario') }}"><i
+                                            class="fa-solid fa-mobile-screen-button text-brand-blue me-2"
+                                            style="width:18px;"></i> Inventario Celulares</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5" href="{{ url_for('externos_bp.index') }}"><i
+                                            class="fa-solid fa-mobile-retro text-info me-2" style="width:18px;"></i> Cel
+                                        Externos</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5" href="{{ url_for('retomas_bp.cuarentena') }}"><i
+                                            class="fa-solid fa-rotate-left text-warning me-2" style="width:18px;"></i>
+                                        Retomas</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5" href="{{ url_for('retomas_bp.arreglos') }}"><i
+                                            class="fa-solid fa-screwdriver-wrench text-danger me-2"
+                                            style="width:18px;"></i>
+                                        Arreglos</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5"
+                                        href="{{ url_for('celulares_bp.trazabilidad') }}"><i
+                                            class="fa-solid fa-timeline text-primary me-2" style="width:18px;"></i>
+                                        Trazabilidad</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5"
+                                        href="{{ url_for('celulares_bp.historial_ventas') }}"><i
+                                            class="fa-solid fa-clock-rotate-left text-brand-pink me-2"
+                                            style="width:18px;"></i> Historial</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.clientes') }}"><i
+                                            class="fa-solid fa-users text-success me-2" style="width:18px;"></i>
+                                        Clientes</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link small py-1.5"
+                                        href="{{ url_for('celulares_bp.arqueo_nuevo') }}"><i
+                                            class="fa-solid fa-calculator text-brand-blue me-2" style="width:18px;"></i>
+                                        Arqueo</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </li>
+                </ul>
 
-                    <!-- SECCIÓN: GESTIÓN & CIERRES -->
-                    <div class="sidebar-section-header mt-1">
-                        <i class="fa-solid fa-sliders me-1.5 text-muted"></i> Administración & Cierres
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('sales_bp.aprobaciones_precio') }}">
-                                <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #BE185D;"><i class="fa-solid fa-shield-halved"></i></span>
-                                <span>Autorizaciones</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/admin/vendedores">
-                                <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i class="fa-solid fa-users"></i></span>
-                                <span>Personal</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/gastos">
-                                <span class="sidebar-icon-badge" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                                <span>Gastos</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/admin/maneos">
-                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-handshake"></i></span>
-                                <span>Maneos</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('externos_bp.cuentas_por_pagar') }}">
-                                <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i class="fa-solid fa-file-invoice-dollar"></i></span>
-                                <span>Cuentas Externos</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
-                                <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i class="fa-solid fa-calculator"></i></span>
-                                <span>Arqueo</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center justify-content-between" href="{{ url_for('legal_bp.acuerdo_datos') }}">
-                                <div class="d-flex align-items-center">
-                                    <span class="sidebar-icon-badge" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-file-shield"></i></span>
-                                    <span>Legal & SIC</span>
-                                </div>
-                                {% if acuerdo_sic_firmado %}
-                                    <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-0" style="font-size: 0.65rem;">Firmado</span>
-                                {% else %}
-                                    <span class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-2 py-0" style="font-size: 0.65rem;">Pendiente</span>
-                                {% endif %}
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: GESTIÓN & CIERRES -->
+                <div class="sidebar-section-header mt-1">
+                    <i class="fa-solid fa-sliders me-1.5 text-muted"></i> Administración & Cierres
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center"
+                            href="{{ url_for('sales_bp.aprobaciones_precio') }}">
+                            <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #BE185D;"><i
+                                    class="fa-solid fa-shield-halved"></i></span>
+                            <span>Autorizaciones</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/admin/vendedores">
+                            <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i
+                                    class="fa-solid fa-users"></i></span>
+                            <span>Personal</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/gastos">
+                            <span class="sidebar-icon-badge" style="background: #FEF2F2; color: #DC2626;"><i
+                                    class="fa-solid fa-money-bill-transfer"></i></span>
+                            <span>Gastos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('vales_bp.index') }}">
+                            <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i
+                                    class="fa-solid fa-receipt"></i></span>
+                            <span>Vales</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/admin/maneos">
+                            <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i
+                                    class="fa-solid fa-handshake"></i></span>
+                            <span>Maneos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center"
+                            href="{{ url_for('externos_bp.cuentas_por_pagar') }}">
+                            <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i
+                                    class="fa-solid fa-file-invoice-dollar"></i></span>
+                            <span>Cuentas Externos</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
+                            <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i
+                                    class="fa-solid fa-calculator"></i></span>
+                            <span>Arqueo</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center justify-content-between"
+                            href="{{ url_for('legal_bp.acuerdo_datos') }}">
+                            <div class="d-flex align-items-center">
+                                <span class="sidebar-icon-badge" style="background: #EFF6FF; color: #2563EB;"><i
+                                        class="fa-solid fa-file-shield"></i></span>
+                                <span>Legal & SIC</span>
+                            </div>
+                            {% if acuerdo_sic_firmado %}
+                            <span
+                                class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-0"
+                                style="font-size: 0.65rem;">Firmado</span>
+                            {% else %}
+                            <span
+                                class="badge bg-danger bg-opacity-10 text-danger border border-danger rounded-pill px-2 py-0"
+                                style="font-size: 0.65rem;">Pendiente</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                </ul>
 
                 {% elif current_user.rol == 'vendedor' %}
-                    <!-- SECCIÓN: OPERACIONES DEL DÍA -->
-                    <div class="sidebar-section-header">
-                        <i class="fa-solid fa-cash-register me-1.5 text-muted"></i> Operaciones del Día
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/sales/caja_visual">
-                                <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #E11D48;"><i class="fa-solid fa-cash-register"></i></span>
-                                <span>Caja</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/sales/ventas_hoy">
-                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-calendar-day"></i></span>
-                                <span>Ventas del Día</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/sales/catalogo">
-                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-book-open"></i></span>
-                                <span>Catálogo</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: OPERACIONES DEL DÍA -->
+                <div class="sidebar-section-header">
+                    <i class="fa-solid fa-cash-register me-1.5 text-muted"></i> Operaciones del Día
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/sales/caja_visual">
+                            <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #E11D48;"><i
+                                    class="fa-solid fa-cash-register"></i></span>
+                            <span>Caja</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/sales/ventas_hoy">
+                            <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i
+                                    class="fa-solid fa-calendar-day"></i></span>
+                            <span>Ventas del Día</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/sales/catalogo">
+                            <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i
+                                    class="fa-solid fa-book-open"></i></span>
+                            <span>Catálogo</span>
+                        </a>
+                    </li>
+                </ul>
 
-                    <!-- SECCIÓN: GESTIÓN & MOVIMIENTOS -->
-                    <div class="sidebar-section-header mt-2">
-                        <i class="fa-solid fa-coins me-1.5 text-muted"></i> Movimientos
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/gastos">
-                                <span class="sidebar-icon-badge" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                                <span>Registrar Gasto</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/admin/maneos">
-                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-handshake"></i></span>
-                                <span>Maneos</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: GESTIÓN & MOVIMIENTOS -->
+                <div class="sidebar-section-header mt-2">
+                    <i class="fa-solid fa-coins me-1.5 text-muted"></i> Movimientos
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/gastos">
+                            <span class="sidebar-icon-badge" style="background: #FEF2F2; color: #DC2626;"><i
+                                    class="fa-solid fa-money-bill-transfer"></i></span>
+                            <span>Registrar Gasto</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('vales_bp.index') }}">
+                            <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i
+                                    class="fa-solid fa-receipt"></i></span>
+                            <span>Vales</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/admin/maneos">
+                            <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i
+                                    class="fa-solid fa-handshake"></i></span>
+                            <span>Maneos</span>
+                        </a>
+                    </li>
+                </ul>
 
-                    <!-- SECCIÓN: CIERRES DE TURNO -->
-                    <div class="sidebar-section-header mt-2">
-                        <i class="fa-solid fa-calculator me-1.5 text-muted"></i> Cierres de Turno
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
-                                <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i class="fa-solid fa-calculator"></i></span>
-                                <span>Arqueo de Caja</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('celulares_bp.arqueo_nuevo') }}">
-                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-mobile-screen"></i></span>
-                                <span>Arqueo Celulares</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: CIERRES DE TURNO -->
+                <div class="sidebar-section-header mt-2">
+                    <i class="fa-solid fa-calculator me-1.5 text-muted"></i> Cierres de Turno
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
+                            <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i
+                                    class="fa-solid fa-calculator"></i></span>
+                            <span>Arqueo de Caja</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('celulares_bp.arqueo_nuevo') }}">
+                            <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i
+                                    class="fa-solid fa-mobile-screen"></i></span>
+                            <span>Arqueo Celulares</span>
+                        </a>
+                    </li>
+                </ul>
 
                 {% elif current_user.rol == 'bodega' %}
-                    <!-- SECCIÓN: BODEGA MAYORISTA -->
-                    <div class="sidebar-section-header">
-                        <i class="fa-solid fa-warehouse me-1.5 text-muted"></i> Operaciones Mayoristas
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.dashboard') }}">
-                                <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-boxes-stacked"></i></span>
-                                <span>Panel Bodega</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.caja_rapida') }}">
-                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-store"></i></span>
-                                <span>Caja Rápida (POS)</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.facturas') }}">
-                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-file-invoice"></i></span>
-                                <span>Facturas Realizadas</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nueva_factura') }}">
-                                <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-file-lines"></i></span>
-                                <span>Factura Manual</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: BODEGA MAYORISTA -->
+                <div class="sidebar-section-header">
+                    <i class="fa-solid fa-warehouse me-1.5 text-muted"></i> Operaciones Mayoristas
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.dashboard') }}">
+                            <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i
+                                    class="fa-solid fa-boxes-stacked"></i></span>
+                            <span>Panel Bodega</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.caja_rapida') }}">
+                            <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i
+                                    class="fa-solid fa-store"></i></span>
+                            <span>Caja Rápida (POS)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.facturas') }}">
+                            <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i
+                                    class="fa-solid fa-file-invoice"></i></span>
+                            <span>Facturas Realizadas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nueva_factura') }}">
+                            <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i
+                                    class="fa-solid fa-file-lines"></i></span>
+                            <span>Factura Manual</span>
+                        </a>
+                    </li>
+                </ul>
 
-                    <!-- SECCIÓN: CLIENTES & CARTERA -->
-                    <div class="sidebar-section-header mt-2">
-                        <i class="fa-solid fa-users me-1.5 text-muted"></i> Clientes & Cartera
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.clientes') }}">
-                                <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i class="fa-solid fa-address-book"></i></span>
-                                <span>Directorio Clientes</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nuevo_cliente') }}">
-                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-user-plus"></i></span>
-                                <span>Registrar Cliente</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.modulo_abonos') }}">
-                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                                <span>Módulo de Abonos</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: CLIENTES & CARTERA -->
+                <div class="sidebar-section-header mt-2">
+                    <i class="fa-solid fa-users me-1.5 text-muted"></i> Clientes & Cartera
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.clientes') }}">
+                            <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i
+                                    class="fa-solid fa-address-book"></i></span>
+                            <span>Directorio Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nuevo_cliente') }}">
+                            <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i
+                                    class="fa-solid fa-user-plus"></i></span>
+                            <span>Registrar Cliente</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.modulo_abonos') }}">
+                            <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i
+                                    class="fa-solid fa-money-bill-transfer"></i></span>
+                            <span>Módulo de Abonos</span>
+                        </a>
+                    </li>
+                </ul>
 
-                    <!-- SECCIÓN: INVENTARIO -->
-                    <div class="sidebar-section-header mt-2">
-                        <i class="fa-solid fa-box me-1.5 text-muted"></i> Inventario Central
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('inventory_bp.index') }}">
-                                <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i class="fa-solid fa-box-open"></i></span>
-                                <span>Mi Inventario (Bodega)</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: INVENTARIO -->
+                <div class="sidebar-section-header mt-2">
+                    <i class="fa-solid fa-box me-1.5 text-muted"></i> Inventario Central
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('inventory_bp.index') }}">
+                            <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i
+                                    class="fa-solid fa-box-open"></i></span>
+                            <span>Mi Inventario (Bodega)</span>
+                        </a>
+                    </li>
+                </ul>
 
                 {% elif current_user.rol == 'vendedor_bodega' %}
-                    <!-- SECCIÓN: VENTAS & FACTURACIÓN -->
-                    <div class="sidebar-section-header">
-                        <i class="fa-solid fa-warehouse me-1.5 text-muted"></i> Mi Canal Bodega
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.dashboard') }}">
-                                <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-house-chimney"></i></span>
-                                <span>Mi Panel</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.caja_rapida') }}">
-                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-store"></i></span>
-                                <span>Caja Rápida (POS)</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.facturas') }}">
-                                <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-file-invoice"></i></span>
-                                <span>Mis Facturas</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nueva_factura') }}">
-                                <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-file-lines"></i></span>
-                                <span>Factura Manual</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: VENTAS & FACTURACIÓN -->
+                <div class="sidebar-section-header">
+                    <i class="fa-solid fa-warehouse me-1.5 text-muted"></i> Mi Canal Bodega
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.dashboard') }}">
+                            <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i
+                                    class="fa-solid fa-house-chimney"></i></span>
+                            <span>Mi Panel</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.caja_rapida') }}">
+                            <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i
+                                    class="fa-solid fa-store"></i></span>
+                            <span>Caja Rápida (POS)</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.facturas') }}">
+                            <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i
+                                    class="fa-solid fa-file-invoice"></i></span>
+                            <span>Mis Facturas</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nueva_factura') }}">
+                            <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i
+                                    class="fa-solid fa-file-lines"></i></span>
+                            <span>Factura Manual</span>
+                        </a>
+                    </li>
+                </ul>
 
-                    <!-- SECCIÓN: CLIENTES & CARTERA -->
-                    <div class="sidebar-section-header mt-2">
-                        <i class="fa-solid fa-users me-1.5 text-muted"></i> Clientes & Cartera
-                    </div>
-                    <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.clientes') }}">
-                                <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i class="fa-solid fa-address-book"></i></span>
-                                <span>Mis Clientes</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nuevo_cliente') }}">
-                                <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i class="fa-solid fa-user-plus"></i></span>
-                                <span>Crear Cliente</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.modulo_abonos') }}">
-                                <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                                <span>Registrar Abono</span>
-                            </a>
-                        </li>
-                    </ul>
+                <!-- SECCIÓN: CLIENTES & CARTERA -->
+                <div class="sidebar-section-header mt-2">
+                    <i class="fa-solid fa-users me-1.5 text-muted"></i> Clientes & Cartera
+                </div>
+                <ul class="navbar-nav w-100 gap-1 mb-2">
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.clientes') }}">
+                            <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i
+                                    class="fa-solid fa-address-book"></i></span>
+                            <span>Mis Clientes</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.nuevo_cliente') }}">
+                            <span class="sidebar-icon-badge" style="background: #F0FDF4; color: #16A34A;"><i
+                                    class="fa-solid fa-user-plus"></i></span>
+                            <span>Crear Cliente</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('bodega_bp.modulo_abonos') }}">
+                            <span class="sidebar-icon-badge" style="background: #ECFDF5; color: #059669;"><i
+                                    class="fa-solid fa-money-bill-transfer"></i></span>
+                            <span>Registrar Abono</span>
+                        </a>
+                    </li>
+                </ul>
                 {% endif %}
             </div>
-            
+
             <!-- Tarjeta de Estado e Identidad Cases al pie del Sidebar -->
             <div class="px-3 pt-2 pb-2 mt-auto">
-                <div class="p-3 rounded-4 border shadow-2xs" style="background: linear-gradient(135deg, #FFF1F5 0%, #FFFFFF 100%); border-color: #FBCFE8 !important;">
+                <div class="p-3 rounded-4 border shadow-2xs"
+                    style="background: linear-gradient(135deg, #FFF1F5 0%, #FFFFFF 100%); border-color: #FBCFE8 !important;">
                     <div class="d-flex align-items-center gap-2 mb-1">
-                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 26px; height: 26px; background: #F9C8D3; color: #881337;">
+                        <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                            style="width: 26px; height: 26px; background: #F9C8D3; color: #881337;">
                             <i class="fa-solid fa-gem small"></i>
                         </span>
-                        <span class="fw-bold text-brand-black small" style="font-family: 'Outfit', sans-serif;">cases.com POS</span>
-                        <span class="badge rounded-pill ms-auto" style="background: #DCFCE7; color: #16A34A; font-size: 0.65rem;">
+                        <span class="fw-bold text-brand-black small"
+                            style="font-family: 'Outfit', sans-serif;">cases.com POS</span>
+                        <span class="badge rounded-pill ms-auto"
+                            style="background: #DCFCE7; color: #16A34A; font-size: 0.65rem;">
                             <i class="fa-solid fa-circle me-1" style="font-size: 0.45rem;"></i> En Línea
                         </span>
                     </div>
-                    <div class="d-flex justify-content-between align-items-center text-muted" style="font-size: 0.72rem;">
+                    <div class="d-flex justify-content-between align-items-center text-muted"
+                        style="font-size: 0.72rem;">
                         <span><i class="fa-solid fa-store me-1 text-brand-pink"></i> Sucursal Central</span>
                         <span class="fw-semibold">v2.4 Pro</span>
                     </div>
@@ -850,7 +1089,8 @@
 
             <!-- Interfaz de Desconexión / Fin de Turno al final del sidebar -->
             <div class="p-3 border-top bg-light bg-opacity-50">
-                <a class="btn btn-outline-danger w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center gap-2" href="{{ url_for('auth_bp.logout') }}">
+                <a class="btn btn-outline-danger w-100 rounded-pill fw-bold py-2 shadow-sm d-flex align-items-center justify-content-center gap-2"
+                    href="{{ url_for('auth_bp.logout') }}">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir del Sistema
                 </a>
             </div>
@@ -861,184 +1101,235 @@
     <!-- App Container -->
     <main class="container mb-5">
         <!-- Banners de Alerta según el Estado del Servidor (Solo Admin, Días 7 al 31 si no está pagado) -->
-        {% if current_user.is_authenticated and current_user.rol == 'admin' and pago_servidor and not pago_servidor.es_exento %}
-            {% if pago_servidor.estado == 'preventivo' %}
-                <div class="alert alert-warning alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle p-2 bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-                            <i class="fa-solid fa-clock fs-5"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-0">
-                                Mensualidad Servidor Zenic: Vence el 15 de {{ pago_servidor.mes_nombre }} (faltan {{ pago_servidor.dias_restantes }} días)
-                            </h6>
-                            <small class="text-secondary">
-                                Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Evita la suspensión del servicio realizando tu pago a tiempo.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 align-items-center ms-auto">
-                        <button type="button" class="btn btn-dark btn-sm rounded-pill fw-semibold px-3" data-bs-toggle="modal" data-bs-target="#modalPagoServidor">
-                            <i class="fa-solid fa-credit-card me-1"></i> Ver Pago
-                        </button>
-                        <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+        {% if current_user.is_authenticated and current_user.rol == 'admin' and pago_servidor and not
+        pago_servidor.es_exento %}
+        {% if pago_servidor.estado == 'preventivo' %}
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2"
+            role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2 bg-warning text-dark d-flex align-items-center justify-content-center"
+                    style="width: 42px; height: 42px;">
+                    <i class="fa-solid fa-clock fs-5"></i>
                 </div>
-            {% elif pago_servidor.estado == 'hoy' %}
-                <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle p-2 bg-danger text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-                            <i class="fa-solid fa-triangle-exclamation fs-5"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-0">
-                                ¡Hoy 15 de {{ pago_servidor.mes_nombre }} vence la mensualidad de tu Servidor Zenic!
-                            </h6>
-                            <small class="text-white-50">
-                                Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Realiza tu pago hoy para evitar interrupciones.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 align-items-center ms-auto">
-                        <button type="button" class="btn btn-light btn-sm rounded-pill fw-bold px-3 text-danger" data-bs-toggle="modal" data-bs-target="#modalPagoServidor">
-                            <i class="fa-solid fa-credit-card me-1"></i> Pagar Hoy
-                        </button>
-                        <button type="button" class="btn-close ms-2 btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                <div>
+                    <h6 class="fw-bold mb-0">
+                        Mensualidad Servidor Zenic: Vence el 15 de {{ pago_servidor.mes_nombre }} (faltan {{
+                        pago_servidor.dias_restantes }} días)
+                    </h6>
+                    <small class="text-secondary">
+                        Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Evita la suspensión del servicio
+                        realizando tu pago a tiempo.
+                    </small>
                 </div>
-            {% elif pago_servidor.estado == 'gabela' %}
-                <div class="alert alert-warning alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle p-2 bg-warning text-dark d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-                            <i class="fa-solid fa-hourglass-half fs-5"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-0">
-                                ⏳ Periodo de gracia Servidor Zenic (quedan {{ pago_servidor.dias_gabela }} días de gabela). Venció el 15 de {{ pago_servidor.mes_nombre }}.
-                            </h6>
-                            <small class="text-secondary">
-                                Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Transfiere y reporta tu pago inmediatamente.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 align-items-center ms-auto">
-                        <button type="button" class="btn btn-dark btn-sm rounded-pill fw-semibold px-3" data-bs-toggle="modal" data-bs-target="#modalPagoServidor">
-                            <i class="fa-brands fa-whatsapp me-1 text-success"></i> Reportar Pago
-                        </button>
-                        <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center ms-auto">
+                <button type="button" class="btn btn-dark btn-sm rounded-pill fw-semibold px-3" data-bs-toggle="modal"
+                    data-bs-target="#modalPagoServidor">
+                    <i class="fa-solid fa-credit-card me-1"></i> Ver Pago
+                </button>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+        {% elif pago_servidor.estado == 'hoy' %}
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2"
+            role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2 bg-danger text-white d-flex align-items-center justify-content-center"
+                    style="width: 42px; height: 42px;">
+                    <i class="fa-solid fa-triangle-exclamation fs-5"></i>
                 </div>
-            {% elif pago_servidor.estado == 'vencido' %}
-                <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2" role="alert">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="rounded-circle p-2 bg-danger text-white d-flex align-items-center justify-content-center" style="width: 42px; height: 42px;">
-                            <i class="fa-solid fa-skull-crossbones fs-5"></i>
-                        </div>
-                        <div>
-                            <h6 class="fw-bold mb-0">
-                                🚨 Mensualidad Servidor Zenic vencida (Gabela de 5 días agotada). Venció el 15 de {{ pago_servidor.mes_nombre }}.
-                            </h6>
-                            <small class="text-white-50">
-                                Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Realiza el pago para restablecer la vigencia del servicio.
-                            </small>
-                        </div>
-                    </div>
-                    <div class="d-flex gap-2 align-items-center ms-auto">
-                        <button type="button" class="btn btn-light btn-sm rounded-pill fw-bold px-3 text-danger" data-bs-toggle="modal" data-bs-target="#modalPagoServidor">
-                            <i class="fa-brands fa-whatsapp me-1 text-success"></i> Reportar Pago
-                        </button>
-                        <button type="button" class="btn-close ms-2 btn-close-white" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
+                <div>
+                    <h6 class="fw-bold mb-0">
+                        ¡Hoy 15 de {{ pago_servidor.mes_nombre }} vence la mensualidad de tu Servidor Zenic!
+                    </h6>
+                    <small class="text-white-50">
+                        Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Realiza tu pago hoy para evitar
+                        interrupciones.
+                    </small>
                 </div>
-            {% endif %}
+            </div>
+            <div class="d-flex gap-2 align-items-center ms-auto">
+                <button type="button" class="btn btn-light btn-sm rounded-pill fw-bold px-3 text-danger"
+                    data-bs-toggle="modal" data-bs-target="#modalPagoServidor">
+                    <i class="fa-solid fa-credit-card me-1"></i> Pagar Hoy
+                </button>
+                <button type="button" class="btn-close ms-2 btn-close-white" data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+        {% elif pago_servidor.estado == 'gabela' %}
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2"
+            role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2 bg-warning text-dark d-flex align-items-center justify-content-center"
+                    style="width: 42px; height: 42px;">
+                    <i class="fa-solid fa-hourglass-half fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0">
+                        ⏳ Periodo de gracia Servidor Zenic (quedan {{ pago_servidor.dias_gabela }} días de gabela).
+                        Venció el 15 de {{ pago_servidor.mes_nombre }}.
+                    </h6>
+                    <small class="text-secondary">
+                        Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Transfiere y reporta tu pago
+                        inmediatamente.
+                    </small>
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center ms-auto">
+                <button type="button" class="btn btn-dark btn-sm rounded-pill fw-semibold px-3" data-bs-toggle="modal"
+                    data-bs-target="#modalPagoServidor">
+                    <i class="fa-brands fa-whatsapp me-1 text-success"></i> Reportar Pago
+                </button>
+                <button type="button" class="btn-close ms-2" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+        {% elif pago_servidor.estado == 'vencido' %}
+        <div class="alert alert-danger alert-dismissible fade show shadow-sm rounded-4 border-0 p-3 mb-4 d-flex flex-wrap align-items-center justify-content-between gap-2"
+            role="alert">
+            <div class="d-flex align-items-center gap-3">
+                <div class="rounded-circle p-2 bg-danger text-white d-flex align-items-center justify-content-center"
+                    style="width: 42px; height: 42px;">
+                    <i class="fa-solid fa-skull-crossbones fs-5"></i>
+                </div>
+                <div>
+                    <h6 class="fw-bold mb-0">
+                        🚨 Mensualidad Servidor Zenic vencida (Gabela de 5 días agotada). Venció el 15 de {{
+                        pago_servidor.mes_nombre }}.
+                    </h6>
+                    <small class="text-white-50">
+                        Monto: <strong>${{ pago_servidor.monto }} COP</strong> | Realiza el pago para restablecer la
+                        vigencia del servicio.
+                    </small>
+                </div>
+            </div>
+            <div class="d-flex gap-2 align-items-center ms-auto">
+                <button type="button" class="btn btn-light btn-sm rounded-pill fw-bold px-3 text-danger"
+                    data-bs-toggle="modal" data-bs-target="#modalPagoServidor">
+                    <i class="fa-brands fa-whatsapp me-1 text-success"></i> Reportar Pago
+                </button>
+                <button type="button" class="btn-close ms-2 btn-close-white" data-bs-dismiss="alert"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+        {% endif %}
         {% endif %}
 
         {% if current_user.is_authenticated and current_user.rol == 'admin' and pago_servidor %}
         <!-- Modal Pago Servidor (Rediseño Elegante y Funcional) -->
-        <div class="modal fade" id="modalPagoServidor" tabindex="-1" aria-labelledby="modalPagoServidorLabel" aria-hidden="true">
+        <div class="modal fade" id="modalPagoServidor" tabindex="-1" aria-labelledby="modalPagoServidorLabel"
+            aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content rounded-4 border-0 shadow-lg overflow-hidden">
                     <!-- Header -->
                     <div class="modal-header bg-brand-pink border-0 p-4 pb-3">
                         <div class="d-flex align-items-center gap-3">
-                            <div class="rounded-circle bg-white p-2 text-brand-black shadow-sm d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                            <div class="rounded-circle bg-white p-2 text-brand-black shadow-sm d-flex align-items-center justify-content-center"
+                                style="width: 44px; height: 44px;">
                                 <i class="fa-solid fa-server fs-5"></i>
                             </div>
                             <div>
-                                <h5 class="modal-title fw-bold text-brand-black mb-0" id="modalPagoServidorLabel">Pago Mensualidad Servidor Zenic</h5>
+                                <h5 class="modal-title fw-bold text-brand-black mb-0" id="modalPagoServidorLabel">Pago
+                                    Mensualidad Servidor Zenic</h5>
                                 <small class="text-secondary">Licencia de Software & Server Hosting</small>
                             </div>
                         </div>
-                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal" aria-label="Close"></button>
+                        <button type="button" class="btn-close shadow-none" data-bs-dismiss="modal"
+                            aria-label="Close"></button>
                     </div>
-                    
+
                     <div class="modal-body p-4">
                         {% if pago_servidor.es_exento %}
-                            <div class="text-center py-3 px-2 mb-3 bg-light-success rounded-4 border border-success border-opacity-25">
-                                <span class="badge bg-success rounded-pill px-3 py-2 fs-6 mb-2"><i class="fa-solid fa-gift me-1"></i> Beneficio Primer Cliente</span>
-                                <h3 class="fw-bold text-dark m-0">Servidor Incluido {{ pago_servidor.anio }}</h3>
-                                <p class="text-muted small mb-0 mt-2">Tu servicio se encuentra activo sin costo por ser el primer cliente. Los cobros mensuales iniciarán en el año <strong>{{ pago_servidor.anio_inicio_cobro }}</strong>.</p>
-                            </div>
+                        <div
+                            class="text-center py-3 px-2 mb-3 bg-light-success rounded-4 border border-success border-opacity-25">
+                            <span class="badge bg-success rounded-pill px-3 py-2 fs-6 mb-2"><i
+                                    class="fa-solid fa-gift me-1"></i> Beneficio Primer Cliente</span>
+                            <h3 class="fw-bold text-dark m-0">Servidor Incluido {{ pago_servidor.anio }}</h3>
+                            <p class="text-muted small mb-0 mt-2">Tu servicio se encuentra activo sin costo por ser el
+                                primer cliente. Los cobros mensuales iniciarán en el año <strong>{{
+                                    pago_servidor.anio_inicio_cobro }}</strong>.</p>
+                        </div>
                         {% else %}
-                            <div class="text-center mb-4 p-3 bg-light rounded-4 border border-0 shadow-sm">
-                                <span class="badge bg-dark rounded-pill px-3 py-1 fs-6 mb-2"><i class="fa-regular fa-calendar me-1"></i> 15 de {{ pago_servidor.mes_nombre }} {{ pago_servidor.anio }}</span>
-                                <h2 class="fw-extrabold text-dark m-0">${{ pago_servidor.monto }} COP</h2>
-                                <p class="text-secondary small mb-0 mt-1">
-                                    {% if pago_servidor.estado == 'pagado' %}
-                                        <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i> Mensualidad Pagada</span>
-                                    {% else %}
-                                        <i class="fa-regular fa-clock me-1"></i> Fecha de Vencimiento: <strong>15 de {{ pago_servidor.mes_nombre }}</strong>
-                                    {% endif %}
-                                </p>
-                            </div>
+                        <div class="text-center mb-4 p-3 bg-light rounded-4 border border-0 shadow-sm">
+                            <span class="badge bg-dark rounded-pill px-3 py-1 fs-6 mb-2"><i
+                                    class="fa-regular fa-calendar me-1"></i> 15 de {{ pago_servidor.mes_nombre }} {{
+                                pago_servidor.anio }}</span>
+                            <h2 class="fw-extrabold text-dark m-0">${{ pago_servidor.monto }} COP</h2>
+                            <p class="text-secondary small mb-0 mt-1">
+                                {% if pago_servidor.estado == 'pagado' %}
+                                <span class="text-success fw-bold"><i class="fa-solid fa-circle-check me-1"></i>
+                                    Mensualidad Pagada</span>
+                                {% else %}
+                                <i class="fa-regular fa-clock me-1"></i> Fecha de Vencimiento: <strong>15 de {{
+                                    pago_servidor.mes_nombre }}</strong>
+                                {% endif %}
+                            </p>
+                        </div>
                         {% endif %}
 
                         <!-- Cuentas Autorizadas de Transferencia -->
                         <div class="card border-0 bg-light rounded-4 p-3 mb-3">
                             <h6 class="fw-bold mb-3 text-dark d-flex align-items-center justify-content-between">
-                                <span><i class="fa-solid fa-wallet text-primary me-2"></i> Cuentas para Transferencia</span>
-                                <small class="text-muted fw-normal" style="font-size:0.75rem;">Haz clic en Copiar</small>
+                                <span><i class="fa-solid fa-wallet text-primary me-2"></i> Cuentas para
+                                    Transferencia</span>
+                                <small class="text-muted fw-normal" style="font-size:0.75rem;">Haz clic en
+                                    Copiar</small>
                             </h6>
-                            
+
                             <!-- Nu -->
-                            <div class="d-flex align-items-center justify-content-between p-3 mb-2 bg-white rounded-3 border shadow-sm">
+                            <div
+                                class="d-flex align-items-center justify-content-between p-3 mb-2 bg-white rounded-3 border shadow-sm">
                                 <div class="d-flex align-items-center gap-3">
-                                    <span class="badge text-white px-3 py-2 rounded-pill fw-bold" style="background-color: #820ad1;">Nu</span>
+                                    <span class="badge text-white px-3 py-2 rounded-pill fw-bold"
+                                        style="background-color: #820ad1;">Nu</span>
                                     <div>
                                         <div class="fw-bold text-dark fs-6">{{ pago_servidor.nu_llave }}</div>
-                                        <small class="text-muted" style="font-size: 0.75rem;">Llave Nu / Transfiya</small>
+                                        <small class="text-muted" style="font-size: 0.75rem;">Llave Nu /
+                                            Transfiya</small>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-1" onclick="navigator.clipboard.writeText('{{ pago_servidor.nu_llave }}'); alert('Llave Nu copiada: {{ pago_servidor.nu_llave }}');" title="Copiar Llave Nu">
+                                <button type="button"
+                                    class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-1"
+                                    onclick="navigator.clipboard.writeText('{{ pago_servidor.nu_llave }}'); alert('Llave Nu copiada: {{ pago_servidor.nu_llave }}');"
+                                    title="Copiar Llave Nu">
                                     <i class="fa-solid fa-copy me-1"></i> Copiar
                                 </button>
                             </div>
 
                             <!-- Nequi -->
-                            <div class="d-flex align-items-center justify-content-between p-3 bg-white rounded-3 border shadow-sm">
+                            <div
+                                class="d-flex align-items-center justify-content-between p-3 bg-white rounded-3 border shadow-sm">
                                 <div class="d-flex align-items-center gap-3">
-                                    <span class="badge text-white px-3 py-2 rounded-pill fw-bold" style="background-color: #20003b;">Nequi</span>
+                                    <span class="badge text-white px-3 py-2 rounded-pill fw-bold"
+                                        style="background-color: #20003b;">Nequi</span>
                                     <div>
                                         <div class="fw-bold text-dark fs-6">{{ pago_servidor.nequi_num }}</div>
-                                        <small class="text-muted" style="font-size: 0.75rem;">Transferencia Móvil Nequi</small>
+                                        <small class="text-muted" style="font-size: 0.75rem;">Transferencia Móvil
+                                            Nequi</small>
                                     </div>
                                 </div>
-                                <button type="button" class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-1" onclick="navigator.clipboard.writeText('{{ pago_servidor.nequi_num }}'); alert('Número Nequi copiado: {{ pago_servidor.nequi_num }}');" title="Copiar Nequi">
+                                <button type="button"
+                                    class="btn btn-outline-dark btn-sm rounded-pill px-3 fw-bold d-flex align-items-center gap-1"
+                                    onclick="navigator.clipboard.writeText('{{ pago_servidor.nequi_num }}'); alert('Número Nequi copiado: {{ pago_servidor.nequi_num }}');"
+                                    title="Copiar Nequi">
                                     <i class="fa-solid fa-copy me-1"></i> Copiar
                                 </button>
                             </div>
                         </div>
 
-                        <div class="alert alert-light border border-info border-opacity-25 rounded-4 p-3 small mb-0 d-flex gap-2 align-items-start">
+                        <div
+                            class="alert alert-light border border-info border-opacity-25 rounded-4 p-3 small mb-0 d-flex gap-2 align-items-start">
                             <i class="fa-solid fa-circle-info text-info fs-5 mt-1"></i>
                             <div>
-                                <strong>Notificación por WhatsApp:</strong> Al presionar el botón inferior se enviará el mensaje prellenado con el enlace de confirmación directa.
+                                <strong>Notificación por WhatsApp:</strong> Al presionar el botón inferior se enviará el
+                                mensaje prellenado con el enlace de confirmación directa.
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="modal-footer border-0 p-4 pt-0">
-                        <a href="{{ pago_servidor.whatsapp_url }}" target="_blank" class="btn btn-success w-100 rounded-pill fw-bold py-3 shadow-sm d-flex align-items-center justify-content-center gap-2 fs-6">
+                        <a href="{{ pago_servidor.whatsapp_url }}" target="_blank"
+                            class="btn btn-success w-100 rounded-pill fw-bold py-3 shadow-sm d-flex align-items-center justify-content-center gap-2 fs-6">
                             <i class="fa-brands fa-whatsapp fs-4"></i> Enviar Comprobante por WhatsApp
                         </a>
                     </div>
@@ -1048,18 +1339,24 @@
         {% endif %}
 
         <!-- MODAL GATEKEEPER BLOQUEANTE: ACUERDO SIC / LEY 1581 Y AUTORIZACIÓN AUDIOVISUAL (ZENIC S.A.S.) -->
-        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and request.endpoint != 'legal_bp.acuerdo_datos' %}
-        <div class="modal fade" id="modalGatekeeperLegal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="modalGatekeeperLegalLabel" aria-hidden="true">
+        {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and
+        request.endpoint != 'legal_bp.acuerdo_datos' %}
+        <div class="modal fade" id="modalGatekeeperLegal" data-bs-backdrop="static" data-bs-keyboard="false"
+            tabindex="-1" aria-labelledby="modalGatekeeperLegalLabel" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
-                    <div class="modal-header border-0 p-4 pb-2" style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white;">
+                    <div class="modal-header border-0 p-4 pb-2"
+                        style="background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color: white;">
                         <div class="d-flex align-items-center gap-3">
-                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width: 48px; height: 48px; background: rgba(249, 200, 211, 0.2); color: #F9C8D3;">
+                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle"
+                                style="width: 48px; height: 48px; background: rgba(249, 200, 211, 0.2); color: #F9C8D3;">
                                 <i class="fa-solid fa-file-signature fs-4"></i>
                             </span>
                             <div>
-                                <h5 class="modal-title fw-bold m-0 text-white" id="modalGatekeeperLegalLabel">Formalización Legal Obligatoria</h5>
-                                <small style="color: #94A3B8;">Custodia de Datos (SIC / Ley 1581) &bull; ZENIC S.A.S.</small>
+                                <h5 class="modal-title fw-bold m-0 text-white" id="modalGatekeeperLegalLabel">
+                                    Formalización Legal Obligatoria</h5>
+                                <small style="color: #94A3B8;">Custodia de Datos (SIC / Ley 1581) &bull; ZENIC
+                                    S.A.S.</small>
                             </div>
                         </div>
                     </div>
@@ -1072,51 +1369,79 @@
                             <div class="alert alert-light border rounded-3 small text-secondary mb-3 d-flex gap-2">
                                 <i class="fa-solid fa-shield-halved text-brand-pink fs-5 mt-1"></i>
                                 <div>
-                                    Para dar cumplimiento a la <strong>Ley 1581 de 2012</strong> y directrices de la <strong>Superintendencia de Industria y Comercio (SIC)</strong>, es necesario formalizar el instrumento de custodia técnica de la base de datos y la autorización de difusión comercial audiovisual de <strong>ZENIC S.A.S.</strong>
+                                    Para dar cumplimiento a la <strong>Ley 1581 de 2012</strong> y directrices de la
+                                    <strong>Superintendencia de Industria y Comercio (SIC)</strong>, es necesario
+                                    formalizar el instrumento de custodia técnica de la base de datos y la autorización
+                                    de difusión comercial audiovisual de <strong>ZENIC S.A.S.</strong>
                                 </div>
                             </div>
 
                             <div class="row g-3 mb-3">
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-dark mb-1">Nombre Comercial / Razón Social <span class="text-danger">*</span></label>
-                                    <input type="text" id="business_name_input" name="business_name" class="form-control form-control-sm rounded-3 bg-light" value="cases.com" required>
+                                    <label class="form-label small fw-bold text-dark mb-1">Nombre Comercial / Razón
+                                        Social <span class="text-danger">*</span></label>
+                                    <input type="text" id="business_name_input" name="business_name"
+                                        class="form-control form-control-sm rounded-3 bg-light" value="cases.com"
+                                        required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-dark mb-1">NIT o Identificación Tributaria <span class="text-danger">*</span></label>
-                                    <input type="text" id="business_nit_input" name="business_nit" class="form-control form-control-sm rounded-3 bg-light" value="901.888.777-1" required>
+                                    <label class="form-label small fw-bold text-dark mb-1">NIT o Identificación
+                                        Tributaria <span class="text-danger">*</span></label>
+                                    <input type="text" id="business_nit_input" name="business_nit"
+                                        class="form-control form-control-sm rounded-3 bg-light" value="901.888.777-1"
+                                        required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-dark mb-1">Nombre Representante Legal / Propietario <span class="text-danger">*</span></label>
-                                    <input type="text" id="legal_representative_input" name="legal_representative" class="form-control form-control-sm rounded-3 bg-light" value="{{ current_user.nombre }}" required>
+                                    <label class="form-label small fw-bold text-dark mb-1">Nombre Representante Legal /
+                                        Propietario <span class="text-danger">*</span></label>
+                                    <input type="text" id="legal_representative_input" name="legal_representative"
+                                        class="form-control form-control-sm rounded-3 bg-light"
+                                        value="{{ current_user.nombre }}" required>
                                 </div>
                                 <div class="col-md-6">
-                                    <label class="form-label small fw-bold text-dark mb-1">C.C. y Lugar de Expedición <span class="text-danger">*</span></label>
-                                    <input type="text" id="legal_rep_id_input" name="legal_rep_id" class="form-control form-control-sm rounded-3 bg-light" placeholder="Ej: 1.020.304.050 de Bogotá" required>
+                                    <label class="form-label small fw-bold text-dark mb-1">C.C. y Lugar de Expedición
+                                        <span class="text-danger">*</span></label>
+                                    <input type="text" id="legal_rep_id_input" name="legal_rep_id"
+                                        class="form-control form-control-sm rounded-3 bg-light"
+                                        placeholder="Ej: 1.020.304.050 de Bogotá" required>
                                 </div>
                             </div>
 
                             <!-- 3 Casillas Obligatorias -->
                             <div class="p-3 rounded-3 bg-light border mb-3">
-                                <h6 class="fw-bold small text-dark mb-2"><i class="fa-solid fa-list-check me-1 text-primary"></i> Cláusulas Vinculantes de Aceptación:</h6>
-                                
+                                <h6 class="fw-bold small text-dark mb-2"><i
+                                        class="fa-solid fa-list-check me-1 text-primary"></i> Cláusulas Vinculantes de
+                                    Aceptación:</h6>
+
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input check-legal-req" type="checkbox" name="accepted_terms" id="chk_terms" value="1" required>
+                                    <input class="form-check-input check-legal-req" type="checkbox"
+                                        name="accepted_terms" id="chk_terms" value="1" required>
                                     <label class="form-check-label small text-secondary" for="chk_terms">
-                                        <strong>1. Custodia Técnica e Indemnidad (SIC):</strong> Acepto la distribución de roles (Responsable vs Encargado), garantizo la licitud de las bases de datos y exonero a ZENIC S.A.S. de sanciones por ausencia de autorizaciones a mis clientes.
+                                        <strong>1. Custodia Técnica e Indemnidad (SIC):</strong> Acepto la distribución
+                                        de roles (Responsable vs Encargado), garantizo la licitud de las bases de datos
+                                        y exonero a ZENIC S.A.S. de sanciones por ausencia de autorizaciones a mis
+                                        clientes.
                                     </label>
                                 </div>
 
                                 <div class="form-check mb-2">
-                                    <input class="form-check-input check-legal-req" type="checkbox" name="accepted_dpa" id="chk_dpa" value="1" required>
+                                    <input class="form-check-input check-legal-req" type="checkbox" name="accepted_dpa"
+                                        id="chk_dpa" value="1" required>
                                     <label class="form-check-label small text-secondary" for="chk_dpa">
-                                        <strong>2. No Comercialización y Supresión (30 días):</strong> Reconozco que ZENIC S.A.S. no vende mis datos, no maneja cláusula de permanencia mínima y conserva 30 días de custodia preventiva antes de borrado definitivo.
+                                        <strong>2. No Comercialización y Supresión (30 días):</strong> Reconozco que
+                                        ZENIC S.A.S. no vende mis datos, no maneja cláusula de permanencia mínima y
+                                        conserva 30 días de custodia preventiva antes de borrado definitivo.
                                     </label>
                                 </div>
 
                                 <div class="form-check">
-                                    <input class="form-check-input check-legal-req" type="checkbox" name="accepted_media_release" id="chk_media" value="1" required>
+                                    <input class="form-check-input check-legal-req" type="checkbox"
+                                        name="accepted_media_release" id="chk_media" value="1" required>
                                     <label class="form-check-label small text-secondary" for="chk_media">
-                                        <strong>3. Autorización Audiovisual y Redes Sociales:</strong> Autorizo a ZENIC S.A.S. a utilizar la imagen comercial, logotipo corporativo y capturas o testimonios del comercio para difusión comercial en sus redes sociales y portafolio institucional.
+                                        <strong>3. Autorización Audiovisual y Redes Sociales:</strong> Autorizo a ZENIC
+                                        S.A.S. a utilizar la imagen comercial, logotipo corporativo y capturas o
+                                        testimonios del comercio para difusión comercial en sus redes sociales y
+                                        portafolio institucional.
                                     </label>
                                 </div>
                             </div>
@@ -1125,29 +1450,39 @@
                             <div class="mb-2">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <label class="form-label small fw-bold text-dark m-0">
-                                        <i class="fa-solid fa-pen-nib text-brand-pink me-1"></i> Rúbrica Manuscrita Digital (Ley 527 de 1999) <span class="text-danger">*</span>
+                                        <i class="fa-solid fa-pen-nib text-brand-pink me-1"></i> Rúbrica Manuscrita
+                                        Digital (Ley 527 de 1999) <span class="text-danger">*</span>
                                     </label>
-                                    <button type="button" id="btnClearSignature" class="btn btn-link btn-sm text-decoration-none text-danger p-0 small">
+                                    <button type="button" id="btnClearSignature"
+                                        class="btn btn-link btn-sm text-decoration-none text-danger p-0 small">
                                         <i class="fa-solid fa-eraser me-1"></i> Borrar Firma
                                     </button>
                                 </div>
-                                <div class="border rounded-3 bg-white text-center position-relative overflow-hidden" style="border: 2px dashed #94A3B8 !important; touch-action: none;">
-                                    <canvas id="signatureCanvas" width="700" height="150" style="width: 100%; height: 140px; cursor: crosshair; display: block;"></canvas>
-                                    <span id="canvasPlaceholder" class="position-absolute top-50 start-50 translate-middle text-muted small pointer-events-none opacity-50">
+                                <div class="border rounded-3 bg-white text-center position-relative overflow-hidden"
+                                    style="border: 2px dashed #94A3B8 !important; touch-action: none;">
+                                    <canvas id="signatureCanvas" width="700" height="150"
+                                        style="width: 100%; height: 140px; cursor: crosshair; display: block;"></canvas>
+                                    <span id="canvasPlaceholder"
+                                        class="position-absolute top-50 start-50 translate-middle text-muted small pointer-events-none opacity-50">
                                         Dibuja tu firma aquí con el mouse o tu dedo...
                                     </span>
                                 </div>
                                 <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">
-                                    Al firmar, se generará una estampa de auditoría criptográfica con Hash SHA-256 inmutable, tu dirección IP y marca temporal oficial colombiana UTC-5.
+                                    Al firmar, se generará una estampa de auditoría criptográfica con Hash SHA-256
+                                    inmutable, tu dirección IP y marca temporal oficial colombiana UTC-5.
                                 </small>
                             </div>
                         </div>
 
                         <div class="modal-footer border-0 p-4 pt-0 d-flex justify-content-between align-items-center">
-                            <a id="btnLeerTerminosCondiciones" href="{{ url_for('legal_bp.acuerdo_datos') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                            <a id="btnLeerTerminosCondiciones" href="{{ url_for('legal_bp.acuerdo_datos') }}"
+                                class="btn btn-outline-secondary btn-sm rounded-pill px-3">
                                 <i class="fa-solid fa-book-open me-1"></i> Leer Términos y Condiciones
                             </a>
-                            <button type="submit" id="btnSubmitLegal" class="btn btn-secondary rounded-pill px-4 fw-bold shadow-sm" style="background-color: #94A3B8; border-color: #94A3B8; opacity: 0.65; cursor: not-allowed;" disabled>
+                            <button type="submit" id="btnSubmitLegal"
+                                class="btn btn-secondary rounded-pill px-4 fw-bold shadow-sm"
+                                style="background-color: #94A3B8; border-color: #94A3B8; opacity: 0.65; cursor: not-allowed;"
+                                disabled>
                                 <i class="fa-solid fa-lock me-1"></i> Acepta las 3 casillas para firmar
                             </button>
                         </div>
@@ -1159,15 +1494,35 @@
 
         <!-- Renderizado de Flash Messages de Flask -->
         {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 shadow-sm rounded-3" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
+        {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ 'success' if category == 'success' else 'danger' }} alert-dismissible fade show border-0 shadow-sm rounded-3"
+            role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+        {% endif %}
         {% endwith %}
+
+        <!-- Centro Persistente de Autorizaciones de Precio para Administrador (No se elimina hasta Aprobar o Rechazar) -->
+        {% if current_user.is_authenticated and current_user.rol == 'admin' %}
+        <div id="adminPriceApprovalsWrapper" class="d-none mb-4">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden" style="border: 2px solid #F59E0B !important; background: #FFFBEB;">
+                <div class="px-4 py-2.5 d-flex justify-content-between align-items-center text-white"
+                     style="background: linear-gradient(135deg, #D97706 0%, #B45309 100%);">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-white text-dark rounded-pill fw-bolder px-2.5 py-1" id="adminApprovalsCountBadge">0</span>
+                        <h6 class="m-0 fw-bolder">
+                            <i class="fa-solid fa-bell fa-shake me-1.5"></i>Solicitudes de Precio por Debajo del Mínimo Esperando tu Autorización
+                        </h6>
+                    </div>
+                    <small class="fw-semibold opacity-90">El vendedor tiene la facturación bloqueada hasta que respondas</small>
+                </div>
+                <div class="p-3" id="adminPriceApprovalsList"></div>
+            </div>
+        </div>
+        {% endif %}
 
         {% block content %}{% endblock %}
     </main>
@@ -1212,7 +1567,7 @@
     <script>
         // Keep-Alive de sesión para evitar que expire si la caja o PWA queda abierta mucho tiempo
         const refrescarSesion = () => {
-            fetch('/auth/ping', { method: 'GET', credentials: 'same-origin' }).catch(() => {});
+            fetch('/auth/ping', { method: 'GET', credentials: 'same-origin' }).catch(() => { });
         };
         // Intervalo periódico cada 10 minutos
         setInterval(refrescarSesion, 10 * 60 * 1000);
@@ -1221,13 +1576,107 @@
             if (document.visibilityState === 'visible') refrescarSesion();
         });
         window.addEventListener('focus', refrescarSesion);
+
+        {% if current_user.rol == 'admin' %}
+        // Polling en Tiempo Real para Notificaciones Persistentes de Autorización de Precio (Solo Admin)
+        const GLOBAL_CSRF_TOKEN = "{{ csrf_token() }}";
+
+        function fmtCOPAdminNotif(val) {
+            return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(val || 0);
+        }
+
+        window.resolverSolicitudPrecioAdmin = async function(id, accion, btnEl) {
+            try {
+                if (btnEl) {
+                    btnEl.disabled = true;
+                    btnEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i> Procesando...';
+                }
+                const csrfMeta = GLOBAL_CSRF_TOKEN || document.querySelector('input[name="csrf_token"]')?.value || '';
+                const resp = await fetch(`/sales/api/aprobaciones/resolver_ajax/${id}`, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfMeta
+                    },
+                    body: JSON.stringify({ accion: accion })
+                });
+                if (resp.ok) {
+                    await consultarAprobacionesPendientesAdmin();
+                    if (window.location.pathname.includes('/aprobaciones_precio')) {
+                        window.location.reload();
+                    }
+                } else {
+                    alert('No se pudo procesar la solicitud. Recarga la página e intenta de nuevo.');
+                    if (btnEl) btnEl.disabled = false;
+                }
+            } catch (e) {
+                if (btnEl) btnEl.disabled = false;
+            }
+        };
+
+        async function consultarAprobacionesPendientesAdmin() {
+            const wrapper = document.getElementById('adminPriceApprovalsWrapper');
+            const listEl = document.getElementById('adminPriceApprovalsList');
+            const badgeEl = document.getElementById('adminApprovalsCountBadge');
+            if (!wrapper || !listEl) return;
+
+            try {
+                const resp = await fetch('/sales/api/aprobaciones/pendientes_admin', { credentials: 'same-origin' });
+                if (!resp.ok) return;
+                const data = await resp.json();
+                if (!data.items || data.items.length === 0) {
+                    wrapper.classList.add('d-none');
+                    listEl.innerHTML = '';
+                    return;
+                }
+
+                wrapper.classList.remove('d-none');
+                if (badgeEl) badgeEl.textContent = data.count;
+
+                listEl.innerHTML = data.items.map(ap => `
+                    <div class="p-3 mb-2 rounded-3 bg-white border shadow-xs d-flex flex-wrap justify-content-between align-items-center gap-3">
+                        <div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-warning text-dark fw-bold">Solicitud #${ap.id} · ${ap.hora}</span>
+                                <span class="fw-bolder text-brand-black fs-6">${ap.producto_nombre}</span>
+                                ${ap.imei ? `<span class="badge bg-light text-dark border font-monospace">IMEI: ${ap.imei}</span>` : ''}
+                            </div>
+                            <div class="small mt-1 text-secondary">
+                                Vendedor: <strong class="text-dark">${ap.vendedor_nombre}</strong> ·
+                                Precio Mínimo: <strong class="text-muted">${fmtCOPAdminNotif(ap.precio_minimo)}</strong> →
+                                Precio Solicitado: <strong class="text-danger fs-6">${fmtCOPAdminNotif(ap.precio_solicitado)}</strong>
+                                <span class="ms-2 text-muted">(${ap.motivo})</span>
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button type="button" class="btn btn-success rounded-pill px-3.5 py-1.5 fw-bold shadow-xs"
+                                    onclick="resolverSolicitudPrecioAdmin(${ap.id}, 'aprobar', this)">
+                                <i class="fa-solid fa-check me-1"></i> Autorizar ${fmtCOPAdminNotif(ap.precio_solicitado)}
+                            </button>
+                            <button type="button" class="btn btn-danger rounded-pill px-3.5 py-1.5 fw-bold shadow-xs"
+                                    onclick="resolverSolicitudPrecioAdmin(${ap.id}, 'rechazar', this)">
+                                <i class="fa-solid fa-xmark me-1"></i> Rechazar
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (e) {}
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            consultarAprobacionesPendientesAdmin();
+            setInterval(consultarAprobacionesPendientesAdmin, 4000);
+        });
+        {% endif %}
     </script>
     {% endif %}
 
-    {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and request.endpoint != 'legal_bp.acuerdo_datos' %}
+    {% if current_user.is_authenticated and current_user.rol == 'admin' and not acuerdo_sic_firmado and request.endpoint
+    != 'legal_bp.acuerdo_datos' %}
     <script>
         // LÓGICA DEL GATEKEEPER LEGAL Y CANVAS DE FIRMA DIGITAL
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const modalEl = document.getElementById('modalGatekeeperLegal');
             if (modalEl) {
                 const modal = new bootstrap.Modal(modalEl, { backdrop: 'static', keyboard: false });
@@ -1296,7 +1745,7 @@
                     window.addEventListener('touchend', endDraw);
 
                     if (btnClear) {
-                        btnClear.addEventListener('click', function() {
+                        btnClear.addEventListener('click', function () {
                             ctx.clearRect(0, 0, canvas.width, canvas.height);
                             signatureInput.value = '';
                             hasSignature = false;
@@ -1339,7 +1788,7 @@
 
                 const formEl = document.getElementById('formFirmaLegal');
                 if (formEl) {
-                    formEl.addEventListener('submit', function(e) {
+                    formEl.addEventListener('submit', function (e) {
                         const allChecked = checkboxes.length === 3 && Array.from(checkboxes).every(c => c.checked);
                         const hasId = legalRepInput && legalRepInput.value.trim().length >= 4;
                         if (!allChecked) {
@@ -1389,6 +1838,8 @@
         });
     </script>
     {% endif %}
-    </script>
+    <script src="{{ url_for('static', filename='js/celulares_catalogo.js', v=8) }}"></script>
+    <script src="{{ url_for('static', filename='js/celulares_catalogo.js', v=9) }}"></script>
 </body>
+
 </html>

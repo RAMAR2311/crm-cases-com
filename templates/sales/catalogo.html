@@ -1,27 +1,60 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row mb-5">
-    <div class="col-12">
-        <!-- Titular Simple y Limpio, el color de marca A3D8DE acentúa el Logo -->
-        <h2 class="fw-bolder m-0" style="color: var(--brand-blue);">
-            <i class="fa-solid fa-book-open me-2"></i>Catálogo de Stock General
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bolder text-brand-black m-0">
+            <i class="fa-solid fa-book-open text-brand-pink me-2"></i>Catálogo General (Accesorios y Celulares)
         </h2>
+        <small class="text-muted">Consulta rápida de precios, especificaciones, variantes y disponibilidad en tiempo real</small>
+    </div>
+
+    <!-- Filtro Rápido por Categoría: Todo / Accesorios / Celulares -->
+    <div class="d-flex flex-wrap gap-2" id="catalogoFilterGroup">
+        <button type="button"
+                class="btn rounded-pill px-4 py-2 fw-bold shadow-xs cat-filter-btn {% if categoria == 'todos' or not categoria %}btn-pink{% else %}btn-blue text-muted{% endif %}"
+                data-filter="todos"
+                onclick="filtrarCatalogoCategoria('todos', this)">
+            <i class="fa-solid fa-layer-group me-1"></i> Todo
+            <span class="badge rounded-pill ms-1 bg-white text-dark border">{{ total_todos if total_todos is defined else productos|length }}</span>
+        </button>
+        <button type="button"
+                class="btn rounded-pill px-4 py-2 fw-bold shadow-xs cat-filter-btn {% if categoria == 'accesorios' %}btn-pink{% else %}btn-blue text-muted{% endif %}"
+                data-filter="accesorios"
+                onclick="filtrarCatalogoCategoria('accesorios', this)">
+            <i class="fa-solid fa-headphones me-1"></i> Accesorios
+            <span class="badge rounded-pill ms-1 bg-white text-dark border">{{ total_accesorios if total_accesorios is defined else 0 }}</span>
+        </button>
+        <button type="button"
+                class="btn rounded-pill px-4 py-2 fw-bold shadow-xs cat-filter-btn {% if categoria == 'celulares' %}btn-pink{% else %}btn-blue text-muted{% endif %}"
+                data-filter="celulares"
+                onclick="filtrarCatalogoCategoria('celulares', this)">
+            <i class="fa-solid fa-mobile-screen-button me-1"></i> Celulares
+            <span class="badge rounded-pill ms-1 bg-white text-dark border">{{ total_celulares if total_celulares is defined else 0 }}</span>
+        </button>
     </div>
 </div>
 
-<div class="card card-custom p-4 border mt-2 bg-white shadow-sm mb-4">
-    <!-- El Formulario usa Método GET Nativo para enviar 'q' por barra de direcciones URL -->
-    <form method="GET" action="{{ url_for('sales_bp.catalogo') }}" class="row align-items-end g-3">
+<!-- Barra de Búsqueda en Tiempo Real -->
+<div class="card card-custom p-4 border-0 bg-white shadow-sm mb-4 rounded-4">
+    <form method="GET" action="{{ url_for('sales_bp.catalogo') }}" class="row align-items-end g-3" onsubmit="return true;">
+        <input type="hidden" name="categoria" id="inputCategoriaHidden" value="{{ categoria or 'todos' }}">
         <div class="col-md-9">
-            <label class="form-label fw-bold text-brand-black small"><i class="fa-solid fa-magnifying-glass me-1"></i> Búsqueda de Artículos</label>
-            <!-- Permite filtrado profundo en la BD por Substraer Coincidencias (ILIKE) -->
-            <input type="text" name="q" class="form-control bg-light border-0 py-2 shadow-sm" value="{{ q }}" placeholder="Busca escribiendo el SKU Oficial o el Nombre del accesorio..." autocomplete="off">
+            <label class="form-label fw-bold text-brand-black small">
+                <i class="fa-solid fa-magnifying-glass text-brand-pink me-1"></i> Búsqueda Rápida de Artículos o Equipos
+            </label>
+            <div class="input-group">
+                <span class="input-group-text bg-light border-0 ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" name="q" id="catalogoSearchInput" class="form-control bg-light border-0 py-2 shadow-none fw-semibold"
+                       value="{{ q or '' }}" placeholder="Escribe nombre, modelo, SKU o IMEI para filtrar al instante..." autocomplete="off">
+                <button type="button" class="btn btn-light border-0 text-muted px-3" onclick="limpiarBusquedaCatalogo()" title="Limpiar">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
         </div>
         <div class="col-md-3">
-            <!-- Botón Dominante en Turquesa (Azul de Cases.com '#A3D8DE') -->
-            <button type="submit" class="btn btn-blue w-100 py-2 rounded-3 shadow-sm fw-bold">
-                Buscar Existencias
+            <button type="submit" class="btn btn-blue w-100 py-2 rounded-pill shadow-xs fw-bold">
+                <i class="fa-solid fa-magnifying-glass me-1"></i> Buscar en Catálogo
             </button>
         </div>
     </form>
@@ -29,37 +62,93 @@
 
 <style>
 @media print {
-    /* Ocultar elementos de navegación y búsqueda al imprimir el catálogo */
-    .btn, form, footer, header, nav, .sidebar, .sidebar-wrapper { display: none !important; }
+    .btn, form, footer, header, nav, .sidebar, .sidebar-wrapper, #catalogoFilterGroup { display: none !important; }
     body, .container-fluid, .main-content { padding: 0 !important; margin: 0 !important; background: white !important; }
     .card { page-break-inside: avoid; border: 1px solid #e0e0e0 !important; box-shadow: none !important; }
     .print-friendly-row { gap: 1rem !important; }
-    .col-md-4, .col-xl-3 { flex: 0 0 auto !important; width: 33.333% !important; } 
-    /* Force 3 columns in print */
+    .col-md-4, .col-xl-3 { flex: 0 0 auto !important; width: 33.333% !important; }
 }
 </style>
 
-<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 print-friendly-row">
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 print-friendly-row" id="catalogoGrid">
     {% for p in productos %}
-    <div class="col">
-        <div class="card h-100 border-0 shadow-sm {% if p.total_stock <= 0 %}opacity-50{% endif %}" style="border-radius: 12px; overflow: hidden;">
-            {% if p.imagen %}
-                <img src="{{ url_for('static', filename='uploads/' ~ p.imagen) }}" class="card-img-top bg-light" alt="{{ p.nombre }}" style="height: 220px; object-fit: contain; padding: 1.5rem;">
-            {% else %}
-                <div class="card-img-top bg-light d-flex align-items-center justify-content-center border-bottom border-light" style="height: 220px;">
-                    <i class="fa-solid fa-image fa-3x text-muted opacity-25"></i>
-                </div>
-            {% endif %}
-            
-            <div class="card-body d-flex flex-column p-4">
-                <div class="d-flex justify-content-between align-items-start mb-1">
-                    <p class="text-muted small mb-0 fw-bold"><i class="fa-solid fa-barcode me-1"></i>{{ p.sku }}</p>
-                    {% if p.total_stock <= 0 %}
-                        <span class="badge bg-danger rounded-pill px-2"><i class="fa-solid fa-ban"></i> Agotado</span>
+    {% set es_celular = (p.tipo_inventario == 'celulares') or (p.tipo_inventario == 'externos' and p.subtipo_externo == 'celular') %}
+    {% set cat_item = 'celulares' if es_celular else 'accesorios' %}
+    <div class="col catalogo-card-col"
+         data-categoria="{{ cat_item }}"
+         data-search="{{ (p.nombre or '')|lower }} {{ (p.sku or '')|lower }} {{ (p.imei or '')|lower }} {{ (p.marca or '')|lower }} {{ (p.modelo_celular or '')|lower }}">
+        <div class="card card-custom h-100 border-0 {% if (p.total_stock or 0) <= 0 %}opacity-50{% endif %}" style="border-radius: 16px; overflow: hidden;">
+            <div class="position-relative">
+                {% if p.imagen %}
+                    <img src="{{ url_for('static', filename='uploads/' ~ p.imagen) }}" class="card-img-top bg-light" alt="{{ p.nombre }}" style="height: 210px; object-fit: contain; padding: 1.25rem;">
+                {% else %}
+                    <div class="card-img-top bg-light d-flex flex-column align-items-center justify-content-center border-bottom border-light" style="height: 210px;">
+                        <i class="fa-solid {% if es_celular %}fa-mobile-screen-button{% else %}fa-headphones{% endif %} fa-3x text-muted opacity-25 mb-2"></i>
+                        <span class="small text-muted fw-semibold">{{ 'Celular' if es_celular else 'Accesorio' }}</span>
+                    </div>
+                {% endif %}
+
+                <!-- Badges Superiores de Tipo y Disponibilidad -->
+                <div class="position-absolute top-0 start-0 m-3 d-flex flex-wrap gap-1">
+                    {% if es_celular %}
+                        <span class="badge rounded-pill px-2.5 py-1 fw-bold shadow-xs" style="background: #E0F2FE; color: #0369A1; border: 1px solid #BAE6FD;">
+                            <i class="fa-solid fa-mobile-screen-button me-1"></i> Celular
+                        </span>
+                    {% else %}
+                        <span class="badge rounded-pill px-2.5 py-1 fw-bold shadow-xs" style="background: #DCFCE7; color: #15803D; border: 1px solid #BBF7D0;">
+                            <i class="fa-solid fa-boxes-stacked me-1"></i> Accesorio
+                        </span>
+                    {% endif %}
+                    {% if p.tipo_inventario == 'externos' %}
+                        <span class="badge badge-soft-blue rounded-pill px-2.5 py-1 fw-bold shadow-xs">
+                            {{ 'Cel Ext.' if es_celular else 'Acc Ext.' }}
+                        </span>
                     {% endif %}
                 </div>
-                <h5 class="card-title fw-bolder text-brand-black mb-3">{{ p.nombre }}</h5>
-                
+
+                <div class="position-absolute top-0 end-0 m-3">
+                    {% if (p.total_stock or 0) <= 0 %}
+                        <span class="badge bg-danger rounded-pill px-2.5 py-1 shadow-xs"><i class="fa-solid fa-ban me-1"></i> Agotado</span>
+                    {% else %}
+                        <span class="badge bg-white text-dark border rounded-pill px-2.5 py-1 fw-bold shadow-xs">
+                            <i class="fa-solid fa-box text-success me-1"></i> {{ p.total_stock }} disp.
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card-body d-flex flex-column p-4">
+                <div class="d-flex justify-content-between align-items-start mb-1">
+                    <p class="text-muted small mb-0 fw-bold font-monospace">
+                        <i class="fa-solid fa-barcode me-1"></i>{{ p.imei if (es_celular and p.imei) else p.sku }}
+                    </p>
+                </div>
+                <h5 class="card-title fw-bolder text-brand-black mb-2">{{ p.nombre }}</h5>
+
+                {% if es_celular %}
+                    <!-- Ficha de Especificaciones para Celulares -->
+                    <div class="d-flex flex-wrap gap-1 mb-3">
+                        <span class="badge {% if p.estado_celular == 'Usado' %}badge-soft-warning{% else %}badge-soft-blue{% endif %} rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                            {{ p.estado_celular or 'Nuevo' }}
+                        </span>
+                        {% if p.memoria %}
+                        <span class="badge bg-light text-dark border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-microchip me-1 text-muted"></i>{{ p.memoria }}
+                        </span>
+                        {% endif %}
+                        {% if p.color %}
+                        <span class="badge bg-light text-secondary border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-palette me-1 text-muted"></i>{{ p.color }}
+                        </span>
+                        {% endif %}
+                        {% if p.bateria %}
+                        <span class="badge bg-light text-success border rounded-pill px-2.5 py-1" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-battery-three-quarters me-1"></i>{{ p.bateria }}
+                        </span>
+                        {% endif %}
+                    </div>
+                {% endif %}
+
                 {% if p.variantes %}
                     <h6 class="fw-bold text-muted mb-2" style="font-size: 0.75rem; letter-spacing: 0.5px;">SUBCATEGORÍAS DISPONIBLES:</h6>
                     <div class="table-responsive mb-auto">
@@ -67,11 +156,14 @@
                             <tbody style="font-size: 0.9rem;">
                                 {% set ns = namespace(active_variants=0) %}
                                 {% for v in p.variantes %}
-                                    {% if v.cantidad_stock > 0 %}
+                                    {% if (v.cantidad_stock or 0) > 0 %}
                                         {% set ns.active_variants = ns.active_variants + 1 %}
                                         <tr class="border-bottom border-light">
-                                            <td class="ps-0 text-secondary"><i class="fa-solid fa-caret-right text-brand-pink me-1" style="font-size: 0.7rem;"></i> {{ v.nombre_variante }}</td>
-                                            <td class="text-end fw-bold text-brand-black pe-0">${{ (v.precio_sugerido or p.precio_sugerido)|cop }}</td>
+                                            <td class="ps-0 text-secondary">
+                                                <i class="fa-solid fa-caret-right text-brand-pink me-1" style="font-size: 0.7rem;"></i> {{ v.nombre_variante }}
+                                                <span class="badge bg-light text-muted border rounded-pill ms-1" style="font-size: 0.65rem;">{{ v.cantidad_stock }} uds</span>
+                                            </td>
+                                            <td class="text-end fw-bold text-brand-black pe-0">${{ (v.precio_sugerido or p.precio_sugerido or 0)|cop }}</td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -83,13 +175,13 @@
                     </div>
                 {% else %}
                     <div class="mt-auto pt-3 border-top border-light d-flex justify-content-between align-items-end">
-                        <span class="text-muted fw-bold" style="font-size: 0.8rem; letter-spacing: 0.5px;">PRECIO GENERAL</span>
-                        <h4 class="fw-bolder m-0" style="color: #BE185D;">${{ (p.precio_sugerido)|cop }}</h4>
+                        <span class="text-muted fw-bold" style="font-size: 0.78rem; letter-spacing: 0.5px;">PRECIO VENTA</span>
+                        <h4 class="fw-bolder m-0" style="color: #BE185D;">${{ (p.precio_sugerido or 0)|cop }}</h4>
                     </div>
                 {% endif %}
             </div>
-            
-            <!-- Franja Rango de Precio -->
+
+            <!-- Franja Rango de Precio para Productos con Variantes -->
             {% if p.variantes and p.rango_precios %}
             <div class="card-footer bg-white border-top border-light pt-2 pb-3 px-4 text-end">
                 <span class="text-muted fw-bold me-1" style="font-size: 0.75rem;">VALORES:</span>
@@ -100,15 +192,85 @@
                 {% endif %}
             </div>
             {% endif %}
-            
         </div>
     </div>
     {% else %}
-    <div class="col-12 text-center py-5 bg-white border rounded shadow-sm">
+    <div class="col-12 text-center py-5 bg-white border rounded-4 shadow-sm">
         <i class="fa-solid fa-box-open fs-1 mb-3 text-muted opacity-25"></i>
         <h4 class="text-brand-black fw-bold">No se hallaron resultados</h4>
-        <p class="text-muted mb-0">No pudimos localizar artículos físicos con esos atributos de búsqueda.</p>
+        <p class="text-muted mb-0">No pudimos localizar artículos ni celulares con esos criterios de búsqueda.</p>
     </div>
     {% endfor %}
 </div>
+
+<div id="catalogoEmptyFilterMsg" class="d-none text-center py-5 bg-white border rounded-4 shadow-sm mt-3">
+    <i class="fa-solid fa-magnifying-glass fs-1 mb-3 text-brand-pink"></i>
+    <h5 class="text-brand-black fw-bold">No hay productos que coincidan con este filtro</h5>
+    <p class="text-muted small mb-0">Prueba cambiando entre Todo, Accesorios o Celulares o borrando el texto buscado.</p>
+</div>
+
+<script>
+let categoriaActivaCatalogo = "{{ categoria or 'todos' }}";
+
+function filtrarCatalogoCategoria(cat, btnEl) {
+    categoriaActivaCatalogo = cat;
+    const hiddenInput = document.getElementById('inputCategoriaHidden');
+    if (hiddenInput) hiddenInput.value = cat;
+
+    document.querySelectorAll('.cat-filter-btn').forEach(b => {
+        b.classList.remove('btn-pink');
+        b.classList.add('btn-blue', 'text-muted');
+    });
+    if (btnEl) {
+        btnEl.classList.remove('btn-blue', 'text-muted');
+        btnEl.classList.add('btn-pink');
+    }
+    aplicarFiltroCombinadoCatalogo();
+}
+
+function aplicarFiltroCombinadoCatalogo() {
+    const q = (document.getElementById('catalogoSearchInput')?.value || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('.catalogo-card-col');
+    let visibles = 0;
+
+    cards.forEach(col => {
+        const cat = col.dataset.categoria || 'accesorios';
+        const text = col.dataset.search || '';
+        const matchCat = (categoriaActivaCatalogo === 'todos') || (cat === categoriaActivaCatalogo);
+        const matchText = (q === '') || text.includes(q);
+
+        if (matchCat && matchText) {
+            col.classList.remove('d-none');
+            visibles++;
+        } else {
+            col.classList.add('d-none');
+        }
+    });
+
+    const emptyMsg = document.getElementById('catalogoEmptyFilterMsg');
+    if (emptyMsg) {
+        if (visibles === 0 && cards.length > 0) {
+            emptyMsg.classList.remove('d-none');
+        } else {
+            emptyMsg.classList.add('d-none');
+        }
+    }
+}
+
+function limpiarBusquedaCatalogo() {
+    const inp = document.getElementById('catalogoSearchInput');
+    if (inp) {
+        inp.value = '';
+        aplicarFiltroCombinadoCatalogo();
+        inp.focus();
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const inp = document.getElementById('catalogoSearchInput');
+    if (inp) {
+        inp.addEventListener('input', aplicarFiltroCombinadoCatalogo);
+    }
+});
+</script>
 {% endblock %}
