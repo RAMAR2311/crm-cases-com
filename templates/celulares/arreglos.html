@@ -123,10 +123,19 @@
                         ${{ (r.valor_recibido or 0)|cop }}
                     </td>
                     <td class="text-center pe-4">
+                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-nowrap">
+                            <a href="{{ url_for('retomas_bp.contrato_compraventa', id=r.id) }}" target="_blank"
+                               class="btn-action-icon btn-action-amber"
+                               title="Ver / Imprimir Contrato de Compraventa">
+                                <i class="fa-solid fa-file-signature"></i>
+                            </a>
+                            {% if current_user.rol == 'admin' %}
+                            <button type="button" class="btn-action-icon btn-action-emerald" data-bs-toggle="modal" data-bs-target="#modalRecibirArreglado{{ r.id }}" title="Entregado Arreglado → Pasar a Inventario">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </button>
+                            {% endif %}
+                        </div>
                         {% if current_user.rol == 'admin' %}
-                        <button type="button" class="btn btn-sm btn-success rounded-pill px-3.5 py-2 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalRecibirArreglado{{ r.id }}">
-                            <i class="fa-solid fa-circle-check me-1"></i> Entregado Arreglado → Inventario
-                        </button>
 
                         <!-- Modal Validar Entrega de Arreglo, Sumar Sobrecosto y Asignar Precio de Venta -->
                         <div class="modal fade text-start" id="modalRecibirArreglado{{ r.id }}" tabindex="-1" aria-hidden="true">

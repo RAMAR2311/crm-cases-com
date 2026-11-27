@@ -307,6 +307,8 @@ class Retoma(db.Model):
     cliente_documento = db.Column(db.String(50), nullable=True)
     cliente_telefono = db.Column(db.String(50), nullable=True)
     observaciones = db.Column(db.Text, nullable=True)
+    firma_vendedor = db.Column(db.Text, nullable=True)
+    firma_comprador = db.Column(db.Text, nullable=True)
     estado = db.Column(db.String(30), nullable=False, default='CUARENTENA') # 'CUARENTENA', 'APROBADA', 'RECHAZADA'
     fecha_recepcion = db.Column(db.DateTime, default=obtener_hora_bogota)
     fecha_aprobacion = db.Column(db.DateTime, nullable=True)

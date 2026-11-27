@@ -1097,6 +1097,27 @@ def contrato_compraventa(id):
     )
 
 
+@retomas_bp.route('/contrato/<int:id>/firmar', methods=['POST'])
+@login_required
+def guardar_firmas_contrato(id):
+    retoma = Retoma.query.get_or_404(id)
+    data = request.get_json() or {}
+    firma_v = (data.get('firma_vendedor') or '').strip()
+    firma_c = (data.get('firma_comprador') or '').strip()
+
+    if 'firma_vendedor' in data:
+        retoma.firma_vendedor = firma_v if firma_v.startswith('data:image/') else None
+    if 'firma_comprador' in data:
+        retoma.firma_comprador = firma_c if firma_c.startswith('data:image/') else None
+
+    try:
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Firmas guardadas en el contrato exitosamente.'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Error al guardar firmas: {str(e)}'}), 500
+
+
 @retomas_bp.route('/contrato_por_venta/<int:sale_id>', methods=['GET'])
 @login_required
 def contrato_por_venta(sale_id):

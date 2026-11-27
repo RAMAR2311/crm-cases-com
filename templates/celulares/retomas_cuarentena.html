@@ -106,7 +106,7 @@
                     <th style="min-width: 160px;">CLIENTE QUE ENTREGÓ</th>
                     <th class="text-end" style="min-width: 130px;">VALOR RECIBIDO</th>
                     <th class="text-center" style="min-width: 130px;">ESTADO</th>
-                    <th class="text-center pe-4" style="min-width: 265px;">ACCIONES</th>
+                    <th class="text-center pe-4" style="min-width: 160px;">ACCIONES</th>
                 </tr>
             </thead>
             <tbody>
@@ -184,32 +184,32 @@
                         {% endif %}
                     </td>
                     <td class="text-center pe-4">
-                        <div class="d-inline-flex flex-wrap align-items-center justify-content-center gap-1.5">
-                            <!-- Botón Circular: Ver Contrato de Compraventa de Retoma -->
+                        <div class="d-inline-flex align-items-center justify-content-center gap-1.5 flex-nowrap">
+                            <!-- 1. Botón Circular: Ver Contrato de Compraventa de Retoma -->
                             <a href="{{ url_for('retomas_bp.contrato_compraventa', id=r.id) }}" target="_blank"
                                class="btn-action-icon btn-action-amber"
-                               title="Ver / Imprimir Contrato de Compraventa (Retoma)">
+                               title="Ver / Imprimir Contrato de Compraventa">
                                 <i class="fa-solid fa-file-signature"></i>
                             </a>
 
                         {% if r.estado == 'CUARENTENA' %}
-                            <!-- Acción 1: Mandar a Arreglos -->
-                            <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold shadow-2xs" data-bs-toggle="modal" data-bs-target="#modalEnviarArreglo{{ r.id }}">
-                                <i class="fa-solid fa-screwdriver-wrench me-1"></i> A Arreglos
+                            <!-- 2. Acción Circular: Mandar a Arreglos -->
+                            <button type="button" class="btn-action-icon btn-action-danger" data-bs-toggle="modal" data-bs-target="#modalEnviarArreglo{{ r.id }}" title="Mandar a Arreglos / Soporte">
+                                <i class="fa-solid fa-screwdriver-wrench"></i>
                             </button>
-                            <!-- Acción 2: Mandar directo a Inventario -->
+                            <!-- 3. Acción Circular: Mandar directo a Inventario -->
                             {% if current_user.rol == 'admin' %}
-                            <button type="button" class="btn btn-sm btn-success rounded-pill px-3 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalAprobarRetoma{{ r.id }}">
-                                <i class="fa-solid fa-box-open me-1"></i> A Inventario
+                            <button type="button" class="btn-action-icon btn-action-emerald" data-bs-toggle="modal" data-bs-target="#modalAprobarRetoma{{ r.id }}" title="Mandar a Inventario de Celulares">
+                                <i class="fa-solid fa-box-open"></i>
                             </button>
                             {% endif %}
                         {% elif r.estado == 'EN_ARREGLO' %}
-                            <a href="{{ url_for('retomas_bp.arreglos') }}" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
-                                <i class="fa-solid fa-screwdriver-wrench me-1"></i> Ver en Arreglos
+                            <a href="{{ url_for('retomas_bp.arreglos') }}" class="btn-action-icon btn-action-danger" title="Ver en Módulo Arreglos">
+                                <i class="fa-solid fa-screwdriver-wrench"></i>
                             </a>
                         {% elif r.product_id_generado %}
-                            <a href="{{ url_for('celulares_bp.editar_celular', id=r.product_id_generado) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
-                                <i class="fa-solid fa-mobile-screen-button me-1"></i> Ver en Inventario
+                            <a href="{{ url_for('celulares_bp.editar_celular', id=r.product_id_generado) }}" class="btn-action-icon btn-action-blue" title="Ver Equipo en Inventario">
+                                <i class="fa-solid fa-mobile-screen-button"></i>
                             </a>
                         {% endif %}
                         </div>

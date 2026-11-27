@@ -525,6 +525,11 @@ def create_app():
                 ('observacion', 'VARCHAR(255)'),
                 ('metodo_pago', "VARCHAR(50) DEFAULT 'efectivo'"),
             ])
+            _asegurar_columnas('retomas', [
+                ('imei2', 'VARCHAR(50)'),
+                ('firma_vendedor', 'TEXT'),
+                ('firma_comprador', 'TEXT'),
+            ])
         except Exception as e:
             print(f"[AUTO-SCHEMA] Aviso verificando columnas: {e}")
 
