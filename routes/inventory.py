@@ -286,8 +286,115 @@ def editar_producto(id):
 @admin_or_bodega_required
 def historial_ajustes():
     tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
-    ajustes = StockAdjustment.query.join(Product).filter(Product.tipo_inventario == tipo).order_by(StockAdjustment.fecha_ajuste.desc()).all()
-    return render_template('inventory/historial_ajustes.html', ajustes=ajustes)
+    q = request.args.get('q', '').strip()
+
+    query_prod = Product.query.filter_by(tipo_inventario=tipo)
+    if q:
+        query_prod = query_prod.filter(
+            or_(
+                Product.nombre.ilike(f'%{q}%'),
+                Product.sku.ilike(f'%{q}%')
+            )
+        )
+    productos = query_prod.order_by(Product.nombre.asc()).all()
+
+    # Calcular resumen de trazabilidad por cada producto
+    productos_kardex = []
+    total_movimientos_global = 0
+    total_entradas_global = 0
+    total_salidas_global = 0
+
+    for p in productos:
+        movs = sorted(p.ajustes_stock, key=lambda x: x.fecha_ajuste, reverse=True)
+        entradas = 0
+        salidas = 0
+        for m in movs:
+            diff = (m.stock_nuevo or 0) - (m.stock_anterior or 0)
+            if diff > 0:
+                entradas += diff
+            elif diff < 0:
+                salidas += abs(diff)
+        total_movimientos_global += len(movs)
+        total_entradas_global += entradas
+        total_salidas_global += salidas
+
+        productos_kardex.append({
+            'producto': p,
+            'total_movimientos': len(movs),
+            'total_entradas': entradas,
+            'total_salidas': salidas,
+            'ultimo_movimiento': movs[0] if movs else None
+        })
+
+    return render_template(
+        'inventory/historial_ajustes.html',
+        productos_kardex=productos_kardex,
+        total_movimientos_global=total_movimientos_global,
+        total_entradas_global=total_entradas_global,
+        total_salidas_global=total_salidas_global,
+        q=q
+    )
+
+@inventory_bp.route('/ajuste-manual/<int:id>', methods=['POST'])
+@login_required
+@admin_or_bodega_required
+def ajuste_manual_kardex(id):
+    producto = Product.query.get_or_404(id)
+    tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
+    if current_user.rol != 'admin' and producto.tipo_inventario != tipo:
+        abort(403)
+
+    tipo_movimiento = request.form.get('tipo_movimiento', 'Ajuste Manual').strip()
+    motivo = request.form.get('motivo', '').strip() or None
+    variant_id = safe_int(request.form.get('variant_id'), 0)
+    modo_ajuste = request.form.get('modo_ajuste', 'restar') # 'restar', 'sumar', 'fijar'
+    cantidad = safe_int(request.form.get('cantidad'), 0)
+
+    if cantidad < 0:
+        flash('La cantidad del ajuste no puede ser negativa.', 'danger')
+        return redirect(request.referrer or url_for('inventory_bp.ver_producto', id=id))
+
+    try:
+        if variant_id > 0:
+            variante = ProductVariant.query.get_or_404(variant_id)
+            if variante.product_id != producto.id:
+                abort(400)
+            stock_anterior = variante.cantidad_stock
+            if modo_ajuste == 'restar':
+                variante.cantidad_stock = max(0, stock_anterior - cantidad)
+            elif modo_ajuste == 'sumar':
+                variante.cantidad_stock = stock_anterior + cantidad
+            else:
+                variante.cantidad_stock = cantidad
+            stock_nuevo = variante.cantidad_stock
+            mov_label = f"{tipo_movimiento} [{variante.nombre_variante}]"
+        else:
+            stock_anterior = producto.cantidad_stock
+            if modo_ajuste == 'restar':
+                producto.cantidad_stock = max(0, stock_anterior - cantidad)
+            elif modo_ajuste == 'sumar':
+                producto.cantidad_stock = stock_anterior + cantidad
+            else:
+                producto.cantidad_stock = cantidad
+            stock_nuevo = producto.cantidad_stock
+            mov_label = tipo_movimiento
+
+        ajuste = StockAdjustment(
+            product_id=producto.id,
+            admin_id=current_user.id,
+            tipo_movimiento=mov_label,
+            motivo=motivo,
+            stock_anterior=stock_anterior,
+            stock_nuevo=stock_nuevo
+        )
+        db.session.add(ajuste)
+        db.session.commit()
+        flash(f'✅ Ajuste de Kardex ({mov_label}) registrado: Stock {stock_anterior} → {stock_nuevo}.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error al registrar ajuste de Kardex: {str(e)}', 'danger')
+
+    return redirect(request.referrer or url_for('inventory_bp.ver_producto', id=id))
 
 @inventory_bp.route('/ver/<int:id>', methods=['GET'])
 @login_required
@@ -433,6 +540,71 @@ def editar_variante(id):
         
     return redirect(url_for('inventory_bp.index'))
 
+@inventory_bp.route('/stock_plano/<int:producto_id>/sumar', methods=['POST'])
+@login_required
+@admin_or_bodega_required
+def sumar_stock_plano(producto_id):
+    producto = Product.query.get_or_404(producto_id)
+    tipo = 'bodega' if current_user.rol == 'bodega' else 'tienda'
+    if current_user.rol != 'admin' and producto.tipo_inventario != tipo:
+        abort(403)
+
+    cantidad_sumar = safe_int(request.form.get('cantidad_sumar'), 0)
+    motivo = (request.form.get('motivo') or 'Entrada de mercancía').strip()
+    precio_costo_req = request.form.get('precio_costo')
+    precio_minimo_req = request.form.get('precio_minimo')
+    precio_sugerido_req = request.form.get('precio_sugerido')
+
+    stock_anterior = producto.cantidad_stock or 0
+    cambios = False
+
+    if cantidad_sumar != 0:
+        producto.cantidad_stock = max(0, stock_anterior + cantidad_sumar)
+        ajuste = StockAdjustment(
+            product_id=producto.id,
+            admin_id=current_user.id,
+            tipo_movimiento='Entrada de Mercancía' if cantidad_sumar > 0 else 'Ajuste de Stock',
+            motivo=motivo,
+            stock_anterior=stock_anterior,
+            stock_nuevo=producto.cantidad_stock
+        )
+        db.session.add(ajuste)
+        cambios = True
+
+    if precio_costo_req is not None and precio_costo_req != '':
+        nuevo_costo = safe_float(precio_costo_req, float(producto.precio_costo or 0))
+        if float(producto.precio_costo or 0) != nuevo_costo:
+            producto.precio_costo = nuevo_costo
+            cambios = True
+
+    if precio_minimo_req is not None and precio_minimo_req != '':
+        nuevo_min = safe_float(precio_minimo_req, float(producto.precio_minimo or 0))
+        if float(producto.precio_minimo or 0) != nuevo_min:
+            producto.precio_minimo = nuevo_min
+            cambios = True
+
+    if precio_sugerido_req is not None and precio_sugerido_req != '':
+        nuevo_sug = safe_float(precio_sugerido_req, float(producto.precio_sugerido or 0))
+        if float(producto.precio_sugerido or 0) != nuevo_sug:
+            producto.precio_sugerido = nuevo_sug
+            cambios = True
+
+    if cambios:
+        try:
+            db.session.commit()
+            if cantidad_sumar > 0:
+                flash(f'✅ Entrada registrada: +{cantidad_sumar} unidades sumadas a "{producto.nombre}" (Stock: {stock_anterior} → {producto.cantidad_stock}).', 'success')
+            else:
+                flash(f'✅ Datos de "{producto.nombre}" actualizados correctamente.', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al actualizar stock: {str(e)}', 'danger')
+    else:
+        flash('No se ingresaron unidades nuevas ni cambios de precio.', 'info')
+
+    return redirect(request.referrer or url_for('inventory_bp.index'))
+
+
 @inventory_bp.route('/variantes_masivo/<int:producto_id>', methods=['POST'])
 @login_required
 @admin_or_bodega_required
@@ -443,6 +615,7 @@ def editar_variantes_masivo(producto_id):
     costos = request.form.getlist('precio_costo[]')
     minimos = request.form.getlist('precio_minimo[]')
     sugs = request.form.getlist('precio_sugerido[]')
+    motivo_entrada = (request.form.get('motivo_entrada') or 'Entrada de mercancía en subcategoría').strip()
     
     cambios_realizados = 0
 
@@ -461,11 +634,13 @@ def editar_variantes_masivo(producto_id):
             # Sumar stock
             stock_anterior = variante.cantidad_stock
             if sumas[i] and int(sumas[i]) != 0:
-                variante.cantidad_stock += int(sumas[i])
+                cant_add = int(sumas[i])
+                variante.cantidad_stock = max(0, stock_anterior + cant_add)
                 ajuste = StockAdjustment(
                     product_id=variante.product_id,
                     admin_id=current_user.id,
-                    tipo_movimiento=f'Edición masiva de stock Subcategoría: {variante.nombre_variante}',
+                    tipo_movimiento=f'Entrada de Mercancía [{variante.nombre_variante}]' if cant_add > 0 else f'Ajuste Subcategoría [{variante.nombre_variante}]',
+                    motivo=motivo_entrada,
                     stock_anterior=stock_anterior,
                     stock_nuevo=variante.cantidad_stock
                 )
@@ -489,14 +664,14 @@ def editar_variantes_masivo(producto_id):
     if cambios_realizados > 0:
         try:
             db.session.commit()
-            flash('Subcategorías actualizadas masivamente con éxito.', 'success')
+            flash('✅ Unidades de ingreso sumadas y subcategorías actualizadas con éxito.', 'success')
         except Exception as e:
             db.session.rollback()
             flash('Error al guardar los cambios masivos.', 'danger')
     else:
         flash('No se detectaron cambios en las subcategorías.', 'info')
         
-    return redirect(url_for('inventory_bp.index'))
+    return redirect(request.referrer or url_for('inventory_bp.index'))
 
 @inventory_bp.route('/variante/<int:id>/eliminar', methods=['POST'])
 @login_required

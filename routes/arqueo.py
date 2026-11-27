@@ -120,30 +120,37 @@ def nuevo():
         fecha_seleccionada = obtener_hora_bogota().date()
         fecha_str = fecha_seleccionada.strftime('%Y-%m-%d')
 
-    # Calcular ventas del día usando el sistema híbrido (SalePayment + legacy)
+    # Calcular ventas del día usando rango exacto Hora Colombia (UTC-5: 00:00:00 a 23:59:59)
+    inicio_dt = datetime.combine(fecha_seleccionada, datetime.min.time())
+    fin_dt = datetime.combine(fecha_seleccionada, datetime.max.time())
     ventas_del_dia = Sale.query.filter(
-        db.func.date(Sale.fecha_venta) == fecha_seleccionada,
+        Sale.fecha_venta >= inicio_dt,
+        Sale.fecha_venta <= fin_dt,
         Sale.tipo_venta == 'general'
     ).all()
     total_efectivo, total_transferencia = calcular_totales_dia(ventas_del_dia)
 
     # Calcular gastos automáticos del día
     gastos_diarios_registros = Expense.query.filter(
-        db.func.date(Expense.fecha_gasto) == fecha_seleccionada,
+        Expense.fecha_gasto >= inicio_dt,
+        Expense.fecha_gasto <= fin_dt,
         Expense.tipo_gasto == 'Gasto Diario'
     ).all()
     gastos_automaticos = Decimal(str(sum(g.monto for g in gastos_diarios_registros))) if gastos_diarios_registros else Decimal('0.00')
+    gastos_efectivo_dia = Decimal(str(sum(g.monto for g in gastos_diarios_registros if (g.metodo_pago or 'efectivo') == 'efectivo'))) if gastos_diarios_registros else Decimal('0.00')
 
     # Calcular gastos por productos externos del día
     gastos_externos_registros = Expense.query.filter(
-        db.func.date(Expense.fecha_gasto) == fecha_seleccionada,
+        Expense.fecha_gasto >= inicio_dt,
+        Expense.fecha_gasto <= fin_dt,
         Expense.categoria == 'Pago Prod. Externo'
     ).all()
     gastos_externos = Decimal(str(sum(g.monto for g in gastos_externos_registros))) if gastos_externos_registros else Decimal('0.00')
 
     # Lista de gastos del día para desplegar en detalle
     gastos_del_dia_lista = Expense.query.filter(
-        db.func.date(Expense.fecha_gasto) == fecha_seleccionada
+        Expense.fecha_gasto >= inicio_dt,
+        Expense.fecha_gasto <= fin_dt
     ).order_by(Expense.fecha_gasto.asc()).all()
 
     # Verificar si ya existe un arqueo GLOBAL para esa fecha (unificado para todos los usuarios)
@@ -155,14 +162,21 @@ def nuevo():
             flash('Ya existe un arqueo cerrado para esta fecha. No se puede duplicar.', 'warning')
             return redirect(url_for('arqueo_bp.reporte', fecha_inicio=fecha_str, fecha_fin=fecha_str))
 
-        base_inicial = safe_float(request.form.get('base_inicial'), 0.0)
+        base_inicial = safe_decimal(request.form.get('base_inicial'), Decimal('0.00'))
+        efectivo_fisico_contado = safe_decimal(request.form.get('efectivo_fisico_contado'), Decimal('0.00'))
         
         # Recalcular gastos automáticos por seguridad en el backend
         gastos_recalculados = Expense.query.filter(
-            db.func.date(Expense.fecha_gasto) == fecha_seleccionada,
+            Expense.fecha_gasto >= inicio_dt,
+            Expense.fecha_gasto <= fin_dt,
             Expense.tipo_gasto == 'Gasto Diario'
         ).all()
         gastos_del_dia = Decimal(str(sum(g.monto for g in gastos_recalculados))) if gastos_recalculados else Decimal('0.00')
+        gastos_efectivo_rec = Decimal(str(sum(g.monto for g in gastos_recalculados if (g.metodo_pago or 'efectivo') == 'efectivo'))) if gastos_recalculados else Decimal('0.00')
+        total_ch_dia = procesar_unidades_ch(ventas_del_dia)[1]
+
+        efectivo_esperado_caja = (base_inicial + total_efectivo) - gastos_efectivo_rec - total_ch_dia
+        diferencia_efectivo = efectivo_fisico_contado - efectivo_esperado_caja
         
         observaciones_gastos = request.form.get('observaciones_gastos', '').strip()
 
@@ -174,8 +188,10 @@ def nuevo():
             observaciones_gastos=observaciones_gastos,
             total_efectivo_sistema=total_efectivo,
             total_transferencia_sistema=total_transferencia,
-            total_unidades_ch=procesar_unidades_ch(ventas_del_dia)[1],
+            total_unidades_ch=total_ch_dia,
             total_celulares=Decimal('0.00'), # Ya no aplica al general
+            efectivo_fisico_contado=efectivo_fisico_contado,
+            diferencia_efectivo=diferencia_efectivo,
             tipo_arqueo='general'
         )
 
@@ -266,6 +282,8 @@ def reporte():
 
     # El efectivo esperado en caja descuenta gastos en EFECTIVO, celulares y CH
     resumen['efectivo_esperado'] = (resumen['total_base'] + resumen['total_efectivo']) - resumen['total_gastos_efectivo'] - resumen['total_unidades_ch'] - resumen['total_celulares']
+    resumen['total_efectivo_contado'] = sum((a.efectivo_fisico_contado or 0) for a in arqueos)
+    resumen['total_diferencia_efectivo'] = sum((a.diferencia_efectivo or 0) for a in arqueos)
 
     # Obtener todas las ventas del periodo para el detalle en la "tirilla" (unificado)
     ventas_query = Sale.query.filter(

@@ -92,6 +92,9 @@
     <div class="col-11 col-sm-9 col-md-7 col-lg-5 col-xl-4 mb-4 mb-lg-0">
         <div class="card login-card p-4 p-sm-5">
             <div class="text-center mb-4">
+                <div class="d-lg-none mb-3">
+                    <img src="{{ url_for('static', filename='img/cases.png', v=3) }}" alt="cases.com" class="img-fluid" style="max-height: 90px;">
+                </div>
                 <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill mb-3" style="background: rgba(249, 200, 211, 0.45); border: 1px solid rgba(249, 200, 211, 0.8);">
                     <i class="fa-solid fa-sparkles" style="color: #BE185D;"></i>
                     <span class="fw-bold" style="color: #9F1239; font-size: 0.76rem; letter-spacing: 0.5px;">SISTEMA POS & CRM</span>
@@ -141,7 +144,7 @@
     <!-- Columna Derecha: Identidad Visual con Glow Rosado y Logo -->
     <div class="col-lg-6 d-none d-lg-flex justify-content-center align-items-center text-center">
         <div class="logo-hero-container">
-            <img src="{{ url_for('static', filename='img/cases.png') }}" alt="Identidad Visual cases.com" class="img-fluid floating-logo" style="max-height: 400px;">
+            <img src="{{ url_for('static', filename='img/cases.png', v=3) }}" alt="Identidad Visual cases.com" class="img-fluid floating-logo" style="max-height: 400px;">
         </div>
     </div>
 </div>

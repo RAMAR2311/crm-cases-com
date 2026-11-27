@@ -37,7 +37,7 @@ class Product(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nombre = db.Column(db.String(150), nullable=False)
     sku = db.Column(db.String(50), unique=True, nullable=False, index=True)
-    tipo_inventario = db.Column(db.String(50), nullable=False, server_default='tienda') # 'tienda' o 'bodega'
+    tipo_inventario = db.Column(db.String(50), nullable=False, server_default='tienda') # 'tienda', 'bodega', 'celulares', 'externos'
     cantidad_stock = db.Column(db.Integer, nullable=False, default=0)
     precio_costo = db.Column(db.Numeric(10, 2), nullable=False, default=0.00) # El Costo de Bodega
     precio_minimo = db.Column(db.Numeric(10, 2), nullable=False)
@@ -46,11 +46,17 @@ class Product(db.Model):
     observacion = db.Column(db.Text, nullable=True) # Nota descriptiva
     fecha_creacion = db.Column(db.DateTime, default=obtener_hora_bogota)
     
-    # Campos específicos para módulo de celulares (tipo_inventario='celulares')
+    # Campos específicos para módulo de celulares y productos externos
     imei = db.Column(db.String(50), unique=True, nullable=True, index=True)
+    imei2 = db.Column(db.String(50), nullable=True, index=True)
     marca = db.Column(db.String(100), nullable=True)
     modelo_celular = db.Column(db.String(100), nullable=True)
     estado_celular = db.Column(db.String(50), nullable=True, default='Nuevo') # Nuevo, Usado
+    color = db.Column(db.String(50), nullable=True)
+    bateria = db.Column(db.String(50), nullable=True)
+    memoria = db.Column(db.String(50), nullable=True)
+    proveedor = db.Column(db.String(150), nullable=True, index=True)
+    subtipo_externo = db.Column(db.String(50), nullable=True) # 'celular' o 'accesorio' cuando tipo_inventario='externos'
     
     detalles_venta = db.relationship('SaleDetail', backref='producto', lazy=True)
     ajustes_stock = db.relationship('StockAdjustment', backref='producto_rel', lazy=True)
@@ -76,6 +82,17 @@ class Product(db.Model):
         if not self.variantes:
             return []
         return [v for v in self.variantes if (v.cantidad_stock or 0) <= 10]
+
+    @property
+    def tiene_maneo_pendiente(self):
+        return any(m.estado == 'PENDIENTE' for m in getattr(self, 'maneos', []))
+
+    @property
+    def maneo_pendiente_actual(self):
+        for m in getattr(self, 'maneos', []):
+            if m.estado == 'PENDIENTE':
+                return m
+        return None
 
     @property
     def rango_precios(self):
@@ -139,12 +156,14 @@ class Sale(db.Model):
     vendedor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     fecha_venta = db.Column(db.DateTime, default=obtener_hora_bogota)
     monto_total = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    monto_retoma = db.Column(db.Numeric(10, 2), nullable=False, default=0.0, server_default='0.00')
     metodo_pago = db.Column(db.String(50), nullable=False, default='efectivo')
     tipo_venta = db.Column(db.String(50), nullable=False, server_default='general') # 'general' o 'celulares'
     
     detalles = db.relationship('SaleDetail', backref='venta', lazy=True, cascade="all, delete-orphan")
     pagos = db.relationship('SalePayment', backref='venta', lazy=True, cascade="all, delete-orphan")
     cliente = db.relationship('SaleClient', backref='venta', lazy=True, cascade="all, delete-orphan", uselist=False)
+    retomas = db.relationship('Retoma', backref='venta', lazy=True)
 
     def __init__(self, **kwargs):
         super(Sale, self).__init__(**kwargs)
@@ -176,7 +195,7 @@ class SalePayment(db.Model):
         super(SalePayment, self).__init__(**kwargs)
 
 class SaleClient(db.Model):
-    """Modelo para almacenar los datos del cliente, especialmente requerido en ventas de celulares."""
+    """Modelo para almacenar los datos del cliente, especialmente requerido en ventas de celulares (MinTIC / SIC)."""
     __tablename__ = 'sale_clients'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -184,6 +203,8 @@ class SaleClient(db.Model):
     nombre = db.Column(db.String(150), nullable=False)
     documento = db.Column(db.String(50), nullable=False, index=True)
     telefono = db.Column(db.String(50), nullable=False)
+    direccion = db.Column(db.String(255), nullable=True)
+    email = db.Column(db.String(150), nullable=True)
     
     # Relación configurada desde Sale
 
@@ -214,7 +235,8 @@ class StockAdjustment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
     admin_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    tipo_movimiento = db.Column(db.String(100), nullable=True) # Ej: Creación Inicial, Ajuste Manual
+    tipo_movimiento = db.Column(db.String(100), nullable=True) # Ej: Creación Inicial, Ajuste Manual, Merma, Daño, Muestra
+    motivo = db.Column(db.String(255), nullable=True) # Observación detallada del ajuste
     stock_anterior = db.Column(db.Integer, nullable=False)
     stock_nuevo = db.Column(db.Integer, nullable=False)
     fecha_ajuste = db.Column(db.DateTime, default=obtener_hora_bogota)
@@ -236,6 +258,8 @@ class ArqueoCaja(db.Model):
     total_transferencia_sistema = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
     total_unidades_ch = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
     total_celulares = db.Column(db.Numeric(10, 2), nullable=False, default=0.0)
+    efectivo_fisico_contado = db.Column(db.Numeric(10, 2), nullable=False, default=0.0, server_default='0.00')
+    diferencia_efectivo = db.Column(db.Numeric(10, 2), nullable=False, default=0.0, server_default='0.00')
     fecha_creacion = db.Column(db.DateTime, default=obtener_hora_bogota)
 
     def __init__(self, **kwargs):
@@ -258,6 +282,89 @@ class Maneo(db.Model):
 
     def __init__(self, **kwargs):
         super(Maneo, self).__init__(**kwargs)
+
+class Retoma(db.Model):
+    """Equipos recibidos como parte de pago en Caja. Entran siempre en estado CUARENTENA."""
+    __tablename__ = 'retomas'
+
+    id = db.Column(db.Integer, primary_key=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=True)
+    product_id_generado = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=True)
+    usuario_recibe_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    usuario_aprueba_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    imei = db.Column(db.String(50), nullable=False, index=True)
+    imei2 = db.Column(db.String(50), nullable=True)
+    marca = db.Column(db.String(100), nullable=False)
+    modelo_celular = db.Column(db.String(100), nullable=False)
+    color = db.Column(db.String(50), nullable=True)
+    memoria = db.Column(db.String(50), nullable=True)
+    bateria = db.Column(db.String(50), nullable=True)
+    valor_recibido = db.Column(db.Numeric(10, 2), nullable=False, default=0.00)
+    costo_real = db.Column(db.Numeric(10, 2), nullable=True)
+    precio_minimo = db.Column(db.Numeric(10, 2), nullable=True)
+    precio_sugerido = db.Column(db.Numeric(10, 2), nullable=True)
+    cliente_nombre = db.Column(db.String(150), nullable=True)
+    cliente_documento = db.Column(db.String(50), nullable=True)
+    cliente_telefono = db.Column(db.String(50), nullable=True)
+    observaciones = db.Column(db.Text, nullable=True)
+    estado = db.Column(db.String(30), nullable=False, default='CUARENTENA') # 'CUARENTENA', 'APROBADA', 'RECHAZADA'
+    fecha_recepcion = db.Column(db.DateTime, default=obtener_hora_bogota)
+    fecha_aprobacion = db.Column(db.DateTime, nullable=True)
+
+    usuario_recibe = db.relationship('User', foreign_keys=[usuario_recibe_id], backref='retomas_recibidas', lazy=True)
+    usuario_aprueba = db.relationship('User', foreign_keys=[usuario_aprueba_id], backref='retomas_aprobadas', lazy=True)
+    producto_generado = db.relationship('Product', foreign_keys=[product_id_generado], backref='retoma_origen', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(Retoma, self).__init__(**kwargs)
+
+class PriceApproval(db.Model):
+    """Autorizaciones de venta por debajo del precio mínimo."""
+    __tablename__ = 'price_approvals'
+
+    id = db.Column(db.Integer, primary_key=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=False)
+    variant_id = db.Column(db.Integer, db.ForeignKey('product_variants.id'), nullable=True)
+    vendedor_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=True)
+    precio_minimo_original = db.Column(db.Numeric(10, 2), nullable=False)
+    precio_solicitado = db.Column(db.Numeric(10, 2), nullable=False)
+    motivo = db.Column(db.String(255), nullable=True)
+    estado = db.Column(db.String(30), nullable=False, default='pendiente') # 'pendiente', 'aprobado', 'rechazado', 'completada'
+    fecha_solicitud = db.Column(db.DateTime, default=obtener_hora_bogota)
+    fecha_resolucion = db.Column(db.DateTime, nullable=True)
+
+    producto = db.relationship('Product', backref='aprobaciones_precio', lazy=True)
+    variante = db.relationship('ProductVariant', backref='aprobaciones_precio_rel', lazy=True)
+    vendedor = db.relationship('User', foreign_keys=[vendedor_id], backref='solicitudes_precio', lazy=True)
+    admin = db.relationship('User', foreign_keys=[admin_id], backref='resoluciones_precio', lazy=True)
+    venta = db.relationship('Sale', backref='aprobaciones_precio', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(PriceApproval, self).__init__(**kwargs)
+
+class ProviderInvoice(db.Model):
+    """Cuentas por pagar automáticas generadas al vender Productos Externos (Consignación)."""
+    __tablename__ = 'provider_invoices'
+
+    id = db.Column(db.Integer, primary_key=True)
+    proveedor = db.Column(db.String(150), nullable=False, index=True)
+    product_id = db.Column(db.Integer, db.ForeignKey('products.id'), nullable=True)
+    sale_id = db.Column(db.Integer, db.ForeignKey('sales.id'), nullable=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    concepto = db.Column(db.String(255), nullable=False)
+    monto_costo = db.Column(db.Numeric(10, 2), nullable=False)
+    estado = db.Column(db.String(30), nullable=False, default='PENDIENTE') # 'PENDIENTE', 'PAGADO'
+    fecha_creacion = db.Column(db.DateTime, default=obtener_hora_bogota)
+    fecha_pago = db.Column(db.DateTime, nullable=True)
+
+    producto = db.relationship('Product', backref='cuentas_por_pagar_externo', lazy=True)
+    venta = db.relationship('Sale', backref='cuentas_por_pagar_externo', lazy=True)
+    usuario = db.relationship('User', backref='cuentas_externos_registradas', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(ProviderInvoice, self).__init__(**kwargs)
 
 class Expense(db.Model):
     __tablename__ = 'expenses'
@@ -430,5 +537,3 @@ class ZenicDataAgreementAudit(db.Model):
         @event.listens_for(cls, 'before_delete')
         def impedir_eliminacion_acuerdo(mapper, connection, target):
             raise ValueError("PROTECCIÓN LEGAL (Ley 527 de 1999): Los registros de acuerdos y consentimientos firmados son inmutables y no pueden ser eliminados.")
-
-

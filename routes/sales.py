@@ -1,6 +1,10 @@
 from flask import Blueprint, request, jsonify, flash, redirect, render_template, abort, url_for
 from flask_login import login_required, current_user
-from models import db, Product, ProductVariant, Sale, SaleDetail, SalePayment, SaleClient, Expense, obtener_hora_bogota
+from models import (
+    db, Product, ProductVariant, Sale, SaleDetail, SalePayment,
+    SaleClient, Expense, StockAdjustment, Retoma, PriceApproval,
+    ProviderInvoice, obtener_hora_bogota
+)
 from decorators import admin_required
 from decimal import Decimal
 from datetime import datetime, timedelta
@@ -9,52 +13,46 @@ from sqlalchemy.orm import joinedload
 
 sales_bp = Blueprint('sales_bp', __name__)
 
-@sales_bp.route('/nueva', methods=['GET', 'POST'])
-@login_required # Importante: Te bloqueará el acceso si no hay current_user logeado (Flask-Login)
-def procesar_venta():
-    if request.method == 'GET':
-        return render_template('sales/nueva.html')
 
+def _ejecutar_procesamiento_venta(data):
     """
-    Se espera que los datos vengan en el cuerpo de la petición (JSON)
-    Ej: {'items': [{ 'product_id': 1, 'cantidad': 2, 'precio_final': 15.50}, ...], 'metodo_pago': 'transferencia'}
+    Motor transaccional atómico compartido por /sales/nueva y /sales/procesar_venta.
+    - Exclusivamente 4 métodos de pago: efectivo, nequi, bancolombia, daviplata.
+    - Bloquea ventas debajo de precio_minimo con 400 Bad Request salvo que exista PriceApproval en estado 'aprobado'.
+    - Descuenta stock, registra StockAdjustment, SaleDetail, SalePayment, Retoma en CUARENTENA y ProviderInvoice para externos.
     """
-    data = request.get_json()
     items = data.get('items', [])
-    pagos_data = data.get('pagos', [])  # Nuevo: array de pagos mixtos
-    metodo_pago_legacy = data.get('metodo_pago', 'efectivo')  # Retrocompatibilidad
-    
+    pagos_data = data.get('pagos', [])
+    metodo_pago_legacy = data.get('metodo_pago', 'efectivo')
+    retoma_data = data.get('retoma')
+
     if not items:
         return jsonify({'error': 'No se enviaron productos para la venta'}), 400
 
-    # Si no se envían pagos en el nuevo formato, crear uno único con el método legacy
     if not pagos_data:
-        pagos_data = [{'metodo_pago': metodo_pago_legacy, 'monto': None}]  # monto=None se llenará con el total
+        pagos_data = [{'metodo_pago': metodo_pago_legacy, 'monto': None}]
 
     try:
-        # Determinar el método de pago principal (para la columna legacy de retrocompatibilidad)
         if len(pagos_data) == 1:
             metodo_pago_principal = pagos_data[0].get('metodo_pago', 'efectivo')
         else:
             metodo_pago_principal = 'mixto'
 
-        # Manejar Fecha de Venta para registros de fechas anteriores
         fecha_venta_str = data.get('fecha_venta')
         fecha_venta_obj = obtener_hora_bogota()
         if fecha_venta_str:
             try:
                 fecha_seleccionada = datetime.strptime(fecha_venta_str, '%Y-%m-%d').date()
                 if fecha_seleccionada != fecha_venta_obj.date():
-                    # Si no es hoy, combinamos la fecha seleccionada con la hora actual para conservar secuencialidad de hora de registro
                     fecha_venta_obj = datetime.combine(fecha_seleccionada, fecha_venta_obj.time())
             except ValueError:
-                pass # Fallback silencioso a la hora actual si el formato falla
+                pass
 
         tipo_venta_detectado = None
         for item in items:
             es_manual = item.get('es_manual', False)
             es_obsequio_item = item.get('es_obsequio', False)
-            
+
             if es_manual:
                 tipo_item = 'general'
             else:
@@ -62,20 +60,41 @@ def procesar_venta():
                 producto_check = Product.query.get(prod_id)
                 if not producto_check:
                     return jsonify({'error': f"El producto con ID {prod_id} no existe."}), 400
-                tipo_item = 'celulares' if producto_check.tipo_inventario == 'celulares' else 'general'
-            
-            # Solo validamos la mezcla de categorías para los productos que NO son obsequios
+                if producto_check.tipo_inventario == 'bodega':
+                    return jsonify({'error': 'Los productos de Bodega Mayorista no pueden facturarse en la Caja de Tienda.'}), 400
+                if producto_check.tiene_maneo_pendiente:
+                    return jsonify({'error': f"El producto '{producto_check.nombre}' se encuentra prestado en Maneo activo y no puede venderse."}), 400
+
+                es_cel = (
+                    producto_check.tipo_inventario == 'celulares'
+                    or (producto_check.tipo_inventario == 'externos' and producto_check.subtipo_externo == 'celular')
+                )
+                tipo_item = 'celulares' if es_cel else 'general'
+
             if not es_obsequio_item:
                 if tipo_venta_detectado is None:
                     tipo_venta_detectado = tipo_item
                 elif tipo_venta_detectado != tipo_item:
                     return jsonify({'error': 'No se pueden mezclar celulares con accesorios en la misma venta. Por favor, realice transacciones separadas para no descuadrar los arqueos. (Nota: Si es un obsequio, primero márcalo como regalo)'}), 400
-        
+
         tipo_venta_detectado = tipo_venta_detectado or 'general'
+
+        # Validar Retoma si viene en el payload
+        monto_retoma_dec = Decimal('0.00')
+        if retoma_data and isinstance(retoma_data, dict):
+            valor_ret = Decimal(str(retoma_data.get('valor_recibido', '0') or '0'))
+            imei_ret = str(retoma_data.get('imei', '') or '').strip()
+            marca_ret = str(retoma_data.get('marca', '') or '').strip()
+            modelo_ret = str(retoma_data.get('modelo_celular', '') or '').strip()
+            if valor_ret > 0:
+                if not imei_ret or not marca_ret or not modelo_ret:
+                    return jsonify({'error': 'Para aplicar una Retoma debes completar IMEI, Marca y Modelo del equipo recibido.'}), 400
+                monto_retoma_dec = valor_ret
 
         nueva_venta = Sale(
             vendedor_id=current_user.id,
             monto_total=Decimal('0.00'),
+            monto_retoma=monto_retoma_dec,
             metodo_pago=metodo_pago_principal,
             fecha_venta=fecha_venta_obj,
             tipo_venta=tipo_venta_detectado
@@ -83,37 +102,38 @@ def procesar_venta():
         db.session.add(nueva_venta)
         db.session.flush()
 
-        monto_total = Decimal('0.00')
+        subtotal_bruto = Decimal('0.00')
+        aprobaciones_usadas = []
 
         for item in items:
             product_id = item.get('product_id')
-            variant_id = item.get('variant_id') # Posible variante
+            variant_id = item.get('variant_id')
             cantidad_vendida = int(item.get('cantidad', 0))
             precio_venta_final = Decimal(str(item.get('precio_final', '0.00')))
             es_manual = item.get('es_manual', False)
-            es_obsequio = item.get('es_obsequio', False)
+            es_obsequio = bool(item.get('es_obsequio', False))
 
             if cantidad_vendida <= 0:
                 raise ValueError("La cantidad vendida debe ser mayor a 0.")
 
             if es_manual:
-                # Producto manual (prestado de otro local) — no descuenta stock
                 nombre_manual = item.get('nombre_manual', 'Producto Externo')
                 precio_costo_manual = Decimal(str(item.get('precio_costo', '0.00')))
+                proveedor_manual = (item.get('proveedor') or 'Local Externo').strip()
 
                 detalle = SaleDetail(
                     sale_id=nueva_venta.id,
                     product_id=None,
                     variant_id=None,
                     cantidad_vendida=cantidad_vendida,
-                    precio_venta_final=precio_venta_final,
+                    precio_venta_final=Decimal('0.00') if es_obsequio else precio_venta_final,
                     nombre_manual=nombre_manual,
                     precio_costo_manual=precio_costo_manual
                 )
                 db.session.add(detalle)
-                monto_total += (precio_venta_final * cantidad_vendida)
+                if not es_obsequio:
+                    subtotal_bruto += (precio_venta_final * cantidad_vendida)
 
-                # Crear el gasto automático para descontar el ingreso prestado del balance final
                 if precio_costo_manual > 0:
                     gasto_externo = Expense(
                         usuario_id=current_user.id,
@@ -124,10 +144,19 @@ def procesar_venta():
                         fecha_gasto=fecha_venta_obj
                     )
                     db.session.add(gasto_externo)
+
+                    db.session.add(ProviderInvoice(
+                        proveedor=proveedor_manual,
+                        product_id=None,
+                        sale_id=nueva_venta.id,
+                        usuario_id=current_user.id,
+                        concepto=f"{cantidad_vendida}x {nombre_manual} (Ticket #{nueva_venta.id})",
+                        monto_costo=(precio_costo_manual * cantidad_vendida),
+                        estado='PENDIENTE',
+                        fecha_creacion=fecha_venta_obj
+                    ))
             else:
-                # Producto del inventario propio
                 producto = Product.query.with_for_update().get(product_id)
-                
                 if not producto:
                     raise ValueError(f"El producto con ID {product_id} no existe.")
 
@@ -137,17 +166,19 @@ def procesar_venta():
                         raise ValueError(f"La variante con ID {variant_id} no existe.")
                     if cantidad_vendida > variante.cantidad_stock:
                         raise ValueError(f"Stock insuficiente para la variante '{variante.nombre_variante}' de '{producto.nombre}'. Solicitado: {cantidad_vendida}, Disponible: {variante.cantidad_stock}.")
-                    
+
                     stock_anterior = variante.cantidad_stock
                     variante.cantidad_stock -= cantidad_vendida
-                    producto.cantidad_stock -= cantidad_vendida # Sincronizar producto base
-                    precio_limite_autorizado = variante.precio_costo if current_user.rol == 'admin' else variante.precio_minimo
-                    
-                    from models import StockAdjustment
+                    if producto.cantidad_stock >= cantidad_vendida:
+                        producto.cantidad_stock -= cantidad_vendida
+                    precio_minimo_item = Decimal(str(variante.precio_minimo if variante.precio_minimo is not None else producto.precio_minimo))
+                    precio_costo_item = Decimal(str(variante.precio_costo if variante.precio_costo is not None else producto.precio_costo))
+
                     ajuste = StockAdjustment(
                         product_id=producto.id,
                         admin_id=current_user.id,
-                        tipo_movimiento=f"Venta Tienda (Subcat: {variante.nombre_variante})",
+                        tipo_movimiento=f"Venta Tienda (Subcat: {variante.nombre_variante}) #{nueva_venta.id}",
+                        motivo=f"Ticket #{nueva_venta.id}",
                         stock_anterior=stock_anterior,
                         stock_nuevo=variante.cantidad_stock
                     )
@@ -155,175 +186,347 @@ def procesar_venta():
                 else:
                     if cantidad_vendida > producto.cantidad_stock:
                         raise ValueError(f"Stock insuficiente para el producto '{producto.nombre}'. Solicitado: {cantidad_vendida}, Disponible: {producto.cantidad_stock}.")
-                    
+
                     stock_anterior = producto.cantidad_stock
                     producto.cantidad_stock -= cantidad_vendida
-                    precio_limite_autorizado = producto.precio_costo if current_user.rol == 'admin' else producto.precio_minimo
-                    
-                    from models import StockAdjustment
+                    precio_minimo_item = Decimal(str(producto.precio_minimo or 0))
+                    precio_costo_item = Decimal(str(producto.precio_costo or 0))
+
                     ajuste = StockAdjustment(
                         product_id=producto.id,
                         admin_id=current_user.id,
-                        tipo_movimiento="Venta Tienda",
+                        tipo_movimiento=f"Venta Tienda #{nueva_venta.id}",
+                        motivo=f"Ticket #{nueva_venta.id}" + (f" | IMEI: {producto.imei}" if producto.imei else ""),
                         stock_anterior=stock_anterior,
                         stock_nuevo=producto.cantidad_stock
                     )
                     db.session.add(ajuste)
 
-                if not es_obsequio and precio_venta_final < precio_limite_autorizado:
-                    raise ValueError(f"No autorizado: El precio ({precio_venta_final}) del producto '{producto.nombre}' está por debajo del límite permitido ({precio_limite_autorizado}).")
+                # Control estricto de Precio Mínimo mediante PriceApproval
+                if not es_obsequio and precio_venta_final < precio_minimo_item:
+                    q_app = PriceApproval.query.filter_by(
+                        product_id=producto.id,
+                        estado='aprobado'
+                    )
+                    if variant_id:
+                        q_app = q_app.filter_by(variant_id=variant_id)
+                    aprobacion = q_app.order_by(PriceApproval.id.desc()).first()
+
+                    if not aprobacion or Decimal(str(aprobacion.precio_solicitado)) > precio_venta_final:
+                        raise ValueError(
+                            f"BLOQUEO DE PRECIO MÍNIMO: El precio digitado (${precio_venta_final:,.0f}) para '{producto.nombre}' "
+                            f"es inferior al Precio Mínimo (${precio_minimo_item:,.0f}). Debes solicitar una Autorización de Precio (PriceApproval) y que esté en estado 'aprobado'."
+                        )
+                    aprobaciones_usadas.append(aprobacion)
 
                 detalle = SaleDetail(
                     sale_id=nueva_venta.id,
                     product_id=producto.id,
                     variant_id=variant_id,
                     cantidad_vendida=cantidad_vendida,
-                    precio_venta_final=precio_venta_final
+                    precio_venta_final=Decimal('0.00') if es_obsequio else precio_venta_final
                 )
                 db.session.add(detalle)
-                db.session.flush() # Importante para tener el id de la venta si se quisiera, pero ya lo tenemos en nueva_venta.id
-                
-                # Para añadir el ID de la venta al tipo de movimiento ahora que la venta tiene ID asignado:
-                ajuste.tipo_movimiento = f"{ajuste.tipo_movimiento} #{nueva_venta.id}"
-                
-                monto_total += (precio_venta_final * cantidad_vendida)
 
-        nueva_venta.monto_total = monto_total
+                if not es_obsequio:
+                    subtotal_bruto += (precio_venta_final * cantidad_vendida)
 
-        # Registrar los pagos mixtos en la tabla sale_payments
-        total_pagos = Decimal('0.00')
-        for pago_info in pagos_data:
-            metodo = pago_info.get('metodo_pago', 'efectivo')
-            monto_pago = pago_info.get('monto')
-            
-            if monto_pago is None:
-                # Si solo hay un pago sin monto explícito, asignar el total completo
-                monto_pago = monto_total
-            else:
-                monto_pago = Decimal(str(monto_pago))
-            
-            if monto_pago <= 0:
-                raise ValueError(f"El monto del pago por '{metodo}' debe ser mayor a 0.")
-            
-            pago = SalePayment(
-                sale_id=nueva_venta.id,
-                metodo_pago=metodo,
-                monto=monto_pago
-            )
-            db.session.add(pago)
-            total_pagos += monto_pago
+                # Si es un Producto Externo (tipo_inventario == 'externos'), generar automáticamente ProviderInvoice
+                if producto.tipo_inventario == 'externos' and precio_costo_item > 0:
+                    prov_nombre = (producto.proveedor or 'Proveedor Externo').strip()
+                    db.session.add(ProviderInvoice(
+                        proveedor=prov_nombre,
+                        product_id=producto.id,
+                        sale_id=nueva_venta.id,
+                        usuario_id=current_user.id,
+                        concepto=f"{cantidad_vendida}x {producto.nombre} ({producto.sku}) - Ticket #{nueva_venta.id}",
+                        monto_costo=(precio_costo_item * cantidad_vendida),
+                        estado='PENDIENTE',
+                        fecha_creacion=fecha_venta_obj
+                    ))
 
-        # Validar que la suma de pagos cubra el total de la venta
-        if total_pagos != monto_total:
-            raise ValueError(f"La suma de los pagos (${total_pagos}) no coincide con el total de la venta (${monto_total}). Diferencia: ${monto_total - total_pagos}.")
+        if monto_retoma_dec > subtotal_bruto:
+            raise ValueError(f"El valor de la retoma (${monto_retoma_dec:,.0f}) no puede superar el subtotal de la venta (${subtotal_bruto:,.0f}).")
 
-        # Guardar datos del cliente si se vendió un celular
+        monto_total_neto = subtotal_bruto - monto_retoma_dec
+        nueva_venta.monto_total = monto_total_neto
+
+        # Marcar aprobaciones de precio utilizadas como 'completada'
+        for ap in aprobaciones_usadas:
+            ap.estado = 'completada'
+            ap.sale_id = nueva_venta.id
+            ap.fecha_resolucion = obtener_hora_bogota()
+
+        # Registrar Retoma en estado CUARENTENA si aplica
         cliente_data = data.get('cliente')
-        if cliente_data and isinstance(cliente_data, dict):
-            cliente = SaleClient(
+        if monto_retoma_dec > 0 and retoma_data:
+            nueva_retoma = Retoma(
                 sale_id=nueva_venta.id,
-                nombre=cliente_data.get('nombre', 'Desconocido').strip(),
-                documento=cliente_data.get('documento', '0').strip(),
-                telefono=cliente_data.get('telefono', '').strip()
+                usuario_recibe_id=current_user.id,
+                imei=str(retoma_data.get('imei')).strip(),
+                imei2=str(retoma_data.get('imei2') or '').strip() or None,
+                marca=str(retoma_data.get('marca')).strip(),
+                modelo_celular=str(retoma_data.get('modelo_celular')).strip(),
+                color=str(retoma_data.get('color') or '').strip() or None,
+                memoria=str(retoma_data.get('memoria') or '').strip() or None,
+                bateria=str(retoma_data.get('bateria') or '').strip() or None,
+                valor_recibido=monto_retoma_dec,
+                cliente_nombre=(cliente_data.get('nombre') if isinstance(cliente_data, dict) else retoma_data.get('cliente_nombre')),
+                cliente_documento=(cliente_data.get('documento') if isinstance(cliente_data, dict) else retoma_data.get('cliente_documento')),
+                cliente_telefono=(cliente_data.get('telefono') if isinstance(cliente_data, dict) else retoma_data.get('cliente_telefono')),
+                observaciones=str(retoma_data.get('observaciones') or f"Recibido en parte de pago Ticket #{nueva_venta.id}").strip(),
+                estado='CUARENTENA',
+                fecha_recepcion=fecha_venta_obj
             )
-            db.session.add(cliente)
+            db.session.add(nueva_retoma)
+
+        # Registrar los pagos mixtos en sale_payments
+        total_pagos = Decimal('0.00')
+        if monto_total_neto > 0:
+            for pago_info in pagos_data:
+                metodo = pago_info.get('metodo_pago', 'efectivo')
+                monto_pago = pago_info.get('monto')
+
+                if monto_pago is None:
+                    monto_pago = monto_total_neto
+                else:
+                    monto_pago = Decimal(str(monto_pago))
+
+                if monto_pago <= 0:
+                    raise ValueError(f"El monto del pago por '{metodo}' debe ser mayor a 0.")
+
+                pago = SalePayment(
+                    sale_id=nueva_venta.id,
+                    metodo_pago=metodo,
+                    monto=monto_pago
+                )
+                db.session.add(pago)
+                total_pagos += monto_pago
+
+            if abs(total_pagos - monto_total_neto) > Decimal('0.01'):
+                raise ValueError(f"La suma de los pagos (${total_pagos:,.0f}) no coincide con el total a pagar tras retoma (${monto_total_neto:,.0f}).")
+
+        # Guardar datos del cliente (MinTIC / SIC con dirección y correo)
+        if cliente_data and isinstance(cliente_data, dict):
+            nombre_cli = (cliente_data.get('nombre') or '').strip()
+            doc_cli = (cliente_data.get('documento') or '').strip()
+            tel_cli = (cliente_data.get('telefono') or '').strip()
+            if nombre_cli and doc_cli:
+                cliente = SaleClient(
+                    sale_id=nueva_venta.id,
+                    nombre=nombre_cli,
+                    documento=doc_cli,
+                    telefono=tel_cli or 'N/A',
+                    direccion=(cliente_data.get('direccion') or '').strip() or None,
+                    email=(cliente_data.get('email') or '').strip() or None
+                )
+                db.session.add(cliente)
 
         db.session.commit()
-        
+
         return jsonify({
-            'success': True, 
+            'success': True,
             'message': 'Venta registrada e inventario descontado con éxito.',
             'sale_id': nueva_venta.id,
-            'total': str(monto_total)
+            'total': str(monto_total_neto),
+            'monto_retoma': str(monto_retoma_dec)
         }), 201
 
     except ValueError as val_err:
         db.session.rollback()
         return jsonify({'error': str(val_err)}), 400
-        
+
     except Exception as e:
         db.session.rollback()
-        return jsonify({'error': 'Ocurrió un error interno al procesar la venta.'}), 500
+        return jsonify({'error': f'Ocurrió un error interno al procesar la venta: {str(e)}'}), 500
 
-# Endpoint API asíncrono para el escáner del Punto de Venta
+
+@sales_bp.route('/nueva', methods=['GET', 'POST'])
+@login_required
+def procesar_venta():
+    if request.method == 'GET':
+        return redirect(url_for('sales_bp.caja_visual'))
+    return _ejecutar_procesamiento_venta(request.get_json() or {})
+
+
+@sales_bp.route('/procesar_venta', methods=['POST'])
+@login_required
+def procesar_venta_endpoint():
+    return _ejecutar_procesamiento_venta(request.get_json() or {})
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# API DE BÚSQUEDA PARA CAJA POS (SKU, CÓDIGO DE BARRAS O IMEI)
+# ══════════════════════════════════════════════════════════════════════════
+
 @sales_bp.route('/api/producto/<path:sku>', methods=['GET'])
 @login_required
 def api_buscar_producto(sku):
-    producto = Product.query.filter(Product.sku == sku, Product.tipo_inventario.in_(['tienda', 'celulares'])).first()
+    sku_clean = sku.strip()
+    producto = Product.query.filter(
+        or_(Product.sku == sku_clean, Product.imei == sku_clean),
+        Product.tipo_inventario.in_(['tienda', 'celulares', 'externos'])
+    ).first()
     auto_select_variant = None
-    
+
     if not producto:
-        # Búsqueda por IMEI en variantes de celulares
         variante = ProductVariant.query.join(Product).filter(
             Product.tipo_inventario == 'celulares',
-            ProductVariant.nombre_variante.like(f"%{sku}%")
+            ProductVariant.nombre_variante.like(f"%{sku_clean}%")
         ).first()
-        
+
         if variante:
             producto = variante.producto
             auto_select_variant = variante.id
         else:
             return jsonify({'error': 'Código SKU o IMEI no encontrado en el sistema'}), 404
-        
+
+    if producto.tiene_maneo_pendiente:
+        return jsonify({'error': f'El equipo "{producto.nombre}" está prestado actualmente en Maneo y no puede venderse.'}), 400
+
     return jsonify({
         'id': producto.id,
         'nombre': producto.nombre,
         'sku': producto.sku,
+        'imei': producto.imei,
         'tipo_inventario': producto.tipo_inventario,
+        'subtipo_externo': producto.subtipo_externo,
+        'proveedor': producto.proveedor,
         'cantidad_stock': producto.total_stock,
         'precio_minimo': float(producto.precio_minimo),
-        'precio_limite': float(producto.precio_costo) if current_user.rol == 'admin' else float(producto.precio_minimo),
+        'precio_limite': float(producto.precio_minimo),
         'precio_sugerido': float(producto.precio_sugerido),
-        'variantes': [{"id": v.id, "nombre": v.nombre_variante, "stock": v.cantidad_stock, "precio_minimo": float(v.precio_minimo or producto.precio_minimo), "precio_limite": float(v.precio_costo or producto.precio_costo) if current_user.rol == 'admin' else float(v.precio_minimo or producto.precio_minimo), "precio_sugerido": float(v.precio_sugerido or producto.precio_sugerido)} for v in producto.variantes],
+        'variantes': [
+            {
+                "id": v.id,
+                "nombre": v.nombre_variante,
+                "stock": v.cantidad_stock,
+                "precio_minimo": float(v.precio_minimo or producto.precio_minimo),
+                "precio_limite": float(v.precio_minimo or producto.precio_minimo),
+                "precio_sugerido": float(v.precio_sugerido or producto.precio_sugerido)
+            }
+            for v in producto.variantes
+        ],
         'auto_select_variant': auto_select_variant
     })
 
-# Ruta para la Impresión del formato Térmico (Ticket)
+
+# ══════════════════════════════════════════════════════════════════════════
+# AUTORIZACIONES DE PRECIO MÍNIMO (PriceApproval)
+# ══════════════════════════════════════════════════════════════════════════
+
+@sales_bp.route('/api/solicitar_precio', methods=['POST'])
+@login_required
+def api_solicitar_precio():
+    data = request.get_json() or {}
+    product_id = data.get('product_id')
+    variant_id = data.get('variant_id') or None
+    precio_solicitado = Decimal(str(data.get('precio_solicitado', '0') or '0'))
+    motivo = (data.get('motivo') or 'Descuento especial solicitado en Caja').strip()
+
+    prod = Product.query.get(product_id)
+    if not prod:
+        return jsonify({'error': 'Producto no encontrado.'}), 404
+
+    precio_min = prod.precio_minimo
+    if variant_id:
+        var = ProductVariant.query.get(variant_id)
+        if var and var.precio_minimo is not None:
+            precio_min = var.precio_minimo
+
+    if precio_solicitado <= 0:
+        return jsonify({'error': 'El precio solicitado debe ser mayor a $0.'}), 400
+
+    # Si el usuario actual es Admin, puede auto-aprobar de inmediato o crearla ya aprobada
+    auto_aprobar = (current_user.rol == 'admin' and bool(data.get('auto_aprobar', True)))
+
+    aprobacion = PriceApproval(
+        product_id=prod.id,
+        variant_id=variant_id,
+        vendedor_id=current_user.id,
+        admin_id=current_user.id if auto_aprobar else None,
+        precio_minimo_original=precio_min,
+        precio_solicitado=precio_solicitado,
+        motivo=motivo,
+        estado='aprobado' if auto_aprobar else 'pendiente',
+        fecha_resolucion=obtener_hora_bogota() if auto_aprobar else None
+    )
+    db.session.add(aprobacion)
+    db.session.commit()
+
+    return jsonify({
+        'success': True,
+        'approval_id': aprobacion.id,
+        'estado': aprobacion.estado,
+        'mensaje': (
+            f'✅ Precio especial de ${float(precio_solicitado):,.0f} autorizado inmediatamente por Administrador.'
+            if auto_aprobar else
+            f'⏳ Solicitud #{aprobacion.id} enviada al Administrador. Una vez aprobada podrás procesar el cobro.'
+        )
+    }), 201
+
+
+@sales_bp.route('/aprobaciones_precio', methods=['GET'])
+@login_required
+def aprobaciones_precio():
+    aprobaciones = PriceApproval.query.order_by(PriceApproval.fecha_solicitud.desc()).limit(100).all()
+    return render_template('sales/aprobaciones_precio.html', aprobaciones=aprobaciones)
+
+
+@sales_bp.route('/aprobaciones_precio/resolver/<int:id>', methods=['POST'])
+@login_required
+@admin_required
+def resolver_aprobacion_precio(id):
+    ap = PriceApproval.query.get_or_404(id)
+    accion = request.form.get('accion', 'aprobar')
+    ap.estado = 'aprobado' if accion == 'aprobar' else 'rechazado'
+    ap.admin_id = current_user.id
+    ap.fecha_resolucion = obtener_hora_bogota()
+    db.session.commit()
+    flash(f'Solicitud de precio #{ap.id} marcada como {ap.estado.upper()}.', 'success')
+    return redirect(request.referrer or url_for('sales_bp.aprobaciones_precio'))
+
+
+# ══════════════════════════════════════════════════════════════════════════
+# TICKET, HISTORIAL, VENTAS DE HOY Y CAJA RÁPIDA VISUAL
+# ══════════════════════════════════════════════════════════════════════════
+
 @sales_bp.route('/recibo/<int:sale_id>', methods=['GET'])
-@login_required # Proteger confidencialidad del cajero
+@login_required
 def imprimir_ticket(sale_id):
-    # Regla: Retorna 404 si alguien ingresa un ID falso
     venta = Sale.query.get_or_404(sale_id)
     return render_template('sales/ticket.html', venta=venta)
 
-# Endpoint Historial de Ventas (Administradores)
+
 @sales_bp.route('/historial', methods=['GET'])
 @login_required
 @admin_required
 def historial():
-    # Calcular el valor exacto de 'HOY' en Bogotá
     hoy_bogota = obtener_hora_bogota().strftime('%Y-%m-%d')
-    
-    # Si existen los args, los usa, de lo contrario colapsa a HOY por defecto
     fecha_inicio = request.args.get('fecha_inicio', hoy_bogota)
     fecha_fin = request.args.get('fecha_fin', hoy_bogota)
-    
-    # Optimización: eager loading (evita N+1 con joinedload)
+
     query = Sale.query.options(joinedload(Sale.vendedor))
-    
-    # Motor de búsqueda por Rango Restricto
+
     if fecha_inicio:
         inicio_dt = datetime.strptime(fecha_inicio, '%Y-%m-%d')
         query = query.filter(Sale.fecha_venta >= inicio_dt)
-        
+
     if fecha_fin:
         fin_dt = datetime.strptime(fecha_fin, '%Y-%m-%d')
-        # Sumar 1 día matemáticamente para incluir los registros hasta las 23:59:59 del último día
         query = query.filter(Sale.fecha_venta < fin_dt + timedelta(days=1))
-        
+
     ventas = query.order_by(Sale.fecha_venta.desc()).all()
-    
-    # Auditar y cruzar sumatorios de métricas de pago
-    # Sistema híbrido: usa SalePayment si existe, caso contrario cae al metodo_pago legacy
+
     total_efectivo = Decimal('0')
     total_nequi = Decimal('0')
     total_bancolombia = Decimal('0')
     total_daviplata = Decimal('0')
     total_transferencia_legacy = Decimal('0')
-    total_mixto = 0  # Contador de ventas con pago mixto
+    total_mixto = 0
 
     for v in ventas:
-        if v.pagos:  # Pagos nuevos con tabla sale_payments
+        if v.pagos:
             for pago in v.pagos:
                 if pago.metodo_pago == 'efectivo':
                     total_efectivo += pago.monto
@@ -337,7 +540,7 @@ def historial():
                     total_transferencia_legacy += pago.monto
             if len(v.pagos) > 1:
                 total_mixto += 1
-        else:  # Retrocompatibilidad con ventas antiguas sin SalePayment
+        else:
             if v.metodo_pago == 'efectivo':
                 total_efectivo += v.monto_total
             elif v.metodo_pago == 'nequi':
@@ -351,48 +554,51 @@ def historial():
 
     total_general = total_efectivo + total_nequi + total_bancolombia + total_daviplata + total_transferencia_legacy
 
-    # Envío al Engine de HTML
-    return render_template('sales/historial.html', 
-                           ventas=ventas, 
-                           total_general=total_general,
-                           total_efectivo=total_efectivo,
-                           total_nequi=total_nequi,
-                           total_bancolombia=total_bancolombia,
-                           total_daviplata=total_daviplata,
-                           total_transferencia_legacy=total_transferencia_legacy,
-                           total_mixto=total_mixto,
-                           fecha_inicio=fecha_inicio,
-                           fecha_fin=fecha_fin)
+    return render_template(
+        'sales/historial.html',
+        ventas=ventas,
+        total_general=total_general,
+        total_efectivo=total_efectivo,
+        total_nequi=total_nequi,
+        total_bancolombia=total_bancolombia,
+        total_daviplata=total_daviplata,
+        total_transferencia_legacy=total_transferencia_legacy,
+        total_mixto=total_mixto,
+        fecha_inicio=fecha_inicio,
+        fecha_fin=fecha_fin
+    )
 
 
-# Endpoint Visor de Ventas del Día para Cajeros (Solo lectura, se resetea cada día)
 @sales_bp.route('/ventas_hoy', methods=['GET'])
 @login_required
 def ventas_hoy():
-    # Obtener la fecha de hoy
+    # Día exacto en Hora Colombia (UTC-5: 00:00:00 a 23:59:59)
     hoy_bogota = obtener_hora_bogota().date()
-    # Para la consulta requerimos abarcar desde las 00:00:00 hasta las 23:59:59
     inicio_dt = datetime.combine(hoy_bogota, datetime.min.time())
     fin_dt = datetime.combine(hoy_bogota, datetime.max.time())
-    
-    # Consultar todas las ventas de este día (sin importar si es admin o vendedor)
-    ventas = Sale.query.options(
+
+    query = Sale.query.options(
         joinedload(Sale.vendedor),
         joinedload(Sale.pagos),
         joinedload(Sale.detalles).joinedload(SaleDetail.producto)
     ).filter(
         Sale.fecha_venta >= inicio_dt,
         Sale.fecha_venta <= fin_dt
-    ).order_by(Sale.fecha_venta.desc()).all()
-    
-    # Acumuladores de las ventas de hoy
+    )
+
+    # Seguridad por rol: admin ve todas las ventas del día; vendedor solo ve las suyas
+    if current_user.rol != 'admin':
+        query = query.filter(Sale.vendedor_id == current_user.id)
+
+    ventas = query.order_by(Sale.fecha_venta.desc()).all()
+
     total_efectivo = Decimal('0')
     total_transferencias = Decimal('0')
     total_nequi = Decimal('0')
     total_bancolombia = Decimal('0')
     total_daviplata = Decimal('0')
     total_mixto = 0
-    
+
     for v in ventas:
         if v.pagos:
             for pago in v.pagos:
@@ -400,7 +606,7 @@ def ventas_hoy():
                 monto = pago.monto or Decimal('0')
                 if metodo == 'efectivo':
                     total_efectivo += monto
-                else: 
+                else:
                     total_transferencias += monto
                     if metodo == 'nequi':
                         total_nequi += monto
@@ -423,38 +629,37 @@ def ventas_hoy():
                     total_bancolombia += monto
                 elif metodo == 'daviplata':
                     total_daviplata += monto
-                
+
     total_general = total_efectivo + total_transferencias
 
-    return render_template('sales/ventas_hoy.html',
-                           ventas=ventas,
-                           total_efectivo=total_efectivo,
-                           total_transferencias=total_transferencias,
-                           total_nequi=total_nequi,
-                           total_bancolombia=total_bancolombia,
-                           total_daviplata=total_daviplata,
-                           total_general=total_general,
-                           total_mixto=total_mixto,
-                           hoy=hoy_bogota.strftime('%Y-%m-%d'))
+    return render_template(
+        'sales/ventas_hoy.html',
+        ventas=ventas,
+        total_efectivo=total_efectivo,
+        total_transferencias=total_transferencias,
+        total_nequi=total_nequi,
+        total_bancolombia=total_bancolombia,
+        total_daviplata=total_daviplata,
+        total_general=total_general,
+        total_mixto=total_mixto,
+        hoy=hoy_bogota.strftime('%Y-%m-%d')
+    )
 
 
-# Endpoint para Anular/Eliminar Venta Histórica
 @sales_bp.route('/eliminar/<int:sale_id>', methods=['POST'])
 @login_required
 @admin_required
 def eliminar_venta(sale_id):
     venta = Sale.query.get_or_404(sale_id)
-    
+
     try:
-        # Revertir Stock
-        from models import StockAdjustment
         for detalle in venta.detalles:
             if detalle.variant_id:
                 variante = ProductVariant.query.with_for_update().get(detalle.variant_id)
                 if variante:
                     stock_anterior = variante.cantidad_stock
                     variante.cantidad_stock += detalle.cantidad_vendida
-                    
+
                     ajuste = StockAdjustment(
                         product_id=detalle.product_id,
                         admin_id=current_user.id,
@@ -463,7 +668,7 @@ def eliminar_venta(sale_id):
                         stock_nuevo=variante.cantidad_stock
                     )
                     db.session.add(ajuste)
-                    
+
                 producto = Product.query.with_for_update().get(detalle.product_id)
                 if producto:
                     producto.cantidad_stock += detalle.cantidad_vendida
@@ -472,7 +677,7 @@ def eliminar_venta(sale_id):
                 if producto:
                     stock_anterior = producto.cantidad_stock
                     producto.cantidad_stock += detalle.cantidad_vendida
-                    
+
                     ajuste = StockAdjustment(
                         product_id=producto.id,
                         admin_id=current_user.id,
@@ -481,44 +686,55 @@ def eliminar_venta(sale_id):
                         stock_nuevo=producto.cantidad_stock
                     )
                     db.session.add(ajuste)
-                    
-        # Eliminar Venta y Detalles (Cascada)
+
         db.session.delete(venta)
         db.session.commit()
         flash('Venta anulada y stock devuelto exitosamente.', 'success')
-        
-    except Exception as e:
+
+    except Exception:
         db.session.rollback()
         flash('Ocurrió un error al anular la venta.', 'danger')
-        
+
     return redirect(url_for('sales_bp.historial'))
 
-# Endpoint Catálogo Estricto de solo vista para Operarios
+
 @sales_bp.route('/catalogo', methods=['GET'])
-@login_required 
+@login_required
 def catalogo():
     query_str = request.args.get('q', '').strip()
-    
+
     if query_str:
-        # Motor de similitud Case-Insensitive (Like)
         search_term = f"%{query_str}%"
-        productos = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares'])).filter(
+        productos = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares', 'externos'])).filter(
             or_(
-                Product.sku.ilike(search_term), 
-                Product.nombre.ilike(search_term)
+                Product.sku.ilike(search_term),
+                Product.nombre.ilike(search_term),
+                Product.imei.ilike(search_term)
             )
         ).limit(50).all()
     else:
-        # Límite pasivo de 50 ítems para ahorrar memoria RAM de BD en carga inicial
-        productos = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares'])).limit(50).all()
-        
+        productos = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares', 'externos'])).limit(50).all()
+
     return render_template('sales/catalogo.html', productos=productos, q=query_str)
+
 
 @sales_bp.route('/caja_visual', methods=['GET'])
 @login_required
 def caja_visual():
-    from models import obtener_hora_bogota
     hoy_bogota = obtener_hora_bogota()
-    productos = Product.query.filter(Product.tipo_inventario.in_(['tienda', 'celulares'])).order_by(Product.nombre.asc()).all()
-    return render_template('sales/caja_visual.html', productos=productos, hoy=hoy_bogota.strftime('%Y-%m-%d'))
-
+    todos = Product.query.filter(
+        Product.tipo_inventario.in_(['tienda', 'celulares', 'externos'])
+    ).order_by(Product.nombre.asc()).all()
+    # Excluir equipos actualmente prestados en Maneo pendiente y registros históricos archivados (-OLD-)
+    productos = [
+        p for p in todos
+        if not p.tiene_maneo_pendiente
+        and '-OLD-' not in (p.sku or '')
+        and '-OLD-' not in (p.imei or '')
+        and (p.tipo_inventario != 'celulares' or (p.cantidad_stock or 0) > 0)
+    ]
+    return render_template(
+        'sales/caja_visual.html',
+        productos=productos,
+        hoy=hoy_bogota.strftime('%Y-%m-%d')
+    )

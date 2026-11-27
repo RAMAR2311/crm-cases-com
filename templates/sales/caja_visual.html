@@ -4,15 +4,26 @@
 <div class="row h-100 g-4">
     <!-- Panel Izquierdo: Catálogo de Productos -->
     <div class="col-lg-8 d-flex flex-column h-100">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold text-brand-black m-0"><i class="fa-solid fa-store text-brand-pink me-2"></i> Caja Rápida Visual</h2>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <div>
+                <h2 class="fw-bold text-brand-black m-0"><i class="fa-solid fa-cash-register text-brand-pink me-2"></i> Caja</h2>
+                <small class="text-muted">Búsqueda en tiempo real por Nombre, SKU, Código de Barras o IMEI</small>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <button type="button" class="btn btn-sm btn-blue rounded-pill px-3 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalCelExtCaja">
+                    <i class="fa-solid fa-mobile-screen-button text-brand-pink me-1"></i> + Cel Ext.
+                </button>
+                <button type="button" class="btn btn-sm btn-blue rounded-pill px-3 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalAccExtCaja">
+                    <i class="fa-solid fa-headphones text-brand-pink me-1"></i> + Acc Ext.
+                </button>
+            </div>
         </div>
 
-        <!-- Buscador de productos -->
+        <!-- Buscador de productos (Nombre, SKU, Código de barras, IMEI) -->
         <div class="mb-4">
-            <div class="input-group input-group-lg shadow-sm rounded-pill border">
+            <div class="input-group input-group-lg shadow-sm rounded-pill border bg-white">
                 <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-                <input type="text" id="productSearch" class="form-control border-0 bg-white shadow-none ps-2" placeholder="Buscar producto por nombre o SKU..." style="border-radius: 0 50px 50px 0;">
+                <input type="text" id="productSearch" class="form-control border-0 bg-white shadow-none ps-2" placeholder="Buscar por nombre, SKU, código de barras o IMEI..." style="border-radius: 0 50px 50px 0;">
             </div>
         </div>
 
@@ -24,29 +35,38 @@
             {% if p.variantes %}
                 {% set total_stock = p.variantes | sum(attribute='cantidad_stock') %}
                 {% for v in p.variantes %}
-                    {% set _ = vars_data.append({"id": v.id, "nombre": v.nombre_variante, "stock": v.cantidad_stock, "precio_sugerido": v.precio_sugerido or p.precio_sugerido or 0}) %}
+                    {% set _ = vars_data.append({"id": v.id, "nombre": v.nombre_variante, "stock": v.cantidad_stock, "precio_sugerido": (v.precio_sugerido or p.precio_sugerido or 0)|float, "precio_minimo": (v.precio_minimo or p.precio_minimo or 0)|float}) %}
                 {% endfor %}
             {% endif %}
-            <div class="col-6 col-md-4 col-xl-3 product-card-container" data-name="{{ p.nombre|lower }}" data-sku="{{ p.sku|lower }}">
-                <div class="card h-100 border-0 shadow-sm cursor-pointer product-card" 
-                     data-product='{{ {"id": p.id, "nombre": p.nombre, "sku": p.sku, "precio_sugerido": p.precio_sugerido or 0, "cantidad_stock": total_stock, "tipo_inventario": p.tipo_inventario}|tojson|safe }}'
+            <div class="col-6 col-md-4 col-xl-3 product-card-container"
+                 data-name="{{ p.nombre|lower }}"
+                 data-sku="{{ p.sku|lower }}"
+                 data-imei="{{ (p.imei or '')|lower }}">
+                <div class="card h-100 border-0 shadow-sm cursor-pointer product-card rounded-4 overflow-hidden"
+                     data-product='{{ {"id": p.id, "nombre": p.nombre, "sku": p.sku, "imei": p.imei or "", "precio_sugerido": (p.precio_sugerido or 0)|float, "precio_minimo": (p.precio_minimo or 0)|float, "cantidad_stock": total_stock, "tipo_inventario": p.tipo_inventario, "subtipo_externo": p.subtipo_externo or ""}|tojson|safe }}'
                      data-variants='{{ vars_data|tojson|safe }}'
                      onclick="handleProductClick(this)">
-                    <div class="ratio ratio-1x1 bg-light rounded-top d-flex align-items-center justify-content-center overflow-hidden">
+                    <div class="ratio ratio-1x1 bg-light d-flex align-items-center justify-content-center overflow-hidden position-relative">
                         {% if p.imagen %}
                             <img src="{{ url_for('static', filename='uploads/' + p.imagen) }}" alt="{{ p.nombre }}" style="object-fit: cover; width: 100%; height: 100%;">
                         {% else %}
-                            <span class="text-muted small text-center pt-4"><i class="fa-solid fa-image fa-2x mb-2 text-black-50"></i><br>Sin Imagen</span>
+                            <span class="text-muted small text-center pt-4">
+                                <i class="fa-solid {% if p.tipo_inventario == 'celulares' or p.subtipo_externo == 'celular' %}fa-mobile-screen-button{% else %}fa-image{% endif %} fa-2x mb-2 text-black-50"></i><br>
+                                {{ p.tipo_inventario|capitalize }}
+                            </span>
+                        {% endif %}
+                        {% if p.tipo_inventario == 'externos' %}
+                        <span class="position-absolute top-0 end-0 m-2 badge badge-soft-blue rounded-pill" style="font-size: 0.65rem; width: auto; height: auto;">EXTERNO</span>
                         {% endif %}
                     </div>
                     <div class="card-body p-3 text-center d-flex flex-column justify-content-between">
                         <div>
                             <h6 class="card-title fw-bold text-dark text-truncate mb-1" title="{{ p.nombre }}">{{ p.nombre }}</h6>
-                            <small class="text-muted d-block mb-2">{{ p.sku }}</small>
+                            <small class="text-muted d-block font-monospace" style="font-size: 0.72rem;">{{ p.imei if p.imei else p.sku }}</small>
                         </div>
-                        <div>
-                            <h5 class="fw-bolder mb-1" style="color: var(--brand-pink);">${{ p.precio_sugerido|cop }}</h5>
-                            <small class="text-muted"><i class="fa-solid fa-box text-secondary"></i> {{ total_stock }} en stock</small>
+                        <div class="mt-2">
+                            <h5 class="fw-bolder mb-1" style="color: #BE185D;">${{ p.precio_sugerido|cop }}</h5>
+                            <small class="text-muted"><i class="fa-solid fa-box text-secondary"></i> {{ total_stock }} disp.</small>
                         </div>
                     </div>
                 </div>
@@ -54,7 +74,7 @@
             {% else %}
             <div class="col-12 text-center py-5">
                 <i class="fa-solid fa-box-open fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">No hay productos en tienda.</h5>
+                <h5 class="text-muted">No hay productos disponibles en tienda.</h5>
             </div>
             {% endfor %}
         </div>
@@ -62,24 +82,48 @@
 
     <!-- Panel Derecho: Carrito -->
     <div class="col-lg-4">
-        <div class="card card-custom p-4 position-sticky shadow-sm rounded-4 border-0" style="top: 100px; height: 100%; background: #ffffff;">
+        <div class="card card-custom p-4 position-sticky shadow-sm rounded-4 border-0" style="top: 100px; background: #ffffff;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="fw-bold m-0 text-brand-black"><i class="fa-solid fa-basket-shopping text-brand-pink me-2"></i> Balance de Venta</h5>
                 <span class="badge rounded-pill px-3 py-2 fw-bold" id="total_items" style="background: #FFE4E6; color: #BE185D;">0 items</span>
             </div>
-            
-            <div class="card-body p-0 overflow-auto mb-3" style="max-height: 35vh;" id="cartContainer">
+
+            <div class="card-body p-0 overflow-auto mb-2" style="max-height: 32vh;" id="cartContainer">
                 <ul class="list-group list-group-flush" id="cart_body">
-                    <!-- Javascript inyectará items aquí -->
                     <li class="list-group-item text-center py-5 text-muted border-0" id="empty_cart_msg">
                         <i class="fa-solid fa-basket-shopping fa-3x mb-3 text-brand-pink opacity-50"></i><br>Tu carrito está vacío.
                     </li>
                 </ul>
             </div>
 
-            <!-- Gran Total en Tarjeta Rosa Elegante -->
+            <!-- Sección Retoma en la Factura (Parte Derecha, debajo de productos antes de facturar) -->
+            <div class="mb-3">
+                <div id="retoma_btn_box" class="d-flex justify-content-between align-items-center p-2 px-3 rounded-3" style="background: #F8FAFC; border: 1.5px dashed #CBD5E1;">
+                    <div class="small fw-semibold text-brand-black">
+                        <i class="fa-solid fa-rotate-left text-warning me-1"></i> ¿Plan Retoma?
+                    </div>
+                    <button type="button" class="btn btn-sm btn-warning text-dark rounded-pill px-3 py-1 fw-bold shadow-xs" data-bs-toggle="modal" data-bs-target="#modalRetomaCaja" style="font-size: 0.78rem;">
+                        <i class="fa-solid fa-plus me-1"></i> Recibir Retoma
+                    </button>
+                </div>
+
+                <!-- Banner de Retoma Aplicada (si existe) -->
+                <div id="retoma_badge_box" class="alert alert-warning py-2 px-3 rounded-3 mb-0 mt-2 d-none border-warning">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small">
+                            <strong><i class="fa-solid fa-rotate-left me-1"></i>Retoma Aplicada:</strong><br>
+                            <span id="retoma_summary_text" class="fw-semibold"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-circle p-1 px-2" onclick="quitarRetomaCaja()" title="Quitar Retoma">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Gran Total -->
             <div class="p-3 rounded-4 mb-3 text-center shadow-sm" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border: 1.5px solid #FECDD3;">
-                <span class="text-uppercase fw-bold small d-block mb-1" style="color: #9F1239; font-size: 0.75rem; letter-spacing: 0.5px;">Total a Cobrar</span>
+                <span class="text-uppercase fw-bold small d-block mb-1" style="color: #9F1239; font-size: 0.75rem; letter-spacing: 0.5px;">Total Neto a Cobrar</span>
                 <span class="fw-bolder fs-1 lh-1" id="total_amount" style="color: #881337;">$0</span>
             </div>
 
@@ -91,26 +135,24 @@
             {% endif %}
 
             <!-- Toggle: Pago Único vs Pago Dividido -->
-            <div class="mb-3">
+            <div class="mb-2">
                 <div class="d-flex align-items-center gap-3 mb-2">
                     <label class="form-label fw-bold text-brand-black small text-uppercase m-0">Método de Pago</label>
                     <div class="form-check form-switch ms-auto">
-                        <input class="form-check-input" type="checkbox" id="toggle_pago_mixto" style="cursor: pointer; width: 2.8rem; height: 1.4rem;">
+                        <input class="form-check-input" type="checkbox" id="toggle_pago_mixto" style="cursor: pointer; width: 2.6rem; height: 1.3rem;">
                         <label class="form-check-label fw-bold small text-muted" for="toggle_pago_mixto" style="cursor: pointer;">Dividir Pago</label>
                     </div>
                 </div>
             </div>
 
-            <!-- Modo 1: Pago Único (Botones Seleccionables, NO Desplegable) -->
+            <!-- Modo 1: Pago Único (4 Métodos Oficiales) -->
             <div id="pago_unico_section">
-                <!-- Input oculto para mantener compatibilidad 100% con Backend y validaciones -->
                 <input type="hidden" id="metodo-pago" value="efectivo">
 
-                <!-- Grilla de Métodos Seleccionables -->
                 <div class="row g-2 mb-3" id="metodos_pago_grid">
                     <div class="col-6">
                         <div class="payment-method-card active p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="efectivo">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #DCFCE7; color: #16A34A;">
+                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #DCFCE7; color: #16A34A;">
                                 <i class="fa-solid fa-money-bill-wave"></i>
                             </span>
                             <div class="flex-grow-1 overflow-hidden">
@@ -121,18 +163,18 @@
                     </div>
                     <div class="col-6">
                         <div class="payment-method-card p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="nequi">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #F3E8FF; color: #7E22CE;">
+                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #F3E8FF; color: #7E22CE;">
                                 <i class="fa-solid fa-mobile-screen"></i>
                             </span>
                             <div class="flex-grow-1 overflow-hidden">
                                 <div class="fw-bold small text-truncate payment-title">Nequi</div>
-                                <div class="text-muted" style="font-size: 0.68rem;">QR / Transferencia</div>
+                                <div class="text-muted" style="font-size: 0.68rem;">QR / Transf.</div>
                             </div>
                         </div>
                     </div>
                     <div class="col-6">
                         <div class="payment-method-card p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="bancolombia">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #FEF9C3; color: #A16207;">
+                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #FEF9C3; color: #A16207;">
                                 <i class="fa-solid fa-building-columns"></i>
                             </span>
                             <div class="flex-grow-1 overflow-hidden">
@@ -143,7 +185,7 @@
                     </div>
                     <div class="col-6">
                         <div class="payment-method-card p-2 rounded-3 text-start d-flex align-items-center gap-2 cursor-pointer h-100" data-method="daviplata">
-                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 36px; height: 36px; background: #FFE4E6; color: #E11D48;">
+                            <span class="payment-icon-badge rounded-circle d-flex align-items-center justify-content-center" style="width: 34px; height: 34px; background: #FFE4E6; color: #E11D48;">
                                 <i class="fa-solid fa-wallet"></i>
                             </span>
                             <div class="flex-grow-1 overflow-hidden">
@@ -154,10 +196,10 @@
                     </div>
                 </div>
 
-                <!-- Calculadora de Cambio / Vueltas (Visible solo en Efectivo) -->
-                <div id="cambio_efectivo_container" class="p-3 rounded-4 mb-3 shadow-sm" style="background: #FFF5F7; border: 1.5px dashed #F472B6;">
+                <!-- Calculadora de Cambio / Vueltas (Plateado Limpio 30%) -->
+                <div id="cambio_efectivo_container" class="p-3 rounded-4 mb-3 shadow-xs" style="background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%); border: 1.5px dashed #94A3B8;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <small class="fw-bold text-uppercase d-flex align-items-center gap-1" style="color: #9F1239; font-size: 0.72rem;">
+                        <small class="fw-bold text-uppercase d-flex align-items-center gap-1" style="color: #334155; font-size: 0.72rem;">
                             <i class="fa-solid fa-calculator text-brand-pink"></i> Calculadora de Vueltas
                         </small>
                     </div>
@@ -166,14 +208,12 @@
                         <input type="number" id="paga_con_input" class="form-control fw-bold border bg-white fs-6" placeholder="Monto recibido" onkeyup="calcularCambioEfectivo()" onchange="calcularCambioEfectivo()">
                         <button type="button" class="btn btn-outline-secondary border" onclick="limpiarPagaCon()" title="Limpiar"><i class="fa-solid fa-xmark"></i></button>
                     </div>
-                    <!-- Botones Rápidos de Billetes -->
                     <div class="d-flex flex-wrap gap-1 mb-2">
                         <button type="button" class="btn-quick-bill" onclick="setPagaCon('exacto')">Exacto</button>
                         <button type="button" class="btn-quick-bill" onclick="setPagaCon(20000)">$20k</button>
                         <button type="button" class="btn-quick-bill" onclick="setPagaCon(50000)">$50k</button>
                         <button type="button" class="btn-quick-bill" onclick="setPagaCon(100000)">$100k</button>
                     </div>
-                    <!-- Mensaje / Resultado de Vueltas -->
                     <div id="cambio_resultado_box">
                         <div class="small text-muted py-1" style="font-size: 0.75rem;">
                             <i class="fa-solid fa-circle-info me-1 text-brand-pink"></i> Ingresa cuánto entrega el cliente para calcular el cambio.
@@ -182,32 +222,25 @@
                 </div>
             </div>
 
-            <!-- Modo 2: Pago Dividido/Mixto (oculto por defecto) -->
+            <!-- Modo 2: Pago Dividido/Mixto -->
             <div id="pago_mixto_section" style="display: none;">
-                <!-- Indicador visual del saldo restante -->
                 <div class="alert border-0 shadow-sm py-2 px-3 mb-3 rounded-3" id="saldo_restante_alert" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);">
                     <div class="d-flex justify-content-between align-items-center">
                         <small class="fw-bold text-muted text-uppercase"><i class="fa-solid fa-scale-balanced me-1"></i> Saldo por cubrir:</small>
                         <span class="fw-bolder fs-5" id="saldo_restante" style="color: var(--brand-blue);">$0</span>
                     </div>
-                    <!-- Barra de progreso visual -->
                     <div class="progress mt-2" style="height: 6px; border-radius: 10px;">
-                        <div class="progress-bar" id="barra_progreso_pago" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #F472B6, #E11D48); border-radius: 10px;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress-bar" id="barra_progreso_pago" role="progressbar" style="width: 0%; background: linear-gradient(90deg, #F472B6, #E11D48); border-radius: 10px;"></div>
                     </div>
                 </div>
-
-                <!-- Lista dinámica de pagos parciales -->
-                <div id="pagos_list" class="d-flex flex-column gap-2 mb-3">
-                    <!-- Se inyecta dinámicamente -->
-                </div>
-
-                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill fw-bold w-100" id="btn_agregar_pago">
+                <div id="pagos_list" class="d-flex flex-column gap-2 mb-3"></div>
+                <button type="button" class="btn btn-outline-secondary btn-sm rounded-pill fw-bold w-100 mb-3" id="btn_agregar_pago">
                     <i class="fa-solid fa-plus me-1"></i> Agregar otro método de pago
                 </button>
             </div>
 
-            <!-- Switch de Imprimir Factura / Ticket -->
-            <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 mb-3 mt-2 shadow-sm" style="background: #FFF1F5; border: 1.5px dashed #FDA4AF;">
+            <!-- Switch de Imprimir Factura / Ticket (Plateado Limpio 30%) -->
+            <div class="d-flex align-items-center justify-content-between p-2 px-3 rounded-3 mb-3 mt-1 shadow-xs" style="background: #F8FAFC; border: 1.5px solid #CBD5E1;">
                 <div class="d-flex align-items-center gap-2">
                     <i class="fa-solid fa-print fs-5" style="color: #BE185D;"></i>
                     <div>
@@ -216,7 +249,7 @@
                     </div>
                 </div>
                 <div class="form-check form-switch m-0">
-                    <input class="form-check-input" type="checkbox" id="toggle_auto_print" checked style="cursor: pointer; width: 2.8rem; height: 1.4rem;">
+                    <input class="form-check-input" type="checkbox" id="toggle_auto_print" checked style="cursor: pointer; width: 2.6rem; height: 1.3rem;">
                 </div>
             </div>
 
@@ -236,12 +269,209 @@
 <!-- Modal Variantes -->
 <div class="modal fade" id="modalVariantes" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
             <div class="modal-header border-0 bg-light">
                 <h5 class="modal-title fw-bold text-primary"><i class="fa-solid fa-list-ul me-2"></i>Selecciona Variante</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body p-4" id="modalVariantesBody">
+            <div class="modal-body p-4" id="modalVariantesBody"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 1: Celular Externo en Caliente (Cel Ext.) -->
+<div class="modal fade" id="modalCelExtCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold text-brand-black">
+                    <i class="fa-solid fa-mobile-screen-button text-brand-pink me-2"></i>Registrar Cel Ext. (Celular Externo)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Proveedor / Local Vecino <span class="text-danger">*</span></label>
+                    <input type="text" id="celext_proveedor" class="form-control" placeholder="Ej: Local Alex / Distribuidora" required>
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Marca <span class="text-danger">*</span></label>
+                        <input type="text" id="celext_marca" class="form-control" placeholder="Ej: Apple">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Modelo / Capacidad <span class="text-danger">*</span></label>
+                        <input type="text" id="celext_modelo" class="form-control" placeholder="Ej: iPhone 14 128GB">
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">IMEI del Equipo <span class="text-danger">*</span></label>
+                    <input type="text" id="celext_imei" class="form-control font-monospace fw-bold" placeholder="15 dígitos del IMEI">
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small text-danger">Costo Proveedor ($) <span class="text-danger">*</span></label>
+                        <input type="number" id="celext_costo" class="form-control fw-bold" min="0" placeholder="0">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small text-success">Precio Venta ($) <span class="text-danger">*</span></label>
+                        <input type="number" id="celext_precio_venta" class="form-control fw-bold" min="0" placeholder="0">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-pink rounded-pill px-4 fw-bold" onclick="crearCelExtDesdeCaja()">
+                    <i class="fa-solid fa-plus me-1"></i> Agregar Cel Ext. a la Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal 2: Accesorio Externo en Caliente (Acc Ext.) -->
+<div class="modal fade" id="modalAccExtCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold text-brand-black">
+                    <i class="fa-solid fa-headphones text-brand-pink me-2"></i>Registrar Acc Ext. (Accesorio Externo)
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Proveedor / Local Vecino <span class="text-danger">*</span></label>
+                    <input type="text" id="accext_proveedor" class="form-control" placeholder="Ej: Accesorios El Centro / Local 14" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small">Nombre del Accesorio <span class="text-danger">*</span></label>
+                    <input type="text" id="accext_nombre" class="form-control" placeholder="Ej: Estuche MagSafe iPhone 15 Pro">
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-4">
+                        <label class="form-label fw-bold small text-danger">Costo Prov. ($)</label>
+                        <input type="number" id="accext_costo" class="form-control fw-bold" min="0" placeholder="0">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small text-success">Precio Venta ($) <span class="text-danger">*</span></label>
+                        <input type="number" id="accext_precio_venta" class="form-control fw-bold" min="0" placeholder="0">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small">Cantidad</label>
+                        <input type="number" id="accext_cantidad" class="form-control fw-bold" min="1" value="1">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-pink rounded-pill px-4 fw-bold" onclick="crearAccExtDesdeCaja()">
+                    <i class="fa-solid fa-plus me-1"></i> Agregar Acc Ext. a la Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Retoma en Caja (Entra a CUARENTENA y descuenta del total) -->
+<div class="modal fade" id="modalRetomaCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold text-brand-black"><i class="fa-solid fa-rotate-left text-warning me-2"></i>Recibir Celular en Retoma (Parte de Pago)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning border-0 small py-2 mb-3">
+                    El valor recibido se descontará del total a pagar y el equipo quedará en <strong>CUARENTENA</strong> hasta aprobación del Administrador.
+                </div>
+                <div class="row g-2 mb-3">
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">IMEI del Equipo Recibido <span class="text-danger">*</span></label>
+                        <input type="text" id="ret_imei" class="form-control font-monospace fw-bold" placeholder="15 dígitos">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Marca <span class="text-danger">*</span></label>
+                        <input type="text" id="ret_marca" class="form-control" placeholder="Ej: Apple">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Modelo <span class="text-danger">*</span></label>
+                        <input type="text" id="ret_modelo" class="form-control" placeholder="Ej: iPhone 12">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small">Memoria</label>
+                        <input type="text" id="ret_memoria" class="form-control" placeholder="128GB">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small">Color</label>
+                        <input type="text" id="ret_color" class="form-control" placeholder="Negro">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small">% Batería</label>
+                        <input type="text" id="ret_bateria" class="form-control" placeholder="85%">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-success">Valor Recibido a Descontar ($) <span class="text-danger">*</span></label>
+                        <input type="number" id="ret_valor" class="form-control fw-bold fs-5 text-success" min="1" placeholder="Ej: 1200000">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">Observaciones del Estado</label>
+                        <input type="text" id="ret_obs" class="form-control" placeholder="Estado de pantalla, batería, etc.">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning text-dark rounded-pill px-4 fw-bold" onclick="aplicarRetomaCaja()">
+                    <i class="fa-solid fa-check me-1"></i> Aplicar Retoma a la Venta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Datos del Cliente (Celulares - MinTIC / SIC) -->
+<div class="modal fade" id="modalClienteCelular" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-brand-blue text-brand-black border-0">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-tag me-2"></i>Datos del Comprador (MinTIC / SIC)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="alert alert-warning py-2 mb-3 border-0 small">
+                    <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Venta de Celular Detectada:</strong> Registra los datos del comprador para la factura, garantía y cumplimiento regulatorio.
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small">Nombre Completo <span class="text-danger">*</span></label>
+                    <input type="text" id="cliente_nombre" class="form-control bg-light" placeholder="Ej: Juan Pérez" required>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Cédula / NIT <span class="text-danger">*</span></label>
+                        <input type="text" id="cliente_documento" class="form-control bg-light" placeholder="Documento" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Teléfono / WhatsApp <span class="text-danger">*</span></label>
+                        <input type="text" id="cliente_telefono" class="form-control bg-light" placeholder="3001234567" required>
+                    </div>
+                </div>
+                <div class="row g-2 mb-0">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Dirección</label>
+                        <input type="text" id="cliente_direccion" class="form-control bg-light" placeholder="Dirección física">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Correo Electrónico</label>
+                        <input type="email" id="cliente_email" class="form-control bg-light" placeholder="cliente@correo.com">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-success rounded-pill fw-bold px-4" onclick="confirmarVentaCelular()">
+                    <i class="fa-solid fa-check me-1"></i> Confirmar y Facturar
+                </button>
             </div>
         </div>
     </div>
@@ -250,10 +480,11 @@
 <script>
     const csrf_token = "{{ csrf_token() }}";
     let carrito = [];
+    let retomaActual = null;
     let activeProductData = null;
     let activeVariantsData = null;
-
     let pagosMixtos = [];
+
     const METODOS_DISPONIBLES = [
         { value: 'efectivo', label: '💵 Efectivo' },
         { value: 'nequi', label: '📱 Nequi' },
@@ -266,17 +497,134 @@
     }
 
     document.getElementById('productSearch').addEventListener('keyup', function(e) {
-        const query = e.target.value.toLowerCase();
+        const query = e.target.value.toLowerCase().trim();
         document.querySelectorAll('.product-card-container').forEach(card => {
-            const name = card.dataset.name;
-            const sku = card.dataset.sku;
-            if (name.includes(query) || sku.includes(query)) {
+            const name = card.dataset.name || '';
+            const sku = card.dataset.sku || '';
+            const imei = card.dataset.imei || '';
+            if (name.includes(query) || sku.includes(query) || imei.includes(query)) {
                 card.style.display = 'block';
             } else {
                 card.style.display = 'none';
             }
         });
     });
+
+    async function enviarExternoAlCarrito(payload, modalId) {
+        try {
+            const resp = await fetch('/externos/api/nuevo_desde_caja', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf_token },
+                body: JSON.stringify(payload)
+            });
+            const data = await resp.json();
+            if (!resp.ok) return alert(data.error || 'Error al crear producto externo.');
+
+            const p = data.product;
+            carrito.push({
+                product_id: p.id,
+                variant_id: null,
+                nombre: p.nombre,
+                sku: p.sku,
+                tipo_inventario: p.tipo_inventario,
+                subtipo_externo: p.subtipo_externo,
+                precio_final: p.precio_sugerido,
+                precio_sugerido: p.precio_sugerido,
+                precio_minimo: p.precio_minimo,
+                cantidad: p.cantidad,
+                max_stock: p.cantidad_stock,
+                es_obsequio: false
+            });
+            renderCart();
+            bootstrap.Modal.getInstance(document.getElementById(modalId)).hide();
+        } catch (err) {
+            alert('Error de red al crear producto externo.');
+        }
+    }
+
+    async function crearCelExtDesdeCaja() {
+        const proveedor = document.getElementById('celext_proveedor').value.trim();
+        const marca = document.getElementById('celext_marca').value.trim();
+        const modelo = document.getElementById('celext_modelo').value.trim();
+        const imei = document.getElementById('celext_imei').value.trim();
+        const costo = parseFloat(document.getElementById('celext_costo').value) || 0;
+        const precioVenta = parseFloat(document.getElementById('celext_precio_venta').value) || 0;
+
+        if (!proveedor) return alert('El proveedor es obligatorio para Cel Ext.');
+        if (!marca || !modelo) return alert('Completa la Marca y el Modelo del celular externo.');
+        if (!imei) return alert('El IMEI es obligatorio para Cel Ext.');
+        if (precioVenta <= 0) return alert('El precio de venta debe ser mayor a $0.');
+
+        await enviarExternoAlCarrito({
+            subtipo: 'celular',
+            proveedor: proveedor,
+            nombre: `${marca} ${modelo}`.trim(),
+            marca: marca,
+            modelo_celular: modelo,
+            imei: imei,
+            precio_costo: costo,
+            precio_venta: precioVenta,
+            cantidad: 1
+        }, 'modalCelExtCaja');
+    }
+
+    async function crearAccExtDesdeCaja() {
+        const proveedor = document.getElementById('accext_proveedor').value.trim();
+        const nombre = document.getElementById('accext_nombre').value.trim();
+        const costo = parseFloat(document.getElementById('accext_costo').value) || 0;
+        const precioVenta = parseFloat(document.getElementById('accext_precio_venta').value) || 0;
+        const cantidad = parseInt(document.getElementById('accext_cantidad').value) || 1;
+
+        if (!proveedor) return alert('El proveedor es obligatorio para Acc Ext.');
+        if (!nombre) return alert('Ingresa el nombre del accesorio externo.');
+        if (precioVenta <= 0) return alert('El precio de venta debe ser mayor a $0.');
+
+        await enviarExternoAlCarrito({
+            subtipo: 'accesorio',
+            proveedor: proveedor,
+            nombre: nombre,
+            precio_costo: costo,
+            precio_venta: precioVenta,
+            cantidad: cantidad
+        }, 'modalAccExtCaja');
+    }
+
+    function aplicarRetomaCaja() {
+        const imei = document.getElementById('ret_imei').value.trim();
+        const marca = document.getElementById('ret_marca').value.trim();
+        const modelo = document.getElementById('ret_modelo').value.trim();
+        const memoria = document.getElementById('ret_memoria').value.trim();
+        const color = document.getElementById('ret_color').value.trim();
+        const bateria = document.getElementById('ret_bateria').value.trim();
+        const valor = parseFloat(document.getElementById('ret_valor').value) || 0;
+        const obs = document.getElementById('ret_obs').value.trim();
+
+        if (!imei || !marca || !modelo || valor <= 0) {
+            return alert('Completa IMEI, Marca, Modelo y Valor Recibido mayor a $0 para aplicar la retoma.');
+        }
+
+        retomaActual = {
+            imei: imei,
+            marca: marca,
+            modelo_celular: modelo,
+            memoria: memoria,
+            color: color,
+            bateria: bateria,
+            valor_recibido: valor,
+            observaciones: obs
+        };
+
+        document.getElementById('retoma_summary_text').innerText = `${marca} ${modelo} (${imei}) - Descuenta ${formatoCOP(valor)}`;
+        document.getElementById('retoma_badge_box').classList.remove('d-none');
+        bootstrap.Modal.getInstance(document.getElementById('modalRetomaCaja')).hide();
+        renderCart();
+    }
+
+    function quitarRetomaCaja() {
+        retomaActual = null;
+        document.getElementById('retoma_badge_box').classList.add('d-none');
+        renderCart();
+    }
 
     function handleProductClick(el) {
         const pData = JSON.parse(el.dataset.product);
@@ -285,9 +633,8 @@
         if (vData && vData.length > 0) {
             activeProductData = pData;
             activeVariantsData = vData;
-            
-            let html = `<div class="mb-3"><h6 class="fw-bold">${pData.nombre}</h6><small class="text-muted">Stock Total: ${pData.cantidad_stock}</small></div>`;
-            html += `<div class="list-group">`;
+
+            let html = `<div class="mb-3"><h6 class="fw-bold">${pData.nombre}</h6><small class="text-muted">Stock Total: ${pData.cantidad_stock}</small></div><div class="list-group">`;
             vData.forEach(v => {
                 let badge = v.stock > 0 ? `<span class="badge bg-success rounded-pill">${v.stock} disp</span>` : `<span class="badge bg-danger rounded-pill">0 disp</span>`;
                 let btnState = v.stock > 0 ? '' : 'disabled';
@@ -298,11 +645,9 @@
                         <small class="text-muted">${formatoCOP(v.precio_sugerido)}</small>
                     </div>
                     ${badge}
-                </button>
-                `;
+                </button>`;
             });
             html += `</div>`;
-            
             document.getElementById('modalVariantesBody').innerHTML = html;
             new bootstrap.Modal(document.getElementById('modalVariantes')).show();
         } else {
@@ -310,20 +655,20 @@
                 alert("Este producto no tiene stock disponible.");
                 return;
             }
-            addToCart(pData.id, null, pData.nombre, pData.sku, pData.precio_sugerido, pData.cantidad_stock);
+            addToCart(pData.id, null, pData.nombre, pData.sku, pData.precio_sugerido, pData.cantidad_stock, null, pData.precio_minimo, pData.tipo_inventario, pData.subtipo_externo);
         }
     }
 
     window.addVariantToCart = function(variantId) {
         const vData = activeVariantsData.find(v => v.id === variantId);
         if (!vData) return;
-        addToCart(activeProductData.id, vData.id, activeProductData.nombre, activeProductData.sku, vData.precio_sugerido, vData.stock, vData.nombre);
+        addToCart(activeProductData.id, vData.id, activeProductData.nombre, activeProductData.sku, vData.precio_sugerido, vData.stock, vData.nombre, vData.precio_minimo, activeProductData.tipo_inventario, activeProductData.subtipo_externo);
         bootstrap.Modal.getInstance(document.getElementById('modalVariantes')).hide();
     };
 
-    function addToCart(productId, variantId, nombre, sku, precio, maxStock, variantName = null) {
+    function addToCart(productId, variantId, nombre, sku, precio, maxStock, variantName = null, precioMinimo = 0, tipoInv = 'tienda', subtipoExt = '') {
         let existingIndex = carrito.findIndex(i => i.product_id === productId && i.variant_id === variantId);
-        
+
         if (existingIndex > -1) {
             if (carrito[existingIndex].cantidad + 1 > maxStock) {
                 alert('No puedes agregar más de la cantidad disponible en stock.');
@@ -341,8 +686,11 @@
                 variant_id: variantId,
                 nombre: nombreMostrar,
                 sku: sku,
+                tipo_inventario: tipoInv,
+                subtipo_externo: subtipoExt,
                 precio_final: precio,
                 precio_sugerido: precio,
+                precio_minimo: precioMinimo,
                 cantidad: 1,
                 max_stock: maxStock,
                 es_obsequio: false
@@ -362,9 +710,31 @@
         renderCart();
     }
 
-    function updateCartItemPrice(index, newPrice) {
+    async function updateCartItemPrice(index, newPrice) {
         let val = parseFloat(newPrice);
         if (isNaN(val) || val < 0) val = 0;
+        const item = carrito[index];
+        if (!item.es_obsequio && item.precio_minimo && val < item.precio_minimo) {
+            const confirmarSolicitud = confirm(
+                `⚠️ El precio digitado (${formatoCOP(val)}) es menor al Precio Mínimo (${formatoCOP(item.precio_minimo)}).\n\n¿Deseas generar una solicitud/autorización de Precio Especial (PriceApproval) para poder facturarlo a este valor?`
+            );
+            if (confirmarSolicitud) {
+                const motivo = prompt("Indica el motivo del descuento especial:", "Descuento autorizado en Caja") || "Descuento en Caja";
+                const resp = await fetch('/sales/api/solicitar_precio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf_token },
+                    body: JSON.stringify({
+                        product_id: item.product_id,
+                        variant_id: item.variant_id,
+                        precio_solicitado: val,
+                        motivo: motivo,
+                        auto_aprobar: true
+                    })
+                });
+                const data = await resp.json();
+                alert(data.mensaje || data.error);
+            }
+        }
         carrito[index].precio_final = val;
         renderCart();
     }
@@ -373,7 +743,6 @@
         let item = carrito[index];
         if (item.es_obsequio) {
             item.es_obsequio = false;
-            // Restore suggested price
             item.precio_final = item.precio_sugerido || 0;
         } else {
             item.es_obsequio = true;
@@ -387,13 +756,18 @@
         renderCart();
     }
 
+    function obtenerGranTotal() {
+        const sub = carrito.reduce((sum, item) => sum + (item.cantidad * item.precio_final), 0);
+        const descRetoma = retomaActual ? (retomaActual.valor_recibido || 0) : 0;
+        return Math.max(0, sub - descRetoma);
+    }
+
     function renderCart() {
         const tbody = document.getElementById('cart_body');
         const totalAmountEl = document.getElementById('total_amount');
         const totalItemsEl = document.getElementById('total_items');
-        
+
         tbody.innerHTML = '';
-        let granTotal = 0;
         let totalItems = 0;
 
         if (carrito.length === 0) {
@@ -407,20 +781,17 @@
         }
 
         carrito.forEach((item, index) => {
-            const subtotal = item.cantidad * item.precio_final;
-            granTotal += subtotal;
             totalItems += item.cantidad;
-
             const li = document.createElement('li');
             li.className = 'list-group-item px-3 py-3';
             let precioInputState = item.es_obsequio ? 'disabled' : '';
             let isObsequioClass = item.es_obsequio ? 'text-success' : 'text-muted';
-            
+
             li.innerHTML = `
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <div class="fw-bold text-dark text-truncate" style="max-width: 70%;">
+                    <div class="fw-bold text-dark text-truncate" style="max-width: 72%;">
                         ${item.nombre}
-                        <small class="text-muted d-block fw-normal" style="font-size: 0.75rem;">${item.sku}</small>
+                        <small class="text-muted d-block fw-normal font-monospace" style="font-size: 0.72rem;">${item.sku} (Mín: ${formatoCOP(item.precio_minimo || 0)})</small>
                         ${item.es_obsequio ? '<span class="badge bg-success bg-opacity-10 text-success mt-1"><i class="fa-solid fa-gift me-1"></i>Obsequio</span>' : ''}
                     </div>
                     <div>
@@ -439,7 +810,7 @@
                         <span class="input-group-text bg-light text-muted border-0 px-2">Cant</span>
                         <input type="number" class="form-control text-center fw-bold border-0 bg-light px-1" value="${item.cantidad}" onchange="updateCartItem(${index}, this.value)">
                     </div>
-                    <div class="input-group input-group-sm flex-grow-1" style="max-width: 140px;">
+                    <div class="input-group input-group-sm flex-grow-1" style="max-width: 150px;">
                         <span class="input-group-text bg-light text-muted border-0 px-2">$</span>
                         <input type="number" class="form-control text-end fw-bold border-0 bg-light px-2 text-brand-black" value="${Math.round(item.precio_final)}" onchange="updateCartItemPrice(${index}, this.value)" ${precioInputState}>
                     </div>
@@ -448,32 +819,20 @@
             tbody.appendChild(li);
         });
 
-        totalAmountEl.innerText = formatoCOP(granTotal);
+        totalAmountEl.innerText = formatoCOP(obtenerGranTotal());
         totalItemsEl.innerText = `${totalItems} items`;
 
-        if (typeof calcularCambioEfectivo === 'function') {
-            calcularCambioEfectivo();
-        }
-
-        if (document.getElementById('toggle_pago_mixto').checked) {
-            actualizarSaldoRestante();
-        }
-    }
-
-    function obtenerGranTotal() {
-        return carrito.reduce((sum, item) => sum + (item.cantidad * item.precio_final), 0);
+        if (typeof calcularCambioEfectivo === 'function') calcularCambioEfectivo();
+        if (document.getElementById('toggle_pago_mixto').checked) actualizarSaldoRestante();
     }
 
     document.getElementById('toggle_pago_mixto').addEventListener('change', function() {
         const unicoSec = document.getElementById('pago_unico_section');
         const mixtoSec = document.getElementById('pago_mixto_section');
-        
         if (this.checked) {
             unicoSec.style.display = 'none';
             mixtoSec.style.display = 'block';
-            if (pagosMixtos.length === 0) {
-                agregarPagoParcial();
-            }
+            if (pagosMixtos.length === 0) agregarPagoParcial();
             actualizarSaldoRestante();
         } else {
             unicoSec.style.display = 'block';
@@ -489,30 +848,20 @@
     }
 
     function eliminarPagoParcial(index) {
-        if (pagosMixtos.length <= 1) {
-            alert('Debe existir al menos un método de pago.');
-            return;
-        }
+        if (pagosMixtos.length <= 1) return alert('Debe existir al menos un método de pago.');
         pagosMixtos.splice(index, 1);
         renderizarPagosMixtos();
     }
 
     function actualizarPagoParcial(index, campo, valor) {
-        if (campo === 'metodo_pago') {
-            pagosMixtos[index].metodo_pago = valor;
-        }
-        if (campo === 'monto') {
-            pagosMixtos[index].monto = parseFloat(valor) || 0;
-        }
+        if (campo === 'metodo_pago') pagosMixtos[index].metodo_pago = valor;
+        if (campo === 'monto') pagosMixtos[index].monto = parseFloat(valor) || 0;
         actualizarSaldoRestante();
     }
 
     function resetPagosMixtos() {
         pagosMixtos = [];
-        const toggle = document.getElementById('toggle_pago_mixto');
-        if (toggle.checked) {
-            agregarPagoParcial();
-        }
+        if (document.getElementById('toggle_pago_mixto').checked) agregarPagoParcial();
         renderizarPagosMixtos();
         actualizarSaldoRestante();
     }
@@ -521,104 +870,90 @@
         const granTotal = obtenerGranTotal();
         const sumaPagos = pagosMixtos.reduce((sum, p) => sum + (p.monto || 0), 0);
         const saldo = granTotal - sumaPagos;
-        
         const saldoEl = document.getElementById('saldo_restante');
-        const alertEl = document.getElementById('saldo_restante_alert');
         const barraEl = document.getElementById('barra_progreso_pago');
-        
         saldoEl.innerText = formatoCOP(Math.abs(saldo));
-        
         const porcentaje = granTotal > 0 ? Math.min((sumaPagos / granTotal) * 100, 100) : 0;
         barraEl.style.width = porcentaje + '%';
-        
-        alertEl.classList.remove('saldo-cubierto', 'saldo-excedido');
-        if (saldo === 0 && granTotal > 0) {
-            alertEl.classList.add('saldo-cubierto');
-            saldoEl.style.color = '#28a745';
-            barraEl.style.background = 'linear-gradient(90deg, #28a745, #34ce57)';
-            document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-circle-check me-1"></i> ¡Pago completo!';
-        } else if (saldo < 0) {
-            alertEl.classList.add('saldo-excedido');
-            saldoEl.style.color = '#dc3545';
-            saldoEl.innerText = '+' + formatoCOP(Math.abs(saldo));
-            barraEl.style.background = 'linear-gradient(90deg, #dc3545, #e74c5c)';
-            document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-triangle-exclamation me-1"></i> Excedente:';
-        } else {
-            saldoEl.style.color = 'var(--brand-blue)';
-            barraEl.style.background = 'linear-gradient(90deg, #A3D8DE, #7BC8D0)';
-            document.querySelector('#saldo_restante_alert small').innerHTML = '<i class="fa-solid fa-scale-balanced me-1"></i> Saldo por cubrir:';
-        }
     }
 
     function renderizarPagosMixtos() {
         const container = document.getElementById('pagos_list');
         container.innerHTML = '';
-
         pagosMixtos.forEach((pago, index) => {
             const div = document.createElement('div');
             div.className = 'pago-item d-flex gap-2 align-items-center';
-            
-            let optionsHtml = METODOS_DISPONIBLES.map(m => 
+            let optionsHtml = METODOS_DISPONIBLES.map(m =>
                 `<option value="${m.value}" ${m.value === pago.metodo_pago ? 'selected' : ''}>${m.label}</option>`
             ).join('');
-
             div.innerHTML = `
                 <select class="form-select form-select-sm border-0 shadow-sm bg-light" style="cursor: pointer; flex: 1;" onchange="actualizarPagoParcial(${index}, 'metodo_pago', this.value)">
                     ${optionsHtml}
                 </select>
                 <div class="input-group input-group-sm shadow-sm" style="flex: 1.5;">
                     <span class="input-group-text bg-white border-0 text-muted">$</span>
-                    <input type="number" class="form-control border-0 fw-bold text-end" value="${pago.monto || ''}" placeholder="0" onchange="actualizarPagoParcial(${index}, 'monto', this.value)" onkeyup="actualizarPagoParcial(${index}, 'monto', this.value)">
+                    <input type="number" class="form-control border-0 fw-bold text-end" value="${pago.monto || ''}" placeholder="0" oninput="actualizarPagoParcial(${index}, 'monto', this.value)">
                 </div>
                 <button type="button" class="btn btn-sm text-danger border-0 bg-transparent p-1" onclick="eliminarPagoParcial(${index})">
                     <i class="fa-solid fa-circle-xmark fs-5"></i>
-                </button>
-            `;
+                </button>`;
             container.appendChild(div);
         });
     }
 
     document.getElementById('btn_clear_cart').addEventListener('click', () => {
-        if(confirm('¿Seguro que deseas limpiar la venta?')){
+        if (confirm('¿Seguro que deseas limpiar la venta?')) {
             carrito = [];
-            pagosMixtos = [];
+            retomaActual = null;
+            document.getElementById('retoma_badge_box').classList.add('d-none');
             resetPagosMixtos();
             renderCart();
         }
     });
 
-    document.getElementById('btn_process_sale').addEventListener('click', async function() {
-        if (carrito.length === 0) {
-            return alert('El carrito está vacío.');
+    document.getElementById('btn_process_sale').addEventListener('click', function() {
+        if (carrito.length === 0) return alert('El carrito está vacío.');
+        const tieneCelular = carrito.some(item => item.tipo_inventario === 'celulares' || (item.tipo_inventario === 'externos' && item.subtipo_externo === 'celular'));
+        if (tieneCelular) {
+            new bootstrap.Modal(document.getElementById('modalClienteCelular')).show();
+        } else {
+            ejecutarCobroFinal(null);
         }
+    });
 
+    function confirmarVentaCelular() {
+        const nombre = document.getElementById('cliente_nombre').value.trim();
+        const doc = document.getElementById('cliente_documento').value.trim();
+        const tel = document.getElementById('cliente_telefono').value.trim();
+        const dir = document.getElementById('cliente_direccion').value.trim();
+        const email = document.getElementById('cliente_email').value.trim();
+
+        if (!nombre || !doc || !tel) return alert('Nombre, Cédula y Teléfono son obligatorios.');
+        bootstrap.Modal.getInstance(document.getElementById('modalClienteCelular')).hide();
+        ejecutarCobroFinal({ nombre, documento: doc, telefono: tel, direccion: dir, email: email });
+    }
+
+    async function ejecutarCobroFinal(datosCliente = null) {
         const esMixto = document.getElementById('toggle_pago_mixto').checked;
         const granTotal = obtenerGranTotal();
         let pagosPayload = [];
 
-        if (esMixto) {
-            let sumaPagos = 0;
-            for (let i = 0; i < pagosMixtos.length; i++) {
-                const p = pagosMixtos[i];
-                if (!p.monto || p.monto <= 0) {
-                    return alert(`El pago #${i + 1} (${p.metodo_pago}) tiene un monto inválido. Todos los pagos deben tener un monto mayor a $0.`);
+        if (granTotal > 0) {
+            if (esMixto) {
+                let sumaPagos = 0;
+                for (let i = 0; i < pagosMixtos.length; i++) {
+                    const p = pagosMixtos[i];
+                    if (!p.monto || p.monto <= 0) return alert(`El pago #${i + 1} (${p.metodo_pago}) debe ser mayor a $0.`);
+                    sumaPagos += p.monto;
+                    pagosPayload.push({ metodo_pago: p.metodo_pago, monto: Math.round(p.monto) });
                 }
-                sumaPagos += p.monto;
-                pagosPayload.push({
-                    metodo_pago: p.metodo_pago,
-                    monto: Math.round(p.monto)
-                });
+                if (Math.round(sumaPagos) !== Math.round(granTotal)) {
+                    return alert(`⚠️ La suma de los pagos no coincide con el total neto a cobrar (${formatoCOP(granTotal)}).`);
+                }
+            } else {
+                const metodoPago = document.getElementById('metodo-pago').value;
+                pagosPayload.push({ metodo_pago: metodoPago, monto: Math.round(granTotal) });
             }
-            if (Math.round(sumaPagos) !== Math.round(granTotal)) {
-                const diff = Math.round(granTotal) - Math.round(sumaPagos);
-                return alert(`⚠️ La suma de los pagos no coincide con el total de la venta. Falta: $${formatoCOP(Math.abs(diff)).replace('$','')}`);
-            }
-        } else {
-            const metodoPago = document.getElementById('metodo-pago').value;
-            pagosPayload.push({
-                metodo_pago: metodoPago,
-                monto: Math.round(granTotal)
-            });
         }
 
         const payload = {
@@ -630,72 +965,43 @@
                 es_obsequio: item.es_obsequio
             })),
             pagos: pagosPayload,
+            retoma: retomaActual,
             fecha_venta: document.getElementById('fecha_venta_input') ? document.getElementById('fecha_venta_input').value : null,
-            cliente: null
+            cliente: datosCliente
         };
 
-        this.disabled = true;
-        this.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Procesando...';
+        const btn = document.getElementById('btn_process_sale');
+        btn.disabled = true;
 
         try {
-            const response = await fetch('/sales/nueva', {
+            const response = await fetch('/sales/procesar_venta', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrf_token
-                },
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf_token },
                 body: JSON.stringify(payload)
             });
 
-            // Si la sesión expiró o devolvió redirección a login / 401
-            if (response.status === 401 || (response.redirected && response.url.includes('/auth/login'))) {
-                alert('⚠️ Tu sesión ha expirado por inactividad. Se abrirá la página para volver a iniciar sesión sin perder tu venta actual.');
-                window.open('/auth/login', '_blank');
-                this.disabled = false;
-                this.innerHTML = '<i class="fa-solid fa-credit-card me-2"></i> Procesar Cobro';
-                return;
-            }
-
             const data = await response.json();
-
             if (response.ok) {
-                // Verificar si el usuario tiene activo el switch de imprimir ticket
                 const autoPrint = document.getElementById('toggle_auto_print')?.checked;
-                if (autoPrint) {
-                    let reciboWindow = window.open(`/sales/recibo/${data.sale_id}`, '_blank');
-                    if (!reciboWindow) {
-                        alert('⚠️ Chrome bloqueó la pestaña emergente del recibo.');
-                    }
-                }
-                
-                alert(`✅ ¡Cobro en Caja Procesado! ID: ${data.sale_id}`);
-                
-                carrito = [];
-                pagosMixtos = [];
-                resetPagosMixtos();
-                renderCart();
+                if (autoPrint) window.open(`/sales/recibo/${data.sale_id}`, '_blank');
+                alert(`✅ ¡Cobro en Caja Procesado! Ticket #${data.sale_id}`);
                 window.location.reload();
             } else {
                 alert(`Error: ${data.error}`);
-                this.disabled = false;
-                this.innerHTML = '<i class="fa-solid fa-credit-card me-2"></i> Procesar Cobro';
+                btn.disabled = false;
             }
         } catch (e) {
             alert('Error de conexión con el servidor.');
-            this.disabled = false;
-            this.innerHTML = '<i class="fa-solid fa-credit-card me-2"></i> Procesar Cobro';
+            btn.disabled = false;
         }
-    });
+    }
 
-    // --- Métodos de Pago Seleccionables (Tarjetas interactivas) ---
     document.querySelectorAll('.payment-method-card').forEach(card => {
         card.addEventListener('click', function() {
             document.querySelectorAll('.payment-method-card').forEach(c => c.classList.remove('active'));
             this.classList.add('active');
             const method = this.getAttribute('data-method');
-            const hiddenInput = document.getElementById('metodo-pago');
-            if (hiddenInput) hiddenInput.value = method;
-
+            document.getElementById('metodo-pago').value = method;
             const cambioContainer = document.getElementById('cambio_efectivo_container');
             if (cambioContainer) {
                 cambioContainer.style.display = method === 'efectivo' ? 'block' : 'none';
@@ -704,51 +1010,25 @@
         });
     });
 
-    // --- Calculadora de Vueltas / Cambio en Efectivo ---
     function calcularCambioEfectivo() {
         const pagaConInput = document.getElementById('paga_con_input');
         const box = document.getElementById('cambio_resultado_box');
         if (!pagaConInput || !box) return;
-
         const granTotal = obtenerGranTotal();
         const pagaCon = parseFloat(pagaConInput.value) || 0;
-
-        if (!pagaConInput.value || pagaCon <= 0) {
-            box.innerHTML = `
-                <div class="small text-muted py-1" style="font-size: 0.75rem;">
-                    <i class="fa-solid fa-circle-info me-1 text-brand-pink"></i> Ingresa cuánto entrega el cliente para calcular el cambio.
-                </div>`;
-            return;
-        }
-
+        if (!pagaConInput.value || pagaCon <= 0) return;
         const vueltas = pagaCon - granTotal;
         if (vueltas >= 0) {
-            box.innerHTML = `
-                <div class="p-2 rounded-3 text-center" style="background: #ECFDF5; border: 1.5px solid #A7F3D0;">
-                    <span class="d-block small fw-bold text-success text-uppercase" style="font-size: 0.7rem;">
-                        <i class="fa-solid fa-circle-check me-1"></i> Cambio / Vueltas a Devolver
-                    </span>
-                    <span class="fs-4 fw-bolder text-success">$${formatoCOP(vueltas).replace('$','')}</span>
-                </div>`;
+            box.innerHTML = `<div class="p-2 rounded-3 text-center" style="background: #ECFDF5; border: 1.5px solid #A7F3D0;"><span class="d-block small fw-bold text-success text-uppercase" style="font-size: 0.7rem;">Cambio a Devolver</span><span class="fs-4 fw-bolder text-success">${formatoCOP(vueltas)}</span></div>`;
         } else {
-            box.innerHTML = `
-                <div class="p-2 rounded-3 text-center" style="background: #FFF1F2; border: 1.5px solid #FECDD3;">
-                    <span class="d-block small fw-bold text-danger text-uppercase" style="font-size: 0.7rem;">
-                        <i class="fa-solid fa-triangle-exclamation me-1"></i> Faltan por Cubrir
-                    </span>
-                    <span class="fs-5 fw-bolder text-danger">$${formatoCOP(Math.abs(vueltas)).replace('$','')}</span>
-                </div>`;
+            box.innerHTML = `<div class="p-2 rounded-3 text-center" style="background: #FFF1F2; border: 1.5px solid #FECDD3;"><span class="d-block small fw-bold text-danger text-uppercase" style="font-size: 0.7rem;">Faltan por Cubrir</span><span class="fs-5 fw-bolder text-danger">${formatoCOP(Math.abs(vueltas))}</span></div>`;
         }
     }
 
     function setPagaCon(monto) {
         const input = document.getElementById('paga_con_input');
         if (!input) return;
-        if (monto === 'exacto') {
-            input.value = Math.round(obtenerGranTotal());
-        } else {
-            input.value = monto;
-        }
+        input.value = monto === 'exacto' ? Math.round(obtenerGranTotal()) : monto;
         calcularCambioEfectivo();
     }
 
@@ -756,16 +1036,6 @@
         const input = document.getElementById('paga_con_input');
         if (input) input.value = '';
         calcularCambioEfectivo();
-    }
-
-    // --- Persistencia del Switch de Impresión en LocalStorage ---
-    const togglePrint = document.getElementById('toggle_auto_print');
-    if (togglePrint) {
-        const saved = localStorage.getItem('cases_auto_print');
-        togglePrint.checked = saved === null ? true : (saved === 'true');
-        togglePrint.addEventListener('change', function() {
-            localStorage.setItem('cases_auto_print', this.checked);
-        });
     }
 </script>
 
@@ -780,7 +1050,6 @@
 .payment-method-card:hover {
     border-color: #F472B6;
     background: #FFF5F7;
-    transform: translateY(-1px);
 }
 .payment-method-card.active {
     border: 2px solid #E11D48 !important;
@@ -799,12 +1068,6 @@
     color: #9F1239;
     padding: 3px 10px;
     border-radius: 20px;
-    transition: all 0.15s ease;
-}
-.btn-quick-bill:hover {
-    background: #FFE4E6;
-    border-color: #F472B6;
-    color: #881337;
 }
 </style>
 {% endblock %}

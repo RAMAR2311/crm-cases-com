@@ -10,13 +10,14 @@
         margin: 0 auto;
     }
 
-    /* Cabecera Superior de la Caja */
+    /* Cabecera Superior de la Caja (Plateado Metálico 30% + Filete Rosado 20%) */
     .pos-header-banner {
-        background: radial-gradient(120% 140% at 0% 0%, rgba(249, 200, 211, 0.35) 0%, rgba(163, 216, 222, 0.22) 55%, #FFFFFF 100%);
-        border: 1px solid rgba(249, 200, 211, 0.75);
+        background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 70%, #FFF1F5 100%);
+        border: 1.5px solid #CBD5E1;
+        border-left: 5px solid #E11D48;
         border-radius: 22px;
         padding: 1.15rem 1.5rem;
-        box-shadow: 0 10px 28px -6px rgba(249, 200, 211, 0.28), 0 2px 6px rgba(0, 0, 0, 0.02);
+        box-shadow: 0 10px 26px -6px rgba(15, 23, 42, 0.06), 0 2px 6px rgba(0, 0, 0, 0.02);
         position: relative;
         overflow: hidden;
     }
@@ -38,7 +39,7 @@
 
     .pos-live-pill {
         background: #FFFFFF;
-        border: 1px solid #E2E8F0;
+        border: 1px solid #CBD5E1;
         border-radius: 50px;
         padding: 0.4rem 0.95rem;
         font-size: 0.78rem;
@@ -59,13 +60,13 @@
         box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
     }
 
-    /* Panel de Escaneo / Buscador */
+    /* Panel de Escaneo / Buscador (Estructura Plateada + Focus Rosado) */
     .pos-scanner-card {
         background: #FFFFFF;
-        border: 1px solid rgba(249, 200, 211, 0.75);
+        border: 1.5px solid #CBD5E1;
         border-radius: 22px;
         padding: 1.35rem 1.5rem;
-        box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.04), 0 2px 6px rgba(249, 200, 211, 0.15);
+        box-shadow: 0 10px 26px -8px rgba(15, 23, 42, 0.06);
         transition: all 0.25s ease;
     }
 
@@ -137,9 +138,9 @@
     }
 
     .btn-manual-partner {
-        background: #F0F9FA;
-        color: #0E6B7A;
-        border: 1.5px solid #A3D8DE;
+        background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+        color: #1E293B;
+        border: 1.5px solid #CBD5E1;
         border-radius: 16px;
         padding: 0.65rem 1.15rem;
         font-weight: 700;
@@ -149,28 +150,28 @@
         gap: 0.5rem;
         transition: all 0.2s ease;
         white-space: nowrap;
-        box-shadow: 0 4px 10px rgba(163, 216, 222, 0.2);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.05);
     }
 
     .btn-manual-partner:hover {
-        background: #A3D8DE;
-        color: #083B44;
+        background: linear-gradient(135deg, #E2E8F0 0%, #CBD5E1 100%);
+        color: #0F172A;
         transform: translateY(-1px);
-        box-shadow: 0 6px 14px rgba(163, 216, 222, 0.4);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
     }
 
     /* Tarjeta del Carrito de Compras */
     .pos-cart-card {
         background: #FFFFFF;
-        border: 1px solid var(--brand-border);
+        border: 1.5px solid #CBD5E1;
         border-radius: 22px;
-        box-shadow: 0 12px 32px -8px rgba(0, 0, 0, 0.04);
+        box-shadow: 0 12px 32px -8px rgba(15, 23, 42, 0.05);
         overflow: hidden;
     }
 
     .pos-cart-header {
-        background: linear-gradient(180deg, #FFFFFF 0%, #FAFBFD 100%);
-        border-bottom: 1px solid #EEF2F6;
+        background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+        border-bottom: 1px solid #CBD5E1;
         padding: 1rem 1.5rem;
         display: flex;
         align-items: center;
@@ -178,14 +179,14 @@
     }
 
     .pos-table thead th {
-        background: #F8FAFC;
-        color: #64748B;
+        background: #F1F5F9;
+        color: #334155;
         font-size: 0.72rem;
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.7px;
         padding: 0.9rem 1.25rem;
-        border-bottom: 2px solid #FCE7F3;
+        border-bottom: 2px solid #CBD5E1;
     }
 
     .pos-table tbody tr {
@@ -193,7 +194,7 @@
     }
 
     .pos-table tbody tr:hover {
-        background-color: #FFF9FB !important;
+        background-color: #F8FAFC !important;
     }
 
     .pos-table tbody td {
@@ -273,36 +274,24 @@
         margin: 0;
     }
 
-    /* Panel Lateral de Balance y Cobro */
+    /* Panel Lateral de Balance y Cobro (Estructura Plateada + Hero Rosado 20%) */
     .pos-checkout-card {
         background: #FFFFFF;
-        border: 1px solid rgba(249, 200, 211, 0.8);
+        border: 1.5px solid #CBD5E1;
         border-radius: 24px;
         padding: 1.5rem;
-        box-shadow: 0 16px 38px -10px rgba(225, 29, 72, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
+        box-shadow: 0 16px 38px -10px rgba(15, 23, 42, 0.08), 0 4px 12px rgba(0, 0, 0, 0.03);
     }
 
-    /* Caja Principal del Total a Cobrar */
+    /* Caja Principal del Total a Cobrar (20% Acento Rosado) */
     .total-hero-box {
-        background: radial-gradient(130% 130% at 100% 0%, #FFE4E6 0%, #FFF1F5 55%, #FFF8FA 100%);
+        background: radial-gradient(130% 130% at 100% 0%, #FFE4E6 0%, #FFF1F5 55%, #FFFFFF 100%);
         border: 1.5px solid #FDA4AF;
         border-radius: 20px;
         padding: 1.25rem 1.25rem;
         position: relative;
         overflow: hidden;
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 20px -6px rgba(225, 29, 72, 0.12);
-    }
-
-    .total-hero-box::after {
-        content: '';
-        position: absolute;
-        right: -25px;
-        bottom: -25px;
-        width: 95px;
-        height: 95px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(244, 63, 94, 0.12) 0%, transparent 70%);
-        pointer-events: none;
     }
 
     .total-hero-label {
@@ -322,10 +311,10 @@
         line-height: 1.05;
     }
 
-    /* Tarjetas de Método de Pago */
+    /* Tarjetas de Método de Pago (Plateadas en reposo, Rosadas activas) */
     .payment-method-card {
-        background: #FFFFFF;
-        border: 1.5px solid #E2E8F0;
+        background: #F8FAFC;
+        border: 1.5px solid #CBD5E1;
         border-radius: 15px !important;
         padding: 0.65rem 0.75rem !important;
         transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -335,10 +324,9 @@
     }
 
     .payment-method-card:hover {
-        border-color: #F472B6;
-        background: #FFF9FB;
+        border-color: #94A3B8;
+        background: #F1F5F9;
         transform: translateY(-2px);
-        box-shadow: 0 6px 14px rgba(244, 114, 182, 0.12);
     }
 
     .payment-method-card.active {
@@ -363,10 +351,10 @@
         font-weight: 800 !important;
     }
 
-    /* Calculadora de Vueltas */
+    /* Calculadora de Vueltas en Plateado Limpio (30%) con Botones de Billete Rosado Acento */
     .vueltas-box {
-        background: linear-gradient(180deg, #FFF8FA 0%, #FFF1F5 100%);
-        border: 1.5px dashed #F472B6;
+        background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+        border: 1.5px dashed #94A3B8;
         border-radius: 18px;
         padding: 0.95rem 1rem;
     }
@@ -458,6 +446,12 @@
             <span class="pos-live-pill">
                 <span class="pulse-dot"></span> Terminal Activa
             </span>
+            <button type="button" class="btn btn-sm btn-outline-warning text-dark bg-white rounded-pill px-3 py-1.5 fw-bold shadow-xs" style="font-size: 0.78rem;" data-bs-toggle="modal" data-bs-target="#modalRetomaCaja">
+                <i class="fa-solid fa-rotate-left me-1"></i> Recibir Retoma
+            </button>
+            <a href="{{ url_for('sales_bp.aprobaciones_precio') }}" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1.5 fw-bold text-dark shadow-xs" style="font-size: 0.78rem;">
+                <i class="fa-solid fa-shield-halved text-brand-pink me-1"></i> Autorizaciones Precio
+            </a>
             <a href="{{ url_for('sales_bp.ventas_hoy') }}" class="btn btn-sm btn-white bg-white border rounded-pill px-3 py-1.5 fw-bold text-dark shadow-xs" style="font-size: 0.78rem;">
                 <i class="fa-solid fa-receipt text-brand-pink me-1"></i> Ventas de Hoy
             </a>
@@ -553,6 +547,19 @@
                     <div class="d-flex align-items-center gap-1 bg-light border rounded-pill px-2.5 py-1" style="padding: 3px 11px;">
                         <span class="text-muted fw-bold" style="font-size: 0.72rem;">Ítems:</span>
                         <span class="fw-extrabold text-brand-black" id="total_items" style="font-size: 0.88rem;">0</span>
+                    </div>
+                </div>
+
+                <!-- Banner de Retoma Aplicada -->
+                <div id="retoma_badge_box" class="alert alert-warning py-2 px-3 rounded-3 mb-2 d-none">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="small">
+                            <strong><i class="fa-solid fa-rotate-left me-1"></i>Retoma:</strong>
+                            <span id="retoma_summary_text"></span>
+                        </div>
+                        <button type="button" class="btn btn-sm btn-link text-danger p-0" onclick="quitarRetomaCaja()" title="Quitar Retoma">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -732,8 +739,19 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label fw-bold small text-uppercase text-muted">Nombre del Producto</label>
-                    <input type="text" id="manual_nombre" class="form-control bg-light border-0 rounded-3 py-2" placeholder="Ej: Funda iPhone 15 Pro Max - Local Alex" required>
+                    <label class="form-label fw-bold small text-uppercase text-muted">Tipo Externo</label>
+                    <select id="manual_subtipo" class="form-select bg-light border-0 rounded-3">
+                        <option value="accesorio">🎧 Accesorio Externo (EXTACC-...)</option>
+                        <option value="celular">📱 Celular Externo (EXT-...)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-uppercase text-muted">Proveedor / Local Vecino <span class="text-danger">*</span></label>
+                    <input type="text" id="manual_proveedor" class="form-control bg-light border-0 rounded-3 py-2" placeholder="Ej: Local Vecino Alex" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold small text-uppercase text-muted">Nombre del Producto <span class="text-danger">*</span></label>
+                    <input type="text" id="manual_nombre" class="form-control bg-light border-0 rounded-3 py-2" placeholder="Ej: Funda iPhone 15 Pro Max" required>
                 </div>
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
@@ -780,17 +798,29 @@
                 <div class="alert alert-warning py-2 mb-4 border-0 small rounded-3">
                     <i class="fa-solid fa-triangle-exclamation me-1"></i> <strong>Venta de Celular Detectada:</strong> Es obligatorio registrar los datos del cliente para temas de garantía y soporte técnico.
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Nombre Completo</label>
+                <div class="mb-2">
+                    <label class="form-label fw-bold small">Nombre Completo <span class="text-danger">*</span></label>
                     <input type="text" id="cliente_nombre" class="form-control bg-light border-0 py-2" placeholder="Ej: Juan Pérez" required>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Cédula / Documento</label>
-                    <input type="text" id="cliente_documento" class="form-control bg-light border-0 py-2" placeholder="Número de identificación" required>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Cédula / Documento <span class="text-danger">*</span></label>
+                        <input type="text" id="cliente_documento" class="form-control bg-light border-0 py-2" placeholder="Identificación" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Teléfono / WhatsApp <span class="text-danger">*</span></label>
+                        <input type="text" id="cliente_telefono" class="form-control bg-light border-0 py-2" placeholder="Ej: 3001234567" required>
+                    </div>
                 </div>
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Teléfono / WhatsApp</label>
-                    <input type="text" id="cliente_telefono" class="form-control bg-light border-0 py-2" placeholder="Ej: 3001234567" required>
+                <div class="row g-2 mb-0">
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Dirección (MinTIC/SIC)</label>
+                        <input type="text" id="cliente_direccion" class="form-control bg-light border-0 py-2" placeholder="Dirección">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Correo Electrónico</label>
+                        <input type="email" id="cliente_email" class="form-control bg-light border-0 py-2" placeholder="cliente@correo.com">
+                    </div>
                 </div>
             </div>
             <div class="modal-footer border-0 bg-light px-4 py-3">
@@ -803,9 +833,62 @@
     </div>
 </div>
 
+<!-- Modal Retoma en Caja -->
+<div class="modal fade" id="modalRetomaCaja" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold text-brand-black"><i class="fa-solid fa-rotate-left text-warning me-2"></i>Recibir Celular en Retoma</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="row g-2 mb-2">
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">IMEI del Equipo Recibido <span class="text-danger">*</span></label>
+                        <input type="text" id="ret_imei" class="form-control font-monospace fw-bold" placeholder="15 dígitos">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Marca <span class="text-danger">*</span></label>
+                        <input type="text" id="ret_marca" class="form-control" placeholder="Apple">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold small">Modelo <span class="text-danger">*</span></label>
+                        <input type="text" id="ret_modelo" class="form-control" placeholder="iPhone 13">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small">Memoria</label>
+                        <input type="text" id="ret_memoria" class="form-control" placeholder="128GB">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small">Color</label>
+                        <input type="text" id="ret_color" class="form-control" placeholder="Azul">
+                    </div>
+                    <div class="col-4">
+                        <label class="form-label fw-bold small">% Batería</label>
+                        <input type="text" id="ret_bateria" class="form-control" placeholder="88%">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small text-success">Valor Recibido a Descontar ($) <span class="text-danger">*</span></label>
+                        <input type="number" id="ret_valor" class="form-control fw-bold fs-5 text-success" min="1" placeholder="0">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-bold small">Observaciones</label>
+                        <input type="text" id="ret_obs" class="form-control" placeholder="Estado del equipo recibido">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer border-0 bg-light">
+                <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning text-dark rounded-pill px-4 fw-bold" onclick="aplicarRetomaCaja()">Aplicar Retoma</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Motor Javascript Vanilla para procesar Cajas Dinámicas sin recargar -->
 <script>
     let carrito = [];
+    let retomaActual = null;
     let pagosMixtos = []; // Array de {metodo_pago, monto}
     const csrf_token = "{{ csrf_token() }}";
 
@@ -875,43 +958,101 @@
         resetPagosMixtos();
     });
 
-    // Botón para agregar producto manual (prestado de otro local)
-    document.getElementById('btn_agregar_manual').addEventListener('click', function() {
+    // Botón para agregar producto externo en caliente (/externos/api/nuevo_desde_caja)
+    document.getElementById('btn_agregar_manual').addEventListener('click', async function() {
+        const subtipo = document.getElementById('manual_subtipo') ? document.getElementById('manual_subtipo').value : 'accesorio';
+        const proveedor = document.getElementById('manual_proveedor') ? document.getElementById('manual_proveedor').value.trim() : 'Local Externo';
         const nombre = document.getElementById('manual_nombre').value.trim();
         const costo = parseFloat(document.getElementById('manual_costo').value) || 0;
         const precioVenta = parseFloat(document.getElementById('manual_precio_venta').value) || 0;
         const cantidad = parseInt(document.getElementById('manual_cantidad').value) || 1;
 
+        if (!proveedor) return alert('Debes ingresar el proveedor externo.');
         if (!nombre) return alert('Debes ingresar un nombre para el producto.');
         if (precioVenta <= 0) return alert('El precio de venta debe ser mayor a $0.');
         if (costo < 0) return alert('El costo no puede ser negativo.');
 
-        carrito.push({
-            id: null,
-            sku: 'MANUAL',
-            nombre: nombre,
-            cantidad: cantidad,
-            precio_final: precioVenta,
-            precio_limite: 0,
-            precio_minimo: costo,
-            precio_sugerido: precioVenta,
-            cantidad_stock: 9999,
-            variantes: [],
-            variant_id: null,
-            es_manual: true,
-            precio_costo: costo
-        });
-
-        renderizarCarrito();
-
-        // Cerrar modal y limpiar campos
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalProductoManual'));
-        modal.hide();
-        document.getElementById('manual_nombre').value = '';
-        document.getElementById('manual_costo').value = '';
-        document.getElementById('manual_precio_venta').value = '';
-        document.getElementById('manual_cantidad').value = '1';
+        try {
+            const resp = await fetch('/externos/api/nuevo_desde_caja', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf_token },
+                body: JSON.stringify({
+                    subtipo: subtipo,
+                    proveedor: proveedor,
+                    nombre: nombre,
+                    precio_costo: costo,
+                    precio_venta: precioVenta,
+                    cantidad: cantidad
+                })
+            });
+            const data = await resp.json();
+            if (!resp.ok) return alert(data.error || 'Error al registrar producto externo.');
+            const p = data.product;
+            carrito.push({
+                id: p.id,
+                sku: p.sku,
+                nombre: p.nombre,
+                tipo_inventario: p.tipo_inventario,
+                subtipo_externo: p.subtipo_externo,
+                cantidad: p.cantidad,
+                precio_final: p.precio_sugerido,
+                precio_limite: p.precio_minimo,
+                precio_minimo: p.precio_minimo,
+                precio_sugerido: p.precio_sugerido,
+                cantidad_stock: p.cantidad_stock,
+                variantes: [],
+                variant_id: null,
+                es_manual: false,
+                es_obsequio: false
+            });
+            renderizarCarrito();
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalProductoManual'));
+            modal.hide();
+            document.getElementById('manual_nombre').value = '';
+            document.getElementById('manual_costo').value = '';
+            document.getElementById('manual_precio_venta').value = '';
+            document.getElementById('manual_cantidad').value = '1';
+        } catch (err) {
+            alert('Error de conexión al crear producto externo.');
+        }
     });
+
+    function aplicarRetomaCaja() {
+        const imei = document.getElementById('ret_imei').value.trim();
+        const marca = document.getElementById('ret_marca').value.trim();
+        const modelo = document.getElementById('ret_modelo').value.trim();
+        const memoria = document.getElementById('ret_memoria').value.trim();
+        const color = document.getElementById('ret_color').value.trim();
+        const bateria = document.getElementById('ret_bateria').value.trim();
+        const valor = parseFloat(document.getElementById('ret_valor').value) || 0;
+        const obs = document.getElementById('ret_obs').value.trim();
+
+        if (!imei || !marca || !modelo || valor <= 0) {
+            return alert('Completa IMEI, Marca, Modelo y Valor Recibido mayor a $0 para aplicar la retoma.');
+        }
+
+        retomaActual = {
+            imei: imei,
+            marca: marca,
+            modelo_celular: modelo,
+            memoria: memoria,
+            color: color,
+            bateria: bateria,
+            valor_recibido: valor,
+            observaciones: obs
+        };
+
+        document.getElementById('retoma_summary_text').innerText = `${marca} ${modelo} (${imei}) - Descuenta ${formatoCOP(valor)}`;
+        document.getElementById('retoma_badge_box').classList.remove('d-none');
+        bootstrap.Modal.getInstance(document.getElementById('modalRetomaCaja')).hide();
+        renderizarCarrito();
+    }
+
+    function quitarRetomaCaja() {
+        retomaActual = null;
+        document.getElementById('retoma_badge_box').classList.add('d-none');
+        renderizarCarrito();
+    }
 
     // Toggle entre Pago Único y Pago Mixto
     document.getElementById('toggle_pago_mixto').addEventListener('change', function() {
@@ -968,7 +1109,9 @@
     }
 
     function obtenerGranTotal() {
-        return carrito.reduce((sum, item) => sum + (item.cantidad * item.precio_final), 0);
+        const sub = carrito.reduce((sum, item) => sum + (item.cantidad * item.precio_final), 0);
+        const descRet = retomaActual ? (retomaActual.valor_recibido || 0) : 0;
+        return Math.max(0, sub - descRet);
     }
     
     const formatoCOP = (num) => "$" + Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
@@ -1166,11 +1309,24 @@
 
         if (campo === 'precio_final') {
             const nuevoPrecio = parseFloat(valor);
-            
-            if (!item.es_obsequio && nuevoPrecio < item.precio_limite) {
-                alert(`¡OPERACIÓN BLOQUEADA! El precio pactado ($${nuevoPrecio}) es INFERIOR al Mínimo Autorizado para tu nivel de usuario ($${item.precio_limite}). No se puede vender a este precio para evitar pérdidas.`);
-                renderizarCarrito();
-                return;
+            if (!item.es_obsequio && nuevoPrecio < item.precio_minimo) {
+                const deseaAutorizar = confirm(
+                    `⚠️ El precio pactado ($${nuevoPrecio}) es INFERIOR al Precio Mínimo ($${item.precio_minimo}).\n\n¿Deseas generar una Autorización de Precio Especial (PriceApproval) para este producto?`
+                );
+                if (deseaAutorizar && item.id) {
+                    const motivo = prompt("Indica el motivo del descuento:", "Autorizado en Caja") || "Autorizado en Caja";
+                    fetch('/sales/api/solicitar_precio', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf_token },
+                        body: JSON.stringify({
+                            product_id: item.id,
+                            variant_id: item.variant_id,
+                            precio_solicitado: nuevoPrecio,
+                            motivo: motivo,
+                            auto_aprobar: true
+                        })
+                    }).then(r => r.json()).then(d => alert(d.mensaje || d.error));
+                }
             }
             item.precio_final = nuevoPrecio;
         }
@@ -1339,7 +1495,7 @@
             return alert('Agregue un número de serie válido. El carrito está vacío.');
         }
 
-        const tieneCelular = carrito.some(item => item.tipo_inventario === 'celulares');
+        const tieneCelular = carrito.some(item => item.tipo_inventario === 'celulares' || (item.tipo_inventario === 'externos' && item.subtipo_externo === 'celular'));
         if (tieneCelular) {
             const modalCliente = new bootstrap.Modal(document.getElementById('modalClienteCelular'));
             modalCliente.show();
@@ -1352,15 +1508,19 @@
         const nombre = document.getElementById('cliente_nombre').value.trim();
         const doc = document.getElementById('cliente_documento').value.trim();
         const tel = document.getElementById('cliente_telefono').value.trim();
+        const dir = document.getElementById('cliente_direccion') ? document.getElementById('cliente_direccion').value.trim() : '';
+        const email = document.getElementById('cliente_email') ? document.getElementById('cliente_email').value.trim() : '';
 
         if (!nombre || !doc || !tel) {
-            return alert('Por favor completa todos los datos del cliente.');
+            return alert('Por favor completa Nombre, Cédula y Teléfono del cliente.');
         }
 
         const datosCliente = {
             nombre: nombre,
             documento: doc,
-            telefono: tel
+            telefono: tel,
+            direccion: dir,
+            email: email
         };
 
         const modalEl = document.getElementById('modalClienteCelular');
@@ -1420,6 +1580,7 @@
                 return base;
             }),
             pagos: pagosPayload,
+            retoma: retomaActual,
             fecha_venta: document.getElementById('fecha_venta_input') ? document.getElementById('fecha_venta_input').value : null,
             cliente: datosCliente
         };

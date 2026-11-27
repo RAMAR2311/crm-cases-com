@@ -1,0 +1,281 @@
+{% extends "base.html" %}
+
+{% block title %}Celulares Externos (Consignación) - cases.com{% endblock %}
+
+{% block content %}
+<!-- Selector Rápido Visual: Cel Ext. vs Acc Ext. -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="btn-group shadow-xs rounded-pill p-1 bg-white border" role="group">
+            <a href="{{ url_for('externos_bp.index') }}" class="btn btn-sm rounded-pill px-4 py-2 fw-bold"
+                style="background: linear-gradient(135deg, #F9C8D3 0%, #F497B6 100%); color: #0F172A;">
+                <i class="fa-solid fa-mobile-screen-button me-1"></i> Cel Ext.
+            </a>
+            <a href="{{ url_for('externos_bp.accesorios') }}"
+                class="btn btn-sm btn-light rounded-pill px-4 py-2 fw-bold text-muted">
+                <i class="fa-solid fa-headphones me-1"></i> Acc Ext.
+            </a>
+        </div>
+        <div>
+            <h2 class="fw-bolder text-brand-black m-0">Cel Ext. <span class="fs-5 text-muted fw-semibold">(Celulares
+                    Externos)</span></h2>
+            <small class="text-muted">Equipos de proveedores con SKU <code>EXT-...</code> separados del inventario
+                propio.</small>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('externos_bp.cuentas_por_pagar') }}"
+            class="btn btn-outline-danger rounded-pill px-3 fw-bold shadow-xs">
+            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Cuentas por Pagar (${{ (deuda_pendiente_total or 0)|cop
+            }})
+        </a>
+        <button type="button" class="btn btn-pink rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal"
+            data-bs-target="#modalNuevoCelularExterno">
+            <i class="fa-solid fa-plus me-1"></i> Nuevo Cel Ext.
+        </button>
+    </div>
+</div>
+
+<!-- KPIs Informativos (Separados del Patrimonio Propio) -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-0 shadow-sm"
+            style="background: radial-gradient(120% 120% at 100% 0%, rgba(163, 216, 222, 0.35) 0%, #FFFFFF 70%);">
+            <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem;">Equipos Externos
+                Disponibles</span>
+            <h3 class="fw-bolder text-brand-black mt-1 mb-0">{{ disponibles_count or 0 }} <span
+                    class="fs-6 text-muted">en consignación</span></h3>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-0 shadow-sm"
+            style="background: radial-gradient(120% 120% at 100% 0%, rgba(254, 243, 199, 0.5) 0%, #FFFFFF 70%);">
+            <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem;">Costo a Proveedor
+                (Excluido de Patrimonio)</span>
+            <h3 class="fw-bolder text-dark mt-1 mb-0">${{ (costo_consignacion or 0)|cop }}</h3>
+        </div>
+    </div>
+    <div class="col-12 col-md-4">
+        <div class="card card-custom p-3 border-0 shadow-sm"
+            style="background: radial-gradient(120% 120% at 100% 0%, rgba(254, 226, 226, 0.45) 0%, #FFFFFF 70%);">
+            <span class="text-uppercase fw-bold text-muted small" style="font-size: 0.72rem;">Deuda Pendiente por Ventas
+                Externas</span>
+            <h3 class="fw-bolder text-danger mt-1 mb-0">${{ (deuda_pendiente_total or 0)|cop }}</h3>
+        </div>
+    </div>
+</div>
+
+<!-- Buscador y Acción Masiva -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm">
+    <div class="row g-2 align-items-center justify-content-between">
+        <div class="col-md-7">
+            <form method="GET" action="{{ url_for('externos_bp.index') }}" class="d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i
+                            class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="q" value="{{ q or '' }}" class="form-control bg-light border-0"
+                        placeholder="Buscar por Proveedor, IMEI, Marca, Modelo o SKU...">
+                </div>
+                <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Buscar</button>
+            </form>
+        </div>
+        {% if current_user.rol == 'admin' %}
+        <div class="col-md-5 text-md-end">
+            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-xs"
+                onclick="enviarSeleccionadosInventarioPropio()">
+                <i class="fa-solid fa-boxes-packing me-1"></i> Enviar Seleccionados a Inventario Propio (-INV)
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<form id="formNacionalizarMasivo" method="POST" action="{{ url_for('externos_bp.nacionalizar_masivo') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="origen" value="celulares">
+
+    <div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        {% if current_user.rol == 'admin' %}
+                        <th class="ps-4" width="45">
+                            <input type="checkbox" class="form-check-input" id="checkAllExternos"
+                                onchange="toggleChecksExternos(this)">
+                        </th>
+                        {% endif %}
+                        <th>SKU EXTERNO</th>
+                        <th>EQUIPO / IMEI</th>
+                        <th>PROVEEDOR</th>
+                        <th class="text-center">ESTADO</th>
+                        <th class="text-end">COSTO PROV.</th>
+                        <th class="text-end">SUGERIDO</th>
+                        <th class="text-center pe-4">ACCIONES</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in celulares_externos %}
+                    <tr>
+                        {% if current_user.rol == 'admin' %}
+                        <td class="ps-4">
+                            {% if c.cantidad_stock > 0 %}
+                            <input type="checkbox" class="form-check-input check-item-externo" name="product_ids[]"
+                                value="{{ c.id }}">
+                            {% endif %}
+                        </td>
+                        {% endif %}
+                        <td>
+                            <span class="badge badge-soft-blue rounded-pill px-2.5 py-1 font-monospace">{{ c.sku
+                                }}</span>
+                        </td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ c.nombre }}</div>
+                            {% if c.imei %}<small class="font-monospace text-muted d-block">IMEI: {{ c.imei }}</small>{%
+                            endif %}
+                            <span class="badge bg-light text-secondary border" style="font-size: 0.65rem;">{{
+                                c.estado_celular or 'Nuevo' }}</span>
+                        </td>
+                        <td>
+                            <span class="fw-bold text-primary"><i class="fa-solid fa-building-user me-1"></i>{{
+                                c.proveedor }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if c.cantidad_stock > 0 %}
+                            <span class="badge badge-soft-success rounded-pill px-3 py-1">En Consignación</span>
+                            {% else %}
+                            <span class="badge badge-soft-danger rounded-pill px-3 py-1">Vendido</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end font-monospace text-muted fw-bold">${{ (c.precio_costo or 0)|cop }}</td>
+                        <td class="text-end font-monospace text-success fw-bolder">${{ (c.precio_sugerido or 0)|cop }}
+                        </td>
+                        <td class="text-center pe-4">
+                            {% if current_user.rol == 'admin' and c.cantidad_stock > 0 %}
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold me-1"
+                                onclick="nacionalizarIndividual('{{ url_for('externos_bp.nacionalizar_individual', id=c.id) }}')"
+                                title="Pasa a tipo_inventario='celulares' y agrega -INV al SKU">
+                                <i class="fa-solid fa-box-archive me-1"></i> Pasar a Propio
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-handshake fs-1 mb-3 text-brand-pink d-block"></i>
+                            <h6 class="fw-bold text-dark">No hay celulares externos registrados</h6>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+<form id="formNacionalizarSingle" method="POST" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+
+<!-- Modal Nuevo Celular Externo -->
+<div class="modal fade" id="modalNuevoCelularExterno" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-handshake text-info me-2"></i>Registrar Celular
+                    Externo (Consignación)</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('externos_bp.index') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">Proveedor Externo (Obligatorio) <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" name="proveedor" class="form-control fw-bold"
+                                placeholder="Ej: Local Vecino Alex / Distribuidora" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold small">IMEI del Equipo</label>
+                            <input type="text" name="imei" class="form-control font-monospace" placeholder="15 dígitos">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Marca <span class="text-danger">*</span></label>
+                            <input type="text" name="marca" class="form-control" placeholder="Ej: Apple" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Modelo <span class="text-danger">*</span></label>
+                            <input type="text" name="modelo_celular" class="form-control"
+                                placeholder="Ej: iPhone 14 Pro" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Estado</label>
+                            <select name="estado_celular" class="form-select">
+                                <option value="Nuevo">Nuevo</option>
+                                <option value="Usado">Usado</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Memoria</label>
+                            <input type="text" name="memoria" class="form-control" placeholder="128GB">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Color</label>
+                            <input type="text" name="color" class="form-control" placeholder="Morado">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">% Batería</label>
+                            <input type="text" name="bateria" class="form-control" placeholder="100%">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-danger">Costo a Pagar al Proveedor ($) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" step="1" min="0" name="precio_costo" class="form-control fw-bold"
+                                required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small">Precio Mínimo Venta ($) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" step="1" min="0" name="precio_minimo" class="form-control fw-bold"
+                                required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-success">Precio Sugerido Venta ($) <span
+                                    class="text-danger">*</span></label>
+                            <input type="number" step="1" min="0" name="precio_sugerido" class="form-control fw-bold"
+                                required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-blue rounded-pill px-4 fw-bold">Registrar Externo</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleChecksExternos(master) {
+        document.querySelectorAll('.check-item-externo').forEach(cb => cb.checked = master.checked);
+    }
+    function enviarSeleccionadosInventarioPropio() {
+        const checked = document.querySelectorAll('.check-item-externo:checked');
+        if (checked.length === 0) return alert('Selecciona al menos un celular externo de la lista.');
+        if (confirm(`¿Transferir ${checked.length} celular(es) al Inventario Propio con sufijo -INV?`)) {
+            document.getElementById('formNacionalizarMasivo').submit();
+        }
+    }
+    function nacionalizarIndividual(url) {
+        if (confirm('¿Pasar este celular externo al Inventario Propio (agregando -INV al SKU)?')) {
+            const f = document.getElementById('formNacionalizarSingle');
+            f.action = url;
+            f.submit();
+        }
+    }
+</script>
+{% endblock %}

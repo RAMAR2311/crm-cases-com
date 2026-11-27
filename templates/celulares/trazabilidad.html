@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Trazabilidad IMEI - cases.com{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div>
+        <h2 class="fw-bolder text-brand-black m-0">
+            <i class="fa-solid fa-timeline text-brand-blue me-2"></i>Trazabilidad Completa por IMEI
+        </h2>
+        <small class="text-muted">Reconstrucción cronológica de entradas, proveedores, maneos, aprobaciones de precio, ventas, clientes y retomas</small>
+    </div>
+    <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-outline-dark rounded-pill px-4 fw-bold">
+        <i class="fa-solid fa-arrow-left me-1"></i> Inventario Celulares
+    </a>
+</div>
+
+<!-- Buscador de IMEI -->
+<div class="card card-custom p-4 mb-4 border-0 shadow-sm rounded-4">
+    <form method="GET" action="{{ url_for('celulares_bp.trazabilidad') }}" class="row g-2 align-items-center">
+        <div class="col-md-9">
+            <div class="input-group input-group-lg border rounded-pill overflow-hidden bg-light">
+                <span class="input-group-text bg-transparent border-0 ps-4"><i class="fa-solid fa-barcode text-brand-pink"></i></span>
+                <input type="text" name="imei" value="{{ imei_query or '' }}" class="form-control bg-transparent border-0 font-monospace fw-bold shadow-none" placeholder="Ingresa o escanea el IMEI a auditar (ej: 358901234567890)..." autofocus required>
+            </div>
+        </div>
+        <div class="col-md-3 d-grid">
+            <button type="submit" class="btn btn-lg btn-blue rounded-pill fw-bold shadow-sm">
+                <i class="fa-solid fa-magnifying-glass me-1"></i> Rastrear IMEI
+            </button>
+        </div>
+    </form>
+</div>
+
+{% if imei_query %}
+    {% if eventos %}
+    <div class="card card-custom p-4 border-0 shadow-sm rounded-4">
+        <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+            <div>
+                <h5 class="fw-bold text-brand-black mb-0">
+                    Línea de Tiempo para IMEI: <span class="font-monospace text-primary">{{ imei_query }}</span>
+                </h5>
+                <small class="text-muted">{{ eventos|length }} eventos registrados en el historial del equipo</small>
+            </div>
+            <span class="badge badge-soft-blue rounded-pill px-3 py-1.5 fw-bold">
+                {{ equipos_encontrados|length }} ciclo(s) en inventario
+            </span>
+        </div>
+
+        <div class="position-relative ps-4" style="border-left: 3px solid #E2E8F0; margin-left: 14px;">
+            {% for ev in eventos %}
+            <div class="mb-4 position-relative">
+                <span class="position-absolute top-0 translate-middle-x rounded-circle d-flex align-items-center justify-content-center shadow-xs bg-{{ ev.color }} text-white"
+                      style="left: -1.6rem; width: 32px; height: 32px; font-size: 0.8rem;">
+                    <i class="fa-solid {{ ev.icono }}"></i>
+                </span>
+                <div class="p-3 rounded-4 border bg-light bg-opacity-50 ms-2">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-1">
+                        <span class="badge bg-{{ ev.color }} bg-opacity-10 text-{{ ev.color }} border border-{{ ev.color }} rounded-pill px-2.5 py-0.5 fw-bold" style="font-size: 0.7rem;">
+                            {{ ev.tipo }}
+                        </span>
+                        <small class="text-muted fw-bold font-monospace">
+                            <i class="fa-regular fa-clock me-1"></i>{{ ev.fecha.strftime('%d/%m/%Y %I:%M %p') if ev.fecha else 'N/A' }}
+                        </small>
+                    </div>
+                    <h6 class="fw-bold text-brand-black mb-1">{{ ev.titulo }}</h6>
+                    <p class="text-secondary small mb-0">{{ ev.detalle }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card card-custom p-5 text-center border-0 shadow-sm rounded-4">
+        <i class="fa-solid fa-magnifying-glass-minus fs-1 text-muted mb-3"></i>
+        <h5 class="fw-bold text-dark">No se encontraron registros para el IMEI "{{ imei_query }}"</h5>
+        <p class="text-muted small mb-0">Verifica los dígitos ingresados. El buscador consulta inventario activo, ciclos archivados (`-OLD-X`), ventas y retomas en cuarentena.</p>
+    </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

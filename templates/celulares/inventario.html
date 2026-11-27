@@ -1,36 +1,139 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
     <div>
         <h2 class="fw-bolder text-brand-black m-0">
-            <i class="fa-solid fa-mobile-screen-button text-brand-blue me-2"></i>Inventario de Celulares por Modelo
+            <i class="fa-solid fa-mobile-screen-button text-brand-blue me-2"></i>Inventario de Celulares (Por IMEI)
         </h2>
-        <small class="text-muted">Control centralizado de terminales móviles, series e IMEIs registrados</small>
+        <small class="text-muted">Control unitario por IMEI, costos, estado físico, proveedor y préstamos en Maneo</small>
     </div>
-    <a href="{{ url_for('celulares_bp.nuevo_celular') }}" class="btn btn-blue rounded-pill px-4 fw-bold shadow-sm">
-        <i class="fa-solid fa-plus me-1"></i> Ingresar Nuevo Modelo
-    </a>
+    <div class="d-flex flex-wrap align-items-center gap-2">
+        <a href="{{ url_for('retomas_bp.cuarentena') }}" class="btn btn-outline-warning text-dark rounded-pill px-3 fw-bold shadow-xs">
+            <i class="fa-solid fa-rotate-left me-1"></i> Retomas / Cuarentena
+        </a>
+        <a href="{{ url_for('celulares_bp.trazabilidad') }}" class="btn btn-outline-dark rounded-pill px-3 fw-bold shadow-xs">
+            <i class="fa-solid fa-timeline me-1 text-brand-blue"></i> Trazabilidad IMEI
+        </a>
+        {% if current_user.rol == 'admin' %}
+        <button type="button" class="btn btn-pink rounded-pill px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalImportarExcelCelulares">
+            <i class="fa-solid fa-file-excel me-1"></i> Carga Masiva Excel
+        </button>
+        <a href="{{ url_for('celulares_bp.nuevo_celular') }}" class="btn btn-blue rounded-pill px-4 fw-bold shadow-sm">
+            <i class="fa-solid fa-plus me-1"></i> Registrar Celular
+        </a>
+        {% endif %}
+    </div>
 </div>
 
+<!-- Tarjetas KPI en Tiempo Real con Relieve 3D -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-blue p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Stock Activo Disponible</span>
+                <span class="kpi-icon-elevated kpi-icon-blue">
+                    <i class="fa-solid fa-mobile-screen-button"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value text-brand-black">{{ stock_activo or 0 }} <span class="fs-6 text-muted fw-semibold">equipos</span></h3>
+            <small class="kpi-subtext">Terminales listas para venta</small>
+        </div>
+    </div>
 
+    {% if current_user.rol == 'admin' %}
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-steel p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Costo Total Invertido</span>
+                <span class="kpi-icon-elevated kpi-icon-steel">
+                    <i class="fa-solid fa-vault"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value text-brand-black">${{ (costo_total_invertido or 0)|cop }}</h3>
+            <small class="kpi-subtext">Capital en celulares propios</small>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-emerald p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Valor Proyectado Venta</span>
+                <span class="kpi-icon-elevated kpi-icon-emerald">
+                    <i class="fa-solid fa-sack-dollar"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value" style="color: #047857;">${{ (valor_proyectado_venta or 0)|cop }}</h3>
+            <small class="kpi-subtext">Suma a precio sugerido</small>
+        </div>
+    </div>
+
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card kpi-card-elevated kpi-accent-amber p-4 h-100">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="kpi-label">Equipos en Maneo</span>
+                <span class="kpi-icon-elevated kpi-icon-amber">
+                    <i class="fa-solid fa-handshake"></i>
+                </span>
+            </div>
+            <h3 class="kpi-value" style="color: #B45309;">{{ equipos_en_maneo or 0 }} <span class="fs-6 text-muted fw-semibold">prestados</span></h3>
+            <small class="kpi-subtext"><a href="{{ url_for('admin_bp.maneos') }}" class="text-decoration-none fw-bold" style="color: #B45309;">Ver préstamos activos →</a></small>
+        </div>
+    </div>
+</div>
+
+<!-- Barra de Búsqueda y Filtros -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm">
+    <form method="GET" action="{{ url_for('celulares_bp.inventario') }}" class="row g-2 align-items-center">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text bg-light border-0"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                <input type="text" name="q" value="{{ q or '' }}" class="form-control bg-light border-0" placeholder="Buscar por IMEI, Marca, Modelo, SKU o Proveedor...">
+                {% if q %}
+                <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-light border-0" title="Limpiar"><i class="fa-solid fa-xmark"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select name="estado" class="form-select bg-light border-0 fw-semibold" onchange="this.form.submit()">
+                <option value="" {% if not estado_filtro %}selected{% endif %}>📋 Todos los equipos ({{ celulares|length }})</option>
+                <option value="disponibles" {% if estado_filtro == 'disponibles' %}selected{% endif %}>🟢 Solo Disponibles en Stock</option>
+                <option value="maneo" {% if estado_filtro == 'maneo' %}selected{% endif %}>🟠 Prestados en Maneo</option>
+                <option value="vendidos" {% if estado_filtro == 'vendidos' %}selected{% endif %}>🔴 Vendidos / Sin Stock</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-grid">
+            <button type="submit" class="btn btn-dark rounded-pill fw-bold">Filtrar</button>
+        </div>
+    </form>
+</div>
+
+<!-- Tabla de Celulares -->
 <div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
     <div class="table-responsive">
         <table class="table table-hover table-custom mb-0 align-middle">
             <thead class="bg-light">
                 <tr>
-                    <th class="ps-4">MODELO DE CELULAR</th>
-                    <th class="text-center" width="180">STOCK TOTAL</th>
-                    <th>LISTA DE EQUIPOS E IMEIs</th>
-                    <th class="text-center pe-4" width="200">ACCIONES</th>
+                    <th class="ps-4">EQUIPO / ESPECIFICACIONES</th>
+                    <th>IMEI / SERIAL</th>
+                    <th>PROVEEDOR</th>
+                    <th class="text-center">ESTADO / STOCK</th>
+                    {% if current_user.rol == 'admin' %}
+                    <th class="text-end">COSTO</th>
+                    {% endif %}
+                    <th class="text-end">MÍNIMO</th>
+                    <th class="text-end">SUGERIDO</th>
+                    <th class="text-center pe-4">ACCIONES</th>
                 </tr>
             </thead>
             <tbody>
                 {% for c in celulares %}
-                <tr>
-                    <td class="ps-4 fw-semibold text-brand-black">
-                        <div class="d-flex align-items-center">
-                            <div class="bg-light border rounded-3 d-flex align-items-center justify-content-center me-3 shadow-sm" style="width: 52px; height: 52px; flex-shrink: 0; overflow: hidden;">
+                {% set maneo_act = c.maneo_pendiente_actual %}
+                <tr class="{% if maneo_act %}table-warning bg-opacity-25{% endif %}">
+                    <td class="ps-4">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-light border rounded-3 d-flex align-items-center justify-content-center shadow-xs" style="width: 48px; height: 48px; flex-shrink: 0; overflow: hidden;">
                                 {% if c.imagen %}
                                     <img src="{{ url_for('static', filename='uploads/' + c.imagen) }}" alt="{{ c.nombre }}" style="width: 100%; height: 100%; object-fit: cover;">
                                 {% else %}
@@ -38,88 +141,160 @@
                                 {% endif %}
                             </div>
                             <div>
-                                <span class="d-block fw-bold text-dark">{{ c.nombre }}</span>
-                                {% if c.observacion %}<small class="text-muted d-block" style="font-size: 0.75rem;">{{ c.observacion }}</small>{% endif %}
+                                <div class="fw-bold text-dark">{{ c.nombre }}</div>
+                                <div class="d-flex flex-wrap gap-1 mt-1">
+                                    <span class="badge {% if c.estado_celular == 'Usado' %}badge-soft-warning{% else %}badge-soft-blue{% endif %} rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">
+                                        {{ c.estado_celular or 'Nuevo' }}
+                                    </span>
+                                    {% if c.memoria %}
+                                    <span class="badge bg-light text-dark border rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">{{ c.memoria }}</span>
+                                    {% endif %}
+                                    {% if c.color %}
+                                    <span class="badge bg-light text-secondary border rounded-pill px-2 py-0.5" style="font-size: 0.68rem;">{{ c.color }}</span>
+                                    {% endif %}
+                                    {% if c.bateria %}
+                                    <span class="badge bg-light text-success border rounded-pill px-2 py-0.5" style="font-size: 0.68rem;"><i class="fa-solid fa-battery-three-quarters me-1"></i>{{ c.bateria }}</span>
+                                    {% endif %}
+                                </div>
+                                {% if c.observacion %}
+                                <small class="text-muted d-block mt-1" style="font-size: 0.72rem;">{{ c.observacion }}</small>
+                                {% endif %}
                             </div>
                         </div>
                     </td>
-                    <td class="text-center">
-                        {% if c.cantidad_stock > 0 %}
-                            <span class="badge rounded-pill px-3 py-2" style="background: #D1FAE5; color: #047857; border: 1px solid rgba(16, 185, 129, 0.3);">
-                                <i class="fa-solid fa-circle-check me-1"></i> {{ c.cantidad_stock }} disp.
-                            </span>
-                        {% else %}
-                            <span class="badge rounded-pill px-3 py-2" style="background: #FEE2E2; color: #DC2626; border: 1px solid rgba(220, 53, 69, 0.3);">
-                                <i class="fa-solid fa-ban me-1"></i> Agotado
-                            </span>
-                        {% endif %}
-                    </td>
+
                     <td>
-                        {% if c.variantes %}
-                            <div class="w-100">
-                                <button class="btn btn-sm btn-light border rounded-pill text-start d-flex justify-content-between align-items-center px-3 py-1 shadow-sm" type="button" data-bs-toggle="collapse" data-bs-target="#collapseIMEIs{{ c.id }}" aria-expanded="false" aria-controls="collapseIMEIs{{ c.id }}">
-                                    <span><i class="fa-solid fa-list-ul me-2 text-brand-blue"></i>Ver {{ c.variantes|length }} IMEI{{ 's' if c.variantes|length > 1 else '' }}</span>
-                                    <i class="fa-solid fa-chevron-down small text-muted ms-2"></i>
-                                </button>
-                                <div class="collapse mt-2 shadow-sm rounded-4 overflow-hidden" id="collapseIMEIs{{ c.id }}">
-                                    <div style="max-height: 200px; overflow-y: auto;" class="border rounded-4 p-3 bg-white text-start">
-                                        <ul class="list-unstyled mb-0" style="font-size: 0.85rem;">
-                                        {% for v in c.variantes %}
-                                            <li class="mb-2 border-bottom pb-2">
-                                                <div class="d-flex align-items-center">
-                                                    {% if v.cantidad_stock > 0 %}
-                                                        <i class="fa-solid fa-mobile-screen me-2 text-success fs-5"></i>
-                                                    {% else %}
-                                                        <i class="fa-solid fa-mobile-screen me-2 text-danger fs-5 opacity-50"></i> <del class="text-muted">
-                                                    {% endif %}
-                                                    
-                                                    <span class="fw-bold text-dark">{{ v.nombre_variante }}</span>
-                                                    
-                                                    {% if v.cantidad_stock <= 0 %}</del> <span class="badge bg-danger ms-2 rounded-pill" style="font-size:0.6rem;">VENDIDO</span>{% endif %}
-                                                </div>
-                                                
-                                                <div class="text-muted mt-1 ps-4" style="font-size:0.75rem;">
-                                                    Costo: <strong>${{ (v.precio_costo or 0)|cop }}</strong> &nbsp;|&nbsp; 
-                                                    Sugerido: <span class="text-success fw-bold">${{ (v.precio_sugerido or 0)|cop }}</span> &nbsp;|&nbsp; 
-                                                    Mínimo: <span class="text-danger fw-bold">${{ (v.precio_minimo or 0)|cop }}</span>
-                                                </div>
-                                            </li>
-                                        {% endfor %}
-                                        </ul>
-                                    </div>
-                                </div>
+                        {% if c.imei %}
+                            <div class="font-monospace fw-bold text-dark" style="font-size: 0.86rem;">
+                                <i class="fa-solid fa-barcode text-muted me-1"></i>{{ c.imei }}
                             </div>
+                            {% if c.imei2 %}
+                            <small class="font-monospace text-muted d-block" style="font-size: 0.74rem;">IMEI 2: {{ c.imei2 }}</small>
+                            {% endif %}
+                            <small class="text-muted d-block" style="font-size: 0.7rem;">SKU: {{ c.sku }}</small>
+                        {% elif c.variantes %}
+                            <small class="text-muted d-block">Modelo agrupado ({{ c.variantes|length }} IMEIs)</small>
+                            {% for v in c.variantes[:2] %}
+                                <span class="badge bg-light text-dark border d-inline-block mb-1" style="font-size: 0.7rem;">{{ v.nombre_variante }}</span>
+                            {% endfor %}
                         {% else %}
-                            <span class="badge bg-light text-muted border rounded-pill py-2 px-3"><i class="fa-solid fa-circle-exclamation me-1"></i> Sin equipos físicos</span>
+                            <span class="text-muted small">{{ c.sku }}</span>
                         {% endif %}
                     </td>
+
+                    <td>
+                        <span class="small fw-semibold text-secondary">{{ c.proveedor or 'Directo / Propio' }}</span>
+                    </td>
+
+                    <td class="text-center">
+                        {% if maneo_act %}
+                            <span class="badge bg-warning text-dark border border-dark rounded-pill px-3 py-1.5 fw-bold d-inline-block" title="Prestado a {{ maneo_act.local_vecino }}">
+                                <i class="fa-solid fa-handshake me-1"></i> EN MANEO ({{ maneo_act.local_vecino }})
+                            </span>
+                        {% elif c.total_stock > 0 %}
+                            <span class="badge badge-soft-success rounded-pill px-3 py-1.5">
+                                <i class="fa-solid fa-circle-check me-1"></i> Disponible ({{ c.total_stock }})
+                            </span>
+                        {% else %}
+                            <span class="badge badge-soft-danger rounded-pill px-3 py-1.5">
+                                <i class="fa-solid fa-ban me-1"></i> Vendido
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    {% if current_user.rol == 'admin' %}
+                    <td class="text-end font-monospace text-muted fw-semibold">
+                        ${{ (c.precio_costo or 0)|cop }}
+                    </td>
+                    {% endif %}
+
+                    <td class="text-end font-monospace text-danger fw-bold">
+                        ${{ (c.precio_minimo or 0)|cop }}
+                    </td>
+
+                    <td class="text-end font-monospace text-success fw-bolder">
+                        ${{ (c.precio_sugerido or 0)|cop }}
+                    </td>
+
                     <td class="text-center pe-4">
-                        <div class="d-flex align-items-center justify-content-center gap-2">
-                            <a href="{{ url_for('celulares_bp.gestionar_imeis', id=c.id) }}" class="btn btn-sm btn-outline-success rounded-pill px-3 py-1 fw-bold shadow-sm" title="Agregar y Eliminar IMEIs">
-                                <i class="fa-solid fa-plus me-1"></i> IMEIs
+                        <div class="d-flex align-items-center justify-content-center gap-1">
+                            {% if current_user.rol == 'admin' %}
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-pill px-2.5 py-1 fw-bold"
+                                    data-bs-toggle="modal" data-bs-target="#variantesModal{{ c.id }}" title="Gestionar Stock / Sumar Entrada">
+                                <i class="fa-solid fa-boxes-packing me-1"></i> Gestionar
+                            </button>
+                            {% endif %}
+                            {% if c.imei %}
+                            <a href="{{ url_for('celulares_bp.trazabilidad', imei=c.imei|replace('-OLD-1','')|replace('-OLD-2','')) }}" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-primary" title="Ver Trazabilidad del IMEI">
+                                <i class="fa-solid fa-timeline"></i>
                             </a>
-                            <a href="{{ url_for('celulares_bp.editar_celular', id=c.id) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-2 py-1 shadow-sm" title="Editar Modelo">
+                            {% endif %}
+                            {% if current_user.rol == 'admin' %}
+                            <a href="{{ url_for('celulares_bp.editar_celular', id=c.id) }}" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-secondary" title="Editar Celular">
                                 <i class="fa-solid fa-pen"></i>
                             </a>
-                            <form method="POST" action="{{ url_for('celulares_bp.eliminar_celular', id=c.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar todo el modelo y sus IMEIs permanentemente?');">
+                            <form method="POST" action="{{ url_for('celulares_bp.eliminar_celular', id=c.id) }}" class="d-inline" onsubmit="return confirm('¿Eliminar este celular del inventario?');">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                <button type="submit" class="btn btn-sm btn-outline-danger rounded-pill px-2 py-1 shadow-sm" title="Eliminar Modelo">
+                                <button type="submit" class="btn btn-sm btn-light border rounded-pill px-2.5 py-1 text-danger" title="Eliminar">
                                     <i class="fa-solid fa-trash-can"></i>
                                 </button>
                             </form>
+                            {% endif %}
                         </div>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="4" class="text-center py-5 text-muted">
-                        <i class="fa-solid fa-mobile-screen-button fs-1 mb-3 text-brand-pink"></i>
-                        <p class="mb-0">No hay modelos de celulares en el inventario.</p>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-mobile-screen-button fs-1 mb-3 text-brand-pink d-block"></i>
+                        <h6 class="fw-bold text-dark">No se encontraron celulares con los filtros seleccionados</h6>
+                        <p class="small mb-0">Registra un equipo individual o usa la carga masiva por Excel.</p>
                     </td>
                 </tr>
                 {% endfor %}
             </tbody>
         </table>
+    </div>
+</div>
+
+<!-- Modales Gestionar Stock / Sumar Unidades para cada Celular -->
+{% for p in celulares %}
+    {% include 'inventory/modal_variantes.html' %}
+{% endfor %}
+
+<!-- Modal Carga Masiva Excel Celulares -->
+<div class="modal fade" id="modalImportarExcelCelulares" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-file-excel text-success me-2"></i>Carga Masiva de Celulares por IMEI</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('celulares_bp.importar_celulares_excel') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="alert alert-info border-0 rounded-3 small mb-3">
+                        <i class="fa-solid fa-shield-halved me-1"></i>
+                        <strong>Validación Estricta de IMEI:</strong> Cada fila se registra como un celular único (`stock = 1`). Los IMEIs que ya estén activos en inventario serán rechazados automáticamente para evitar duplicados.
+                    </div>
+                    <div class="mb-3">
+                        <a href="{{ url_for('celulares_bp.descargar_plantilla_celulares') }}" class="btn btn-sm btn-outline-success rounded-pill fw-bold">
+                            <i class="fa-solid fa-download me-1"></i> Descargar Plantilla Excel Oficial
+                        </a>
+                    </div>
+                    <div class="mb-2">
+                        <label class="form-label fw-bold small">Seleccionar archivo (.xlsx o .csv)</label>
+                        <input type="file" name="archivo" class="form-control" accept=".xlsx,.csv" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">
+                        <i class="fa-solid fa-upload me-1"></i> Importar Equipos
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

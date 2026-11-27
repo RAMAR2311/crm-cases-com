@@ -2,14 +2,20 @@
 
 {% block content %}
 <div class="container-fluid p-0">
-    <div class="d-flex align-items-center mb-4">
-        <a href="{{ url_for('inventory_bp.index') }}" class="btn btn-light rounded-circle me-3 border-0">
-            <i class="fa-solid fa-arrow-left"></i>
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-4">
+        <a href="{{ url_for('inventory_bp.historial_ajustes') }}" class="btn btn-light border rounded-pill px-3 fw-bold shadow-xs">
+            <i class="fa-solid fa-arrow-left me-1"></i> Volver al Buscador Kardex
         </a>
-        <h2 class="fw-bold text-brand-black mb-0">Detalle de Producto: <span class="text-muted">{{ producto.sku }}</span></h2>
-        <div class="ms-auto">
-            <a href="{{ url_for('inventory_bp.editar_producto', id=producto.id) }}" class="btn btn-blue rounded-pill px-4">
-                <i class="fa-solid fa-pen me-2"></i>Editar Producto
+        <a href="{{ url_for('inventory_bp.index') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-bold">
+            <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario
+        </a>
+        <h2 class="fw-bold text-brand-black mb-0 ms-2">Trazabilidad: <span class="text-brand-pink">{{ producto.nombre }}</span> <small class="text-muted fs-6 font-monospace">({{ producto.sku }})</small></h2>
+        <div class="ms-auto d-flex gap-2">
+            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#variantesModal{{ producto.id }}">
+                <i class="fa-solid fa-plus-circle me-1"></i> Sumar Entrada / Gestionar
+            </button>
+            <a href="{{ url_for('inventory_bp.editar_producto', id=producto.id) }}" class="btn btn-blue rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-pen me-2"></i>Editar Maestro
             </a>
         </div>
     </div>
@@ -57,9 +63,12 @@
                 </div>
                 {% endif %}
 
-                <div class="mt-2 pt-3 border-top">
+                <div class="mt-2 pt-3 border-top d-grid gap-2">
                     <button type="button" class="btn btn-outline-primary w-100 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#variantesModal{{ producto.id }}">
                         <i class="fa-solid fa-layer-group me-2"></i>Gestionar Subcategorías
+                    </button>
+                    <button type="button" class="btn btn-outline-danger w-100 rounded-pill fw-bold" data-bs-toggle="modal" data-bs-target="#modalAjusteKardex">
+                        <i class="fa-solid fa-sliders me-2"></i>Ajuste Kardex (Merma / Daño / Conteo)
                     </button>
                 </div>
                 
@@ -104,12 +113,15 @@
                                     <td class="ps-4 text-muted"><small>{{ ajuste.fecha_ajuste.strftime('%Y-%m-%d %H:%M') }}</small></td>
                                     <td><span class="badge bg-light text-dark border px-2 py-1"><i class="fa-solid fa-user-tie me-1"></i>{{ ajuste.admin.nombre }}</span></td>
                                     <td>
-                                        {% if ajuste.tipo_movimiento == 'Creación Inicial' %}
-                                            <span class="badge bg-success rounded-pill px-3 py-2"><i class="fa-solid fa-plus-circle me-1"></i>{{ ajuste.tipo_movimiento }}</span>
-                                        {% elif ajuste.tipo_movimiento == 'Venta' %}
-                                            <span class="badge bg-info text-dark rounded-pill px-3 py-2"><i class="fa-solid fa-cash-register me-1"></i>{{ ajuste.tipo_movimiento }}</span>
+                                        {% if 'Creación' in (ajuste.tipo_movimiento or '') or 'Entrada' in (ajuste.tipo_movimiento or '') or 'Ingreso' in (ajuste.tipo_movimiento or '') %}
+                                            <span class="badge badge-soft-success rounded-pill px-3 py-1.5"><i class="fa-solid fa-plus-circle me-1"></i>{{ ajuste.tipo_movimiento }}</span>
+                                        {% elif 'Venta' in (ajuste.tipo_movimiento or '') %}
+                                            <span class="badge badge-soft-pink rounded-pill px-3 py-1.5"><i class="fa-solid fa-cash-register me-1"></i>{{ ajuste.tipo_movimiento }}</span>
                                         {% else %}
-                                            <span class="badge bg-warning text-dark rounded-pill px-3 py-2"><i class="fa-solid fa-wrench me-1"></i>{{ ajuste.tipo_movimiento }}</span>
+                                            <span class="badge badge-soft-warning rounded-pill px-3 py-1.5"><i class="fa-solid fa-wrench me-1"></i>{{ ajuste.tipo_movimiento }}</span>
+                                        {% endif %}
+                                        {% if ajuste.motivo %}
+                                            <div class="small text-muted mt-1"><i class="fa-regular fa-comment-dots me-1"></i>{{ ajuste.motivo }}</div>
                                         {% endif %}
                                     </td>
                                     <td class="text-center fw-bold text-muted">{{ ajuste.stock_anterior }}</td>
@@ -138,6 +150,65 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Ajuste Manual de Kardex -->
+<div class="modal fade" id="modalAjusteKardex" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-sliders text-danger me-2"></i>Ajuste de Kardex - {{ producto.nombre }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('inventory_bp.ajuste_manual_kardex', id=producto.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Tipo de Ajuste <span class="text-danger">*</span></label>
+                        <select name="tipo_movimiento" class="form-select fw-bold" required>
+                            <option value="Merma / Pérdida">Merma / Pérdida</option>
+                            <option value="Daño / Garantía">Daño / Garantía</option>
+                            <option value="Muestra / Exhibición">Muestra / Exhibición</option>
+                            <option value="Conteo Físico / Auditoría">Conteo Físico / Auditoría</option>
+                            <option value="Entrada Manual">Entrada Manual</option>
+                        </select>
+                    </div>
+                    {% if producto.variantes %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Variante / Subcategoría <span class="text-danger">*</span></label>
+                        <select name="variant_id" class="form-select" required>
+                            {% for v in producto.variantes %}
+                            <option value="{{ v.id }}">{{ v.nombre_variante }} (Stock actual: {{ v.cantidad_stock }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Acción</label>
+                            <select name="modo_ajuste" class="form-select">
+                                <option value="restar">➖ Descontar Unidades</option>
+                                <option value="sumar">➕ Sumar Unidades</option>
+                                <option value="fijar">🎯 Fijar Stock Exacto</option>
+                            </select>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Cantidad <span class="text-danger">*</span></label>
+                            <input type="number" name="cantidad" class="form-control fw-bold" min="0" value="1" required>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label fw-bold small">Motivo / Justificación <span class="text-danger">*</span></label>
+                        <input type="text" name="motivo" class="form-control" placeholder="Ej: Empaque averiado en vitrina" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">Registrar en Kardex</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>

@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Accesorios Externos (Consignación) - cases.com{% endblock %}
+
+{% block content %}
+<!-- Selector Rápido Visual: Cel Ext. vs Acc Ext. -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+        <div class="btn-group shadow-xs rounded-pill p-1 bg-white border" role="group">
+            <a href="{{ url_for('externos_bp.index') }}"
+                class="btn btn-sm btn-light rounded-pill px-4 py-2 fw-bold text-muted">
+                <i class="fa-solid fa-mobile-screen-button me-1"></i> Cel Ext.
+            </a>
+            <a href="{{ url_for('externos_bp.accesorios') }}" class="btn btn-sm rounded-pill px-4 py-2 fw-bold"
+                style="background: linear-gradient(135deg, #F9C8D3 0%, #F497B6 100%); color: #0F172A;">
+                <i class="fa-solid fa-headphones me-1"></i> Acc Ext.
+            </a>
+        </div>
+        <div>
+            <h2 class="fw-bolder text-brand-black m-0">Acc Ext. <span class="fs-5 text-muted fw-semibold">(Accesorios
+                    Externos)</span></h2>
+            <small class="text-muted">Accesorios de proveedores externos con SKU automático
+                <code>EXTACC-...</code></small>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <a href="{{ url_for('externos_bp.cuentas_por_pagar') }}"
+            class="btn btn-outline-danger rounded-pill px-3 fw-bold">
+            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Cuentas por Pagar
+        </a>
+        <button type="button" class="btn btn-pink rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal"
+            data-bs-target="#modalNuevoAccesorioExterno">
+            <i class="fa-solid fa-plus me-1"></i> Nuevo Acc Ext.
+        </button>
+    </div>
+</div>
+
+<!-- Buscador y Acción Masiva -->
+<div class="card card-custom p-3 mb-4 border-0 shadow-sm">
+    <div class="row g-2 align-items-center justify-content-between">
+        <div class="col-md-7">
+            <form method="GET" action="{{ url_for('externos_bp.accesorios') }}" class="d-flex gap-2">
+                <div class="input-group">
+                    <span class="input-group-text bg-light border-0"><i
+                            class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" name="q" value="{{ q or '' }}" class="form-control bg-light border-0"
+                        placeholder="Buscar por Proveedor, Nombre o SKU EXTACC...">
+                </div>
+                <button type="submit" class="btn btn-dark rounded-pill px-4 fw-bold">Buscar</button>
+            </form>
+        </div>
+        {% if current_user.rol == 'admin' %}
+        <div class="col-md-5 text-md-end">
+            <button type="button" class="btn btn-success rounded-pill px-4 fw-bold shadow-xs"
+                onclick="nacionalizarAccesoriosMasivo()">
+                <i class="fa-solid fa-boxes-packing me-1"></i> Nacionalizar Seleccionados a Inventario Tienda
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<form id="formNacionalizarAccMasivo" method="POST" action="{{ url_for('externos_bp.nacionalizar_masivo') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="origen" value="accesorios">
+
+    <div class="card card-custom p-0 overflow-hidden border-0 shadow-sm rounded-4">
+        <div class="table-responsive">
+            <table class="table table-hover table-custom mb-0 align-middle">
+                <thead class="bg-light">
+                    <tr>
+                        {% if current_user.rol == 'admin' %}
+                        <th class="ps-4" width="45">
+                            <input type="checkbox" class="form-check-input"
+                                onchange="document.querySelectorAll('.check-acc-ext').forEach(c => c.checked = this.checked)">
+                        </th>
+                        {% endif %}
+                        <th>SKU EXTERNO</th>
+                        <th>ACCESORIO</th>
+                        <th>PROVEEDOR</th>
+                        <th class="text-center">STOCK</th>
+                        <th class="text-end">COSTO PROV.</th>
+                        <th class="text-end">SUGERIDO</th>
+                        <th class="text-center pe-4">ACCIÓN</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in accesorios_externos %}
+                    <tr>
+                        {% if current_user.rol == 'admin' %}
+                        <td class="ps-4">
+                            <input type="checkbox" class="form-check-input check-acc-ext" name="product_ids[]"
+                                value="{{ a.id }}">
+                        </td>
+                        {% endif %}
+                        <td><span class="badge badge-soft-blue rounded-pill px-2.5 py-1 font-monospace">{{ a.sku
+                                }}</span></td>
+                        <td>
+                            <div class="fw-bold text-dark">{{ a.nombre }}</div>
+                            {% if a.observacion %}<small class="text-muted">{{ a.observacion }}</small>{% endif %}
+                        </td>
+                        <td><span class="fw-bold text-primary">{{ a.proveedor }}</span></td>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark border rounded-pill px-3 py-1 fw-bold">{{
+                                a.cantidad_stock }} uds</span>
+                        </td>
+                        <td class="text-end font-monospace text-muted fw-bold">${{ (a.precio_costo or 0)|cop }}</td>
+                        <td class="text-end font-monospace text-success fw-bolder">${{ (a.precio_sugerido or 0)|cop }}
+                        </td>
+                        <td class="text-center pe-4">
+                            {% if current_user.rol == 'admin' %}
+                            <button type="button" class="btn btn-sm btn-outline-success rounded-pill px-3 fw-bold"
+                                onclick="nacionalizarAccSingle('{{ url_for('externos_bp.nacionalizar_individual', id=a.id) }}')">
+                                <i class="fa-solid fa-box-archive me-1"></i> Nacionalizar a Tienda
+                            </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5 text-muted">
+                            <i class="fa-solid fa-headphones fs-1 mb-3 text-brand-pink d-block"></i>
+                            <h6 class="fw-bold text-dark">No hay accesorios externos registrados</h6>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+
+<form id="formNacAccSingle" method="POST" style="display:none;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+
+<!-- Modal Nuevo Accesorio Externo -->
+<div class="modal fade" id="modalNuevoAccesorioExterno" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header border-0 bg-light">
+                <h5 class="modal-title fw-bold"><i class="fa-solid fa-handshake text-info me-2"></i>Registrar Accesorio
+                    Externo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('externos_bp.accesorios') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Proveedor Externo (Obligatorio) <span
+                                class="text-danger">*</span></label>
+                        <input type="text" name="proveedor" class="form-control fw-bold"
+                            placeholder="Ej: Local Vecino / Proveedor" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold small">Nombre del Accesorio <span
+                                class="text-danger">*</span></label>
+                        <input type="text" name="nombre" class="form-control"
+                            placeholder="Ej: Estuche MagSafe iPhone 15 Pro" required>
+                    </div>
+                    <div class="row g-2 mb-3">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Cantidad</label>
+                            <input type="number" name="cantidad_stock" class="form-control fw-bold" value="1" min="1"
+                                required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-danger">Costo Proveedor ($)</label>
+                            <input type="number" step="1" min="0" name="precio_costo" class="form-control fw-bold"
+                                required>
+                        </div>
+                    </div>
+                    <div class="row g-2 mb-0">
+                        <div class="col-6">
+                            <label class="form-label fw-bold small">Precio Mínimo ($)</label>
+                            <input type="number" step="1" min="0" name="precio_minimo" class="form-control fw-bold"
+                                required>
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label fw-bold small text-success">Precio Sugerido ($)</label>
+                            <input type="number" step="1" min="0" name="precio_sugerido" class="form-control fw-bold"
+                                required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-light rounded-pill px-4"
+                        data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-blue rounded-pill px-4 fw-bold">Registrar Accesorio</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function nacionalizarAccesoriosMasivo() {
+        const checked = document.querySelectorAll('.check-acc-ext:checked');
+        if (checked.length === 0) return alert('Selecciona al menos un accesorio externo.');
+        if (confirm(`¿Nacionalizar ${checked.length} accesorio(s) e incorporarlos al Inventario Propio de Tienda?`)) {
+            document.getElementById('formNacionalizarAccMasivo').submit();
+        }
+    }
+    function nacionalizarAccSingle(url) {
+        if (confirm('¿Incorporar este accesorio al Inventario Propio de Tienda?')) {
+            const f = document.getElementById('formNacAccSingle');
+            f.action = url;
+            f.submit();
+        }
+    }
+</script>
+{% endblock %}

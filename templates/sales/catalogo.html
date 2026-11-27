@@ -84,7 +84,7 @@
                 {% else %}
                     <div class="mt-auto pt-3 border-top border-light d-flex justify-content-between align-items-end">
                         <span class="text-muted fw-bold" style="font-size: 0.8rem; letter-spacing: 0.5px;">PRECIO GENERAL</span>
-                        <h4 class="fw-bolder m-0" style="color: var(--brand-pink);">${{ (p.precio_sugerido)|cop }}</h4>
+                        <h4 class="fw-bolder m-0" style="color: #BE185D;">${{ (p.precio_sugerido)|cop }}</h4>
                     </div>
                 {% endif %}
             </div>
@@ -96,7 +96,7 @@
                 {% if p.rango_precios is number %}
                     <span class="fw-bolder fs-5 text-brand-black">${{ (p.rango_precios)|cop }}</span>
                 {% else %}
-                    <span class="fw-bold" style="color: var(--brand-pink); font-size: 1.1rem;">Desde ${{ (p.rango_precios[0])|cop }}</span>
+                    <span class="fw-bold" style="color: #BE185D; font-size: 1.1rem;">Desde ${{ (p.rango_precios[0])|cop }}</span>
                 {% endif %}
             </div>
             {% endif %}

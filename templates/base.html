@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>cases.com - CRM & POS</title>
     <!-- Favicon y PWA -->
-    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/cases.png') }}">
-    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/cases.png', v=3) }}">
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json', v=3) }}">
     
     <!-- Meta tags para iOS y PWA Nativa -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="cases.com">
-    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/cases.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='img/icons/icon-192x192.png', v=3) }}">
     <meta name="theme-color" content="#F9C8D3">
 
     <!-- Google Fonts: Plus Jakarta Sans (UI/Lectura) & Outfit (Títulos/Branding) -->
@@ -28,32 +28,50 @@
     
     <style>
         /* ══════════════════════════════════════════════════════════════
-           SISTEMA DE DISEÑO PREMIUM - BRANDING NATIVO CASES.COM
+           SISTEMA DE DISEÑO PREMIUM - PALETA 50% NEUTRO / 30% PLATEADO / 20% ROSADO
            ══════════════════════════════════════════════════════════════ */
         :root {
-            /* Paleta Nativa Estricta */
-            --brand-pink: #F9C8D3;          /* Rosa Pastel */
-            --brand-pink-hover: #F2ADC0;
-            --brand-pink-subtle: #FFF2F5;
-            --brand-blue: #A3D8DE;          /* Azul Turquesa */
-            --brand-blue-hover: #8CCBD3;
-            --brand-blue-subtle: #F0F9FA;
-            --brand-black: #1A1A1A;         /* Negro Principal */
-            --brand-white: #FFFFFF;
-            
-            /* Superficies y Neutros */
-            --brand-bg: #F8F9FA;            /* Fondo gris claro con profundidad */
+            /* 1. 50% Neutros Limpios (Superficies y Fondos de Lectura) */
+            --brand-bg: #F4F6F8;
             --brand-surface: #FFFFFF;
-            --brand-border: #E8EDF2;
-            --brand-border-subtle: #F1F4F8;
-            --brand-text-muted: #64748B;
-            
+            --brand-surface-alt: #F8FAFC;
+            --brand-white: #FFFFFF;
+
+            /* 2. 30% Plateado / Acero Metálico (Estructura, Navbar, Sidebar, Tablas, KPIs) */
+            --silver-100: #F1F5F9;
+            --silver-200: #E2E8F0;
+            --silver-300: #CBD5E1;
+            --silver-400: #94A3B8;
+            --silver-gradient: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+            --silver-navbar: linear-gradient(135deg, rgba(248, 250, 252, 0.95) 0%, rgba(226, 232, 240, 0.92) 100%);
+            --silver-card-glow: radial-gradient(120% 120% at 100% 0%, rgba(226, 232, 240, 0.7) 0%, #FFFFFF 68%);
+
+            /* Tipografía Grafito (Contraste WCAG AAA) */
+            --brand-black: #0F172A;
+            --brand-graphite: #1E293B;
+            --brand-text-muted: #475569;
+            --brand-border: #CBD5E1;
+            --brand-border-subtle: #E2E8F0;
+
+            /* 3. 20% Rosado Estratégico (Identidad de Marca, CTAs, Total Hero, Active, Badges) */
+            --brand-pink: #F9C8D3;
+            --brand-pink-hover: #F2ADC0;
+            --brand-pink-subtle: #FFF1F5;
+            --brand-pink-cta: #E11D48;
+            --brand-pink-cta-hover: #BE185D;
+            --brand-pink-focus: rgba(225, 29, 72, 0.2);
+
+            /* Grafito Acero de Alto Contraste para Títulos e Íconos que usan var(--brand-blue) */
+            --brand-blue: #1E293B;
+            --brand-blue-hover: #334155;
+            --brand-blue-subtle: #F1F5F9;
+
             /* Sombras Suaves Multicapa */
-            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
-            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
-            --shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.04), 0 0 1px 1px rgba(0, 0, 0, 0.02);
-            --shadow-hover: 0 16px 32px -6px rgba(0, 0, 0, 0.08);
-            
+            --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.05);
+            --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.06);
+            --shadow-card: 0 8px 24px -4px rgba(15, 23, 42, 0.06), 0 0 1px 1px rgba(15, 23, 42, 0.03);
+            --shadow-hover: 0 16px 32px -6px rgba(15, 23, 42, 0.1);
+
             /* Bordes Redondeados Ergonómicos */
             --radius-sm: 10px;
             --radius-md: 14px;
@@ -79,22 +97,22 @@
         }
 
         /* Utilidades de Marca */
-        .bg-brand-blue { background-color: var(--brand-blue) !important; color: var(--brand-black); }
+        .bg-brand-blue { background: var(--silver-gradient) !important; color: var(--brand-black); }
         .bg-brand-pink { background-color: var(--brand-pink) !important; color: var(--brand-black); }
         .bg-brand-white { background-color: var(--brand-white) !important; }
         .text-brand-black { color: var(--brand-black) !important; }
-        .text-brand-pink { color: var(--brand-pink) !important; }
-        .text-brand-blue { color: #5aa4ac !important; }
+        .text-brand-pink { color: #E11D48 !important; }
+        .text-brand-blue { color: #334155 !important; }
 
         /* ══════════════════════════════════════════════════════════════
-           NAVBAR TRANSLÚCIDA CON GLASSMORPHISM
+           NAVBAR PLATEADA METÁLICA CON FILETE DE ACENTO ROSADO (20%)
            ══════════════════════════════════════════════════════════════ */
         .navbar-custom {
-            background: rgba(249, 200, 211, 0.94) !important;
+            background: var(--silver-navbar) !important;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            border-bottom: 2px solid var(--brand-pink);
+            box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06);
             padding: 0.85rem 0;
             position: sticky;
             top: 0;
@@ -124,65 +142,153 @@
         }
 
         /* ══════════════════════════════════════════════════════════════
-           BOTONES ERGONÓMICOS Y CON MICRO-INTERACCIONES
+           BOTONES: ROSADO (ACENTO 20%) Y PLATEADO EJECUTIVO (30%)
            ══════════════════════════════════════════════════════════════ */
         .btn-pink {
-            background-color: var(--brand-pink);
+            background: linear-gradient(135deg, #F9C8D3 0%, #F497B6 100%);
             color: var(--brand-black);
             font-weight: 700;
-            border: 1px solid rgba(0, 0, 0, 0.04);
+            border: 1px solid rgba(225, 29, 72, 0.15);
             border-radius: var(--radius-pill);
             padding: 0.55rem 1.4rem;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 4px 12px rgba(249, 200, 211, 0.45);
+            box-shadow: 0 4px 12px rgba(244, 151, 182, 0.38);
         }
         .btn-pink:hover, .btn-pink:focus {
-            background-color: var(--brand-pink-hover);
+            background: linear-gradient(135deg, #F497B6 0%, #EC749D 100%);
             color: var(--brand-black);
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(249, 200, 211, 0.6);
+            box-shadow: 0 6px 16px rgba(244, 151, 182, 0.55);
         }
         .btn-pink:active {
             transform: translateY(0);
         }
 
         .btn-blue {
-            background-color: var(--brand-blue);
+            background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
             color: var(--brand-black);
             font-weight: 700;
-            border: 1px solid rgba(0, 0, 0, 0.04);
+            border: 1.5px solid #CBD5E1;
             border-radius: var(--radius-pill);
             padding: 0.55rem 1.4rem;
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            box-shadow: 0 4px 12px rgba(163, 216, 222, 0.45);
+            box-shadow: 0 3px 10px rgba(15, 23, 42, 0.06);
         }
         .btn-blue:hover, .btn-blue:focus {
-            background-color: var(--brand-blue-hover);
+            background: linear-gradient(135deg, #E2E8F0 0%, #CBD5E1 100%);
             color: var(--brand-black);
+            border-color: #94A3B8;
             transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(163, 216, 222, 0.6);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.1);
         }
         .btn-blue:active {
             transform: translateY(0);
         }
 
         /* ══════════════════════════════════════════════════════════════
-           TARJETAS DE MÉTRICAS Y SUPERFICIES (ELEVACIÓN PREMIUM)
+           TARJETAS DE MÉTRICAS Y SUPERFICIES CON RELIEVE 3D (NO PLANAS)
            ══════════════════════════════════════════════════════════════ */
         .card-custom {
             background-color: var(--brand-white);
-            border: 1px solid var(--brand-border);
+            border: 1.5px solid #CBD5E1;
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-card);
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 10px 26px -6px rgba(15, 23, 42, 0.09), 0 4px 10px -2px rgba(15, 23, 42, 0.05);
+            transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s ease, border-color 0.22s ease;
         }
         .card-custom:hover {
-            box-shadow: var(--shadow-hover);
-            border-color: rgba(163, 216, 222, 0.5);
+            box-shadow: 0 18px 36px -8px rgba(15, 23, 42, 0.14), 0 6px 14px -3px rgba(15, 23, 42, 0.07);
+            border-color: #94A3B8;
+        }
+
+        /* Tarjetas KPI Premium con Relieve, Borde Lateral y Sombra Profunda */
+        .kpi-card-elevated {
+            position: relative;
+            border-radius: 20px !important;
+            border: 1.5px solid #CBD5E1 !important;
+            box-shadow: 0 14px 30px -8px rgba(15, 23, 42, 0.13), 0 4px 12px -2px rgba(15, 23, 42, 0.07), inset 0 1px 0 0 #FFFFFF !important;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease !important;
+            overflow: hidden;
+        }
+        .kpi-card-elevated:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 38px -8px rgba(15, 23, 42, 0.18), 0 8px 16px -4px rgba(15, 23, 42, 0.09) !important;
+        }
+        .kpi-accent-blue {
+            background: linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 55%, #E0F2FE 100%) !important;
+            border-left: 6px solid #0284C7 !important;
+        }
+        .kpi-accent-steel {
+            background: linear-gradient(145deg, #FFFFFF 0%, #F1F5F9 52%, #E2E8F0 100%) !important;
+            border-left: 6px solid #1E293B !important;
+        }
+        .kpi-accent-emerald {
+            background: linear-gradient(145deg, #FFFFFF 0%, #F0FDF4 55%, #D1FAE5 100%) !important;
+            border-left: 6px solid #059669 !important;
+        }
+        .kpi-accent-pink {
+            background: linear-gradient(145deg, #FFFFFF 0%, #FFF1F5 55%, #FCE7F3 100%) !important;
+            border-left: 6px solid #E11D48 !important;
+        }
+        .kpi-accent-amber {
+            background: linear-gradient(145deg, #FFFFFF 0%, #FFFBEB 55%, #FEF3C7 100%) !important;
+            border-left: 6px solid #D97706 !important;
+        }
+        .kpi-icon-elevated {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            color: #FFFFFF;
+            flex-shrink: 0;
+        }
+        .kpi-icon-blue {
+            background: linear-gradient(135deg, #0284C7 0%, #0369A1 100%);
+            box-shadow: 0 8px 16px -4px rgba(2, 132, 199, 0.45);
+        }
+        .kpi-icon-steel {
+            background: linear-gradient(135deg, #334155 0%, #0F172A 100%);
+            box-shadow: 0 8px 16px -4px rgba(15, 23, 42, 0.4);
+        }
+        .kpi-icon-emerald {
+            background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+            box-shadow: 0 8px 16px -4px rgba(5, 150, 105, 0.45);
+        }
+        .kpi-icon-pink {
+            background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%);
+            box-shadow: 0 8px 16px -4px rgba(225, 29, 72, 0.45);
+        }
+        .kpi-icon-amber {
+            background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            box-shadow: 0 8px 16px -4px rgba(217, 119, 6, 0.45);
+        }
+        .kpi-label {
+            font-size: 0.74rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #475569;
+        }
+        .kpi-value {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.05rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            margin: 0.15rem 0;
+            line-height: 1.15;
+        }
+        .kpi-subtext {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #64748B;
+            display: block;
+            margin-top: 0.35rem;
         }
 
         /* ══════════════════════════════════════════════════════════════
-           TABLAS DE DATOS MODERNAS Y ESPACIOSAS
+           TABLAS DE DATOS (CABECERA PLATEADA + FILETE ACERO/ROSADO)
            ══════════════════════════════════════════════════════════════ */
         .table-custom {
             background-color: var(--brand-white);
@@ -192,12 +298,12 @@
             width: 100%;
         }
         .table-custom thead th {
-            color: #475569;
-            background-color: #F8FAFC;
-            border-bottom: 2px solid var(--brand-pink);
+            color: #334155;
+            background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+            border-bottom: 2px solid #CBD5E1;
             text-transform: uppercase;
             font-size: 0.72rem;
-            font-weight: 700;
+            font-weight: 800;
             letter-spacing: 0.6px;
             padding: 1.1rem 1rem;
             white-space: nowrap;
@@ -206,30 +312,30 @@
             transition: background-color 0.15s ease;
         }
         .table-custom tbody tr:hover {
-            background-color: rgba(163, 216, 222, 0.08) !important;
+            background-color: #F8FAFC !important;
         }
         .table-custom tbody td {
             padding: 1.15rem 1rem;
             vertical-align: middle;
-            border-bottom: 1px solid #F1F5F9;
+            border-bottom: 1px solid #EEF2F6;
         }
         .table-custom tbody tr:last-child td {
             border-bottom: none;
         }
 
         /* ══════════════════════════════════════════════════════════════
-           INSIGNIAS (BADGES) SUAVES TIPO PÍLDORA
+           INSIGNIAS (BADGES) PLATEADAS Y ACENTO ROSADO
            ══════════════════════════════════════════════════════════════ */
         .badge-soft-pink {
             background-color: var(--brand-pink-subtle);
-            color: #C04368;
-            border: 1px solid rgba(249, 200, 211, 0.7);
+            color: #BE185D;
+            border: 1px solid #FBCFE8;
             font-weight: 700;
         }
         .badge-soft-blue {
-            background-color: var(--brand-blue-subtle);
-            color: #176571;
-            border: 1px solid rgba(163, 216, 222, 0.7);
+            background-color: var(--silver-100);
+            color: #1E293B;
+            border: 1px solid var(--silver-300);
             font-weight: 700;
         }
         .badge-soft-success {
@@ -252,7 +358,7 @@
         }
 
         /* ══════════════════════════════════════════════════════════════
-           SIDEBAR OFFCANVAS PULIDO
+           SIDEBAR OFFCANVAS (ESTRUCTURA PLATEADA + HOVER/ACTIVO ROSADO)
            ══════════════════════════════════════════════════════════════ */
         .offcanvas {
             border-top-right-radius: 24px;
@@ -263,7 +369,7 @@
             font-weight: 800;
             letter-spacing: 0.8px;
             text-transform: uppercase;
-            color: #94A3B8;
+            color: #64748B;
             padding: 0.85rem 0.5rem 0.35rem 0.5rem;
             display: flex;
             align-items: center;
@@ -289,7 +395,7 @@
             padding: 0.5rem 0.65rem;
         }
         .offcanvas-body .nav-link:hover {
-            background-color: #FFF1F5;
+            background-color: var(--brand-pink-subtle);
             transform: translateX(3px);
             color: #BE185D !important;
             border-left: 3px solid #E11D48 !important;
@@ -298,13 +404,13 @@
             transform: scale(1.1);
         }
         .offcanvas-header {
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            border-bottom: 1px solid var(--silver-200);
         }
 
-        /* Inputs y Focus Rings */
+        /* Inputs y Focus Rings (Acento Rosado 20%) */
         .form-control:focus, .form-select:focus {
-            border-color: var(--brand-pink);
-            box-shadow: 0 0 0 0.25rem rgba(249, 200, 211, 0.35);
+            border-color: #F472B6;
+            box-shadow: 0 0 0 0.25rem var(--brand-pink-focus);
         }
     </style>
 </head>
@@ -324,9 +430,9 @@
             {% endif %}
 
             <!-- Brand Logo (Centro) -->
-            <a class="navbar-brand d-flex align-items-center m-0 position-absolute start-50 translate-middle-x px-3 py-1 rounded-pill brand-logo-pill" href="{{ url_for('index') }}" style="background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.9); box-shadow: 0 4px 18px rgba(249, 200, 211, 0.35); text-decoration: none;">
-                <img src="{{ url_for('static', filename='img/cases.png') }}" alt="cases.com" style="height: 42px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.08));" class="me-2">
-                <span class="fw-extrabold text-brand-black" style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; letter-spacing: -0.5px; line-height: 1;">cases<span style="color: #E26888; font-weight: 800;">.com</span></span>
+            <a class="navbar-brand d-flex align-items-center m-0 position-absolute start-50 translate-middle-x px-3 py-1 rounded-pill brand-logo-pill" href="{{ url_for('index') }}" style="background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(12px); border: 1.5px solid #CBD5E1; box-shadow: 0 4px 16px rgba(15, 23, 42, 0.07), 0 0 0 2px rgba(249, 200, 211, 0.45); text-decoration: none;">
+                <img src="{{ url_for('static', filename='img/cases.png', v=3) }}" alt="cases.com" style="height: 42px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.08));" class="me-2">
+                <span class="fw-extrabold text-brand-black" style="font-family: 'Outfit', sans-serif; font-size: 1.45rem; letter-spacing: -0.5px; line-height: 1;">cases<span style="color: #E11D48; font-weight: 800;">.com</span></span>
             </a>
 
             <!-- Icono redondo en la parte superior derecha de estado del Servidor (Solo Admin) -->
@@ -363,7 +469,7 @@
     {% if current_user.is_authenticated %}
     <!-- Offcanvas Menú Lateral (Sidebar) -->
     <div class="offcanvas offcanvas-start border-0 shadow-lg" tabindex="-1" id="offcanvasNavbar" aria-labelledby="offcanvasNavbarLabel" style="width: 320px;">
-        <div class="offcanvas-header p-3 border-bottom position-relative" style="background: linear-gradient(135deg, rgba(249, 200, 211, 0.45) 0%, rgba(163, 216, 222, 0.35) 100%);">
+        <div class="offcanvas-header p-3 border-bottom position-relative" style="background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 72%, rgba(249, 200, 211, 0.35) 100%);">
             <div class="d-flex align-items-center gap-3">
                 <div class="rounded-circle d-flex align-items-center justify-content-center bg-white shadow-sm" style="width: 46px; height: 46px; border: 2.5px solid var(--brand-pink);">
                     <i class="fa-solid fa-user text-brand-black fs-5"></i>
@@ -386,7 +492,7 @@
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center" href="/admin/dashboard">
                                 <span class="sidebar-icon-badge" style="background: #EEF2FF; color: #4F46E5;"><i class="fa-solid fa-chart-pie"></i></span>
-                                <span>Dashboard Principal</span>
+                                <span>Dashboard</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -402,70 +508,72 @@
                         <i class="fa-solid fa-store me-1.5 text-muted"></i> Puntos de Venta & Stock
                     </div>
                     <ul class="navbar-nav w-100 gap-1 mb-2">
-                        <!-- Módulo Caja -->
+                        <!-- Caja Única (Caja Visual) -->
                         <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseCaja" role="button" aria-expanded="false" aria-controls="collapseCaja">
-                                <div class="d-flex align-items-center">
-                                    <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-cash-register"></i></span>
-                                    <span>Módulo Caja</span>
-                                </div>
-                                <i class="fa-solid fa-chevron-down small text-muted"></i>
+                            <a class="nav-link d-flex align-items-center" href="/sales/caja_visual">
+                                <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #E11D48;"><i class="fa-solid fa-cash-register"></i></span>
+                                <span>Caja</span>
                             </a>
-                            <div class="collapse" id="collapseCaja">
-                                <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #FCD34D !important;">
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="/sales/nueva"><i class="fa-solid fa-cash-register text-warning me-2" style="width:18px;"></i> Caja Terminal</a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="/sales/caja_visual"><i class="fa-solid fa-store text-brand-blue me-2" style="width:18px;"></i> Caja Rápida Visual</a>
-                                    </li>
-                                </ul>
-                            </div>
                         </li>
 
-                        <!-- Módulo Inventario Tienda -->
+                        <!-- Accesorios -->
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseInventario" role="button" aria-expanded="false" aria-controls="collapseInventario">
                                 <div class="d-flex align-items-center">
                                     <span class="sidebar-icon-badge" style="background: #DCFCE7; color: #16A34A;"><i class="fa-solid fa-boxes-stacked"></i></span>
-                                    <span>Módulo Inventario</span>
+                                    <span>Accesorios</span>
                                 </div>
                                 <i class="fa-solid fa-chevron-down small text-muted"></i>
                             </a>
                             <div class="collapse" id="collapseInventario">
                                 <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #86EFAC !important;">
                                     <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="/inventory"><i class="fa-solid fa-box-open text-success me-2" style="width:18px;"></i> Inventario Tienda</a>
+                                        <a class="nav-link small py-1.5" href="/inventory"><i class="fa-solid fa-box-open text-success me-2" style="width:18px;"></i> Inventario</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="/sales/catalogo"><i class="fa-solid fa-book-open text-brand-pink me-2" style="width:18px;"></i> Catálogo Físico</a>
+                                        <a class="nav-link small py-1.5" href="{{ url_for('externos_bp.accesorios') }}"><i class="fa-solid fa-headphones text-info me-2" style="width:18px;"></i> Acc Ext.</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('inventory_bp.historial_ajustes') }}"><i class="fa-solid fa-sliders text-secondary me-2" style="width:18px;"></i> Kardex</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="/sales/catalogo"><i class="fa-solid fa-book-open text-brand-pink me-2" style="width:18px;"></i> Catálogo</a>
                                     </li>
                                 </ul>
                             </div>
                         </li>
 
-                        <!-- Módulo Celulares -->
+                        <!-- Celulares -->
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center justify-content-between" data-bs-toggle="collapse" href="#collapseCelulares" role="button" aria-expanded="false" aria-controls="collapseCelulares">
                                 <div class="d-flex align-items-center">
                                     <span class="sidebar-icon-badge" style="background: #E0F2FE; color: #0284C7;"><i class="fa-solid fa-mobile-screen-button"></i></span>
-                                    <span>Módulo Celulares</span>
+                                    <span>Celulares</span>
                                 </div>
                                 <i class="fa-solid fa-chevron-down small text-muted"></i>
                             </a>
                             <div class="collapse" id="collapseCelulares">
                                 <ul class="nav flex-column ms-3 mt-1 mb-2 gap-1 border-start ps-2" style="border-color: #7DD3FC !important;">
                                     <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.inventario') }}"><i class="fa-solid fa-mobile-screen-button text-brand-blue me-2" style="width:18px;"></i> Inventario Celulares</a>
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.inventario') }}"><i class="fa-solid fa-mobile-screen-button text-brand-blue me-2" style="width:18px;"></i> Inventario</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.historial_ventas') }}"><i class="fa-solid fa-clock-rotate-left text-brand-pink me-2" style="width:18px;"></i> Historial Celulares</a>
+                                        <a class="nav-link small py-1.5" href="{{ url_for('externos_bp.index') }}"><i class="fa-solid fa-mobile-retro text-info me-2" style="width:18px;"></i> Cel Ext.</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.clientes') }}"><i class="fa-solid fa-users text-success me-2" style="width:18px;"></i> Clientes Celulares</a>
+                                        <a class="nav-link small py-1.5" href="{{ url_for('retomas_bp.cuarentena') }}"><i class="fa-solid fa-rotate-left text-warning me-2" style="width:18px;"></i> Retomas</a>
                                     </li>
                                     <li class="nav-item">
-                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.arqueo_nuevo') }}"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:18px;"></i> Arqueo Celulares</a>
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.trazabilidad') }}"><i class="fa-solid fa-timeline text-primary me-2" style="width:18px;"></i> Trazabilidad</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.historial_ventas') }}"><i class="fa-solid fa-clock-rotate-left text-brand-pink me-2" style="width:18px;"></i> Historial</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.clientes') }}"><i class="fa-solid fa-users text-success me-2" style="width:18px;"></i> Clientes</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link small py-1.5" href="{{ url_for('celulares_bp.arqueo_nuevo') }}"><i class="fa-solid fa-calculator text-brand-blue me-2" style="width:18px;"></i> Arqueo</a>
                                     </li>
                                 </ul>
                             </div>
@@ -478,15 +586,21 @@
                     </div>
                     <ul class="navbar-nav w-100 gap-1 mb-2">
                         <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('sales_bp.aprobaciones_precio') }}">
+                                <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #BE185D;"><i class="fa-solid fa-shield-halved"></i></span>
+                                <span>Autorizaciones</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link d-flex align-items-center" href="/admin/vendedores">
                                 <span class="sidebar-icon-badge" style="background: #F0F9FF; color: #0284C7;"><i class="fa-solid fa-users"></i></span>
-                                <span>Personal / Equipo</span>
+                                <span>Personal</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center" href="/gastos">
                                 <span class="sidebar-icon-badge" style="background: #FEF2F2; color: #DC2626;"><i class="fa-solid fa-money-bill-transfer"></i></span>
-                                <span>Gastos Operativos</span>
+                                <span>Gastos</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -496,16 +610,22 @@
                             </a>
                         </li>
                         <li class="nav-item">
+                            <a class="nav-link d-flex align-items-center" href="{{ url_for('externos_bp.cuentas_por_pagar') }}">
+                                <span class="sidebar-icon-badge" style="background: #FFF1F2; color: #E11D48;"><i class="fa-solid fa-file-invoice-dollar"></i></span>
+                                <span>Cuentas Externos</span>
+                            </a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link d-flex align-items-center" href="/arqueo/nuevo">
                                 <span class="sidebar-icon-badge" style="background: #FFFBEB; color: #D97706;"><i class="fa-solid fa-calculator"></i></span>
-                                <span>Arqueo de Caja</span>
+                                <span>Arqueo</span>
                             </a>
                         </li>
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center justify-content-between" href="{{ url_for('legal_bp.acuerdo_datos') }}">
                                 <div class="d-flex align-items-center">
                                     <span class="sidebar-icon-badge" style="background: #EFF6FF; color: #2563EB;"><i class="fa-solid fa-file-shield"></i></span>
-                                    <span>Custodia Datos & SIC</span>
+                                    <span>Legal & SIC</span>
                                 </div>
                                 {% if acuerdo_sic_firmado %}
                                     <span class="badge bg-success bg-opacity-10 text-success border border-success rounded-pill px-2 py-0" style="font-size: 0.65rem;">Firmado</span>
@@ -524,14 +644,8 @@
                     <ul class="navbar-nav w-100 gap-1 mb-2">
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center" href="/sales/caja_visual">
-                                <span class="sidebar-icon-badge" style="background: #E0F2FE; color: #0284C7;"><i class="fa-solid fa-store"></i></span>
-                                <span>Caja Rápida Visual</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link d-flex align-items-center" href="/sales/nueva">
-                                <span class="sidebar-icon-badge" style="background: #FEF3C7; color: #D97706;"><i class="fa-solid fa-cash-register"></i></span>
-                                <span>Caja Terminal</span>
+                                <span class="sidebar-icon-badge" style="background: #FFF1F5; color: #E11D48;"><i class="fa-solid fa-cash-register"></i></span>
+                                <span>Caja</span>
                             </a>
                         </li>
                         <li class="nav-item">
@@ -543,7 +657,7 @@
                         <li class="nav-item">
                             <a class="nav-link d-flex align-items-center" href="/sales/catalogo">
                                 <span class="sidebar-icon-badge" style="background: #FDF2F8; color: #DB2777;"><i class="fa-solid fa-book-open"></i></span>
-                                <span>Catálogo Rápido</span>
+                                <span>Catálogo</span>
                             </a>
                         </li>
                     </ul>

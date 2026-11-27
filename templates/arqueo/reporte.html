@@ -145,8 +145,9 @@
                             <th width="10%" class="text-success">Vtas Efectivo</th>
                             <th width="10%" class="text-info">Bancos</th>
                             <th width="9%" style="color: #E11D48;">Unid. CH</th>
-                            <th width="9%" style="color: #7E22CE;">Celulares</th>
-                            <th width="10%" class="text-danger">Gastos</th>
+                            <th width="9%" class="text-danger">Gastos</th>
+                            <th width="10%" class="text-dark">Físico Contado</th>
+                            <th width="10%" class="text-dark">Diferencia</th>
                             <th>Detalle del Gasto</th>
                             {% if current_user.rol == 'admin' %}
                             <th width="6%" class="text-center d-print-none">Acción</th>
@@ -163,9 +164,12 @@
                             <td class="text-end text-success fw-bold">${{ (arqueo.total_efectivo_sistema)|cop }}</td>
                             <td class="text-end text-info fw-bold">${{ (arqueo.total_transferencia_sistema)|cop }}</td>
                             <td class="text-end fw-bold" style="color: #E11D48;">${{ (arqueo.total_unidades_ch)|cop }}</td>
-                            <td class="text-end fw-bold" style="color: #7E22CE;">${{ (arqueo.total_celulares)|cop }}</td>
                             <td class="text-end {% if arqueo.gastos_del_dia > 0 %}text-danger{% else %}text-muted{% endif %} fw-bold">
                                 ${{ (arqueo.gastos_del_dia)|cop }}
+                            </td>
+                            <td class="text-end fw-bold text-dark">${{ (arqueo.efectivo_fisico_contado or 0)|cop }}</td>
+                            <td class="text-end fw-bolder {% if (arqueo.diferencia_efectivo or 0) < 0 %}text-danger{% elif (arqueo.diferencia_efectivo or 0) > 0 %}text-primary{% else %}text-success{% endif %}">
+                                {% if (arqueo.diferencia_efectivo or 0) > 0 %}+{% endif %}${{ (arqueo.diferencia_efectivo or 0)|cop }}
                             </td>
                             <td class="text-muted fst-italic" style="font-size: 0.78rem;">
                                 {{ arqueo.observaciones_gastos if arqueo.observaciones_gastos else '-' }}

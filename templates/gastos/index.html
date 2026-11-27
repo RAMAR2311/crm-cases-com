@@ -3,7 +3,8 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h2 class="fw-bold text-brand-black m-0">Control de Gastos y Costos</h2>
-    <a href="{{ url_for('admin_bp.dashboard') if current_user.rol == 'admin' else url_for('sales_bp.procesar_venta') }}" class="btn btn-outline-secondary rounded-pill px-4">
+    <a href="{{ url_for('admin_bp.dashboard') if current_user.rol == 'admin' else url_for('sales_bp.caja_visual') }}"
+        class="btn btn-outline-secondary rounded-pill px-4">
         <i class="fa-solid fa-arrow-left me-1"></i> Volver al Menú
     </a>
 </div>
@@ -11,20 +12,20 @@
 <!-- Tarjetas de Resumen Financiero -->
 <div class="row g-4 mb-4">
     <div class="col-md-6">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm" style="border-left: 5px solid var(--brand-blue) !important;">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm" style="border-left: 5px solid #64748B !important;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="text-brand-black fw-bold mb-0">Total Gastos Diarios (Mes)</h5>
-                <i class="fa-solid fa-cart-shopping fs-2" style="color: var(--brand-blue);"></i>
+                <i class="fa-solid fa-cart-shopping fs-2" style="color: #475569;"></i>
             </div>
             <h2 class="fw-bolder m-0">${{ (total_diarios or 0)|cop }}</h2>
             <p class="text-muted small mt-2 m-0">Operativos: comida, transportes, aseo.</p>
         </div>
     </div>
     <div class="col-md-6">
-        <div class="card card-custom h-100 p-4 border-0 shadow-sm" style="border-left: 5px solid var(--brand-pink) !important;">
+        <div class="card card-custom h-100 p-4 border-0 shadow-sm" style="border-left: 5px solid #E11D48 !important;">
             <div class="d-flex justify-content-between align-items-center mb-3">
                 <h5 class="text-brand-black fw-bold mb-0">Total Costos Indirectos (Mes)</h5>
-                <i class="fa-solid fa-building-columns fs-2" style="color: var(--brand-pink);"></i>
+                <i class="fa-solid fa-building-columns fs-2" style="color: #BE185D;"></i>
             </div>
             <h2 class="fw-bolder m-0">${{ (total_indirectos or 0)|cop }}</h2>
             <p class="text-muted small mt-2 m-0">Fijos: arriendo, nómina, servicios.</p>
@@ -34,9 +35,10 @@
 
 <!-- Formulario para Registrar Nuevo Gasto -->
 <div class="card card-custom p-4 mb-5 shadow-sm border-0">
-    <h5 class="text-brand-black fw-bold mb-4"><i class="fa-solid fa-money-bill-transfer text-brand-blue me-2"></i>Registrar Salida de Dinero</h5>
+    <h5 class="text-brand-black fw-bold mb-4"><i
+            class="fa-solid fa-money-bill-transfer text-brand-blue me-2"></i>Registrar Salida de Dinero</h5>
     <form method="POST">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <label class="form-label fw-bold text-brand-black">Tipo de Salida</label>
@@ -53,7 +55,8 @@
             <div class="col-md-3">
                 <label class="form-label fw-bold text-brand-black">Categoría</label>
                 <!-- Usamos datalist para permitir escribir o seleccionar opciones -->
-                <input type="text" name="categoria" list="categoriasComunes" class="form-control bg-light border-0" autocomplete="off" placeholder="Ej: Arriendo, Aseo..." required>
+                <input type="text" name="categoria" list="categoriasComunes" class="form-control bg-light border-0"
+                    autocomplete="off" placeholder="Ej: Arriendo, Aseo..." required>
                 <datalist id="categoriasComunes">
                     <option value="Arriendo">
                     <option value="Servicios Públicos">
@@ -71,7 +74,8 @@
                 <div id="gastos-lineas-container">
                     <div class="row g-2 align-items-center mb-2 linea-gasto">
                         <div class="col-5">
-                            <input type="number" step="1" min="0" name="monto[]" class="form-control bg-light border-0" placeholder="Monto $" required>
+                            <input type="number" step="1" min="0" name="monto[]" class="form-control bg-light border-0"
+                                placeholder="Monto $" required>
                         </div>
                         <div class="col-5">
                             <select name="metodo_pago[]" class="form-select bg-light border-0" required>
@@ -82,7 +86,8 @@
                             </select>
                         </div>
                         <div class="col-2 text-end">
-                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle btn-add-linea"><i class="fa-solid fa-plus"></i></button>
+                            <button type="button" class="btn btn-sm btn-outline-primary rounded-circle btn-add-linea"><i
+                                    class="fa-solid fa-plus"></i></button>
                         </div>
                     </div>
                 </div>
@@ -93,10 +98,12 @@
             </div>
             <div class="col-md-10 mt-3">
                 <label class="form-label fw-bold text-brand-black">Nota o Descripción</label>
-                <input type="text" name="descripcion" class="form-control bg-light border-0" placeholder="Breve detalle del gasto..." required>
+                <input type="text" name="descripcion" class="form-control bg-light border-0"
+                    placeholder="Breve detalle del gasto..." required>
             </div>
             <div class="col-md-2 mt-3 text-end">
-                <button type="submit" class="btn btn-blue w-100 rounded-pill fw-bold h-100 py-2"><i class="fa-solid fa-plus me-1"></i> Guardar</button>
+                <button type="submit" class="btn btn-blue w-100 rounded-pill fw-bold h-100 py-2"><i
+                        class="fa-solid fa-plus me-1"></i> Guardar</button>
             </div>
         </div>
     </form>
@@ -123,28 +130,35 @@
             <tbody>
                 {% for gasto in gastos %}
                 <tr>
-                    <td class="ps-4 text-muted"><small>{{ gasto.fecha_gasto.strftime('%d/%m/%Y') if gasto.fecha_gasto else 'N/A' }}</small></td>
-                    <td><span class="text-brand-black fw-semibold"><i class="fa-solid fa-user-tie text-muted me-1"></i>{{ gasto.usuario.nombre if gasto.usuario else 'Sistema' }}</span></td>
+                    <td class="ps-4 text-muted"><small>{{ gasto.fecha_gasto.strftime('%d/%m/%Y') if gasto.fecha_gasto
+                            else 'N/A' }}</small></td>
+                    <td><span class="text-brand-black fw-semibold"><i
+                                class="fa-solid fa-user-tie text-muted me-1"></i>{{ gasto.usuario.nombre if
+                            gasto.usuario else 'Sistema' }}</span></td>
                     <td>
                         {% if gasto.tipo_gasto == 'Gasto Diario' %}
-                            <span class="badge rounded-pill text-dark" style="background-color: var(--brand-blue);">{{ gasto.tipo_gasto }}</span>
+                        <span class="badge badge-soft-blue rounded-pill">{{ gasto.tipo_gasto }}</span>
                         {% else %}
-                            <span class="badge rounded-pill text-dark" style="background-color: var(--brand-pink);">{{ gasto.tipo_gasto }}</span>
+                        <span class="badge badge-soft-pink rounded-pill">{{ gasto.tipo_gasto }}</span>
                         {% endif %}
                     </td>
                     <td class="fw-bold">{{ gasto.categoria }}</td>
                     <td class="text-muted"><small>{{ gasto.descripcion or '—' }}</small></td>
                     <td class="text-center">
                         {% if gasto.metodo_pago == 'efectivo' %}
-                        <span class="badge bg-success bg-opacity-10 text-success border border-success"><i class="fa-solid fa-money-bill-wave me-1"></i> Efectivo</span>
+                        <span class="badge bg-success bg-opacity-10 text-success border border-success"><i
+                                class="fa-solid fa-money-bill-wave me-1"></i> Efectivo</span>
                         {% else %}
-                        <span class="badge bg-info bg-opacity-10 text-info border border-info"><i class="fa-solid fa-building-columns me-1"></i> {{ (gasto.metodo_pago or 'otro')|capitalize }}</span>
+                        <span class="badge bg-info bg-opacity-10 text-info border border-info"><i
+                                class="fa-solid fa-building-columns me-1"></i> {{ (gasto.metodo_pago or
+                            'otro')|capitalize }}</span>
                         {% endif %}
                     </td>
                     <td class="text-end pe-4 fw-bolder text-brand-black">${{ (gasto.monto or 0)|cop }}</td>
                     {% if current_user.rol == 'admin' %}
                     <td class="text-center">
-                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalEliminarGasto{{ gasto.id }}">
+                        <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3"
+                            data-bs-toggle="modal" data-bs-target="#modalEliminarGasto{{ gasto.id }}">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
@@ -153,14 +167,16 @@
 
                 {% if current_user.rol == 'admin' %}
                 <!-- Modal de Confirmación para Eliminar Gasto -->
-                <div class="modal fade" id="modalEliminarGasto{{ gasto.id }}" tabindex="-1" aria-labelledby="modalEliminarGastoLabel{{ gasto.id }}" aria-hidden="true">
+                <div class="modal fade" id="modalEliminarGasto{{ gasto.id }}" tabindex="-1"
+                    aria-labelledby="modalEliminarGastoLabel{{ gasto.id }}" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content border-0 shadow rounded-4 overflow-hidden">
                             <div class="modal-header bg-danger text-white border-0">
                                 <h5 class="modal-title fw-bold" id="modalEliminarGastoLabel{{ gasto.id }}">
                                     <i class="fa-solid fa-triangle-exclamation me-2"></i> Confirmar Eliminación
                                 </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                                    aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-4">
                                 <p class="mb-2">¿Estás seguro de que deseas eliminar este gasto?</p>
@@ -179,13 +195,16 @@
                                     </div>
                                 </div>
                                 <div class="alert alert-warning border-0 rounded-3 mb-0">
-                                    <i class="fa-solid fa-info-circle me-1"></i> Esta acción <strong>no se puede deshacer</strong> y afectará los reportes financieros.
+                                    <i class="fa-solid fa-info-circle me-1"></i> Esta acción <strong>no se puede
+                                        deshacer</strong> y afectará los reportes financieros.
                                 </div>
                             </div>
                             <div class="modal-footer border-0 pt-0">
-                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-                                <form action="{{ url_for('gastos_bp.eliminar_gasto', id=gasto.id) }}" method="POST" class="d-inline">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="button" class="btn btn-outline-secondary rounded-pill px-4"
+                                    data-bs-dismiss="modal">Cancelar</button>
+                                <form action="{{ url_for('gastos_bp.eliminar_gasto', id=gasto.id) }}" method="POST"
+                                    class="d-inline">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                                     <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold">
                                         <i class="fa-solid fa-trash-can me-1"></i> Sí, Eliminar
                                     </button>
@@ -210,14 +229,14 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const container = document.getElementById('gastos-lineas-container');
-    
-    container.addEventListener('click', function(e) {
-        if (e.target.closest('.btn-add-linea')) {
-            const nuevaLinea = document.createElement('div');
-            nuevaLinea.className = 'row g-2 align-items-center mb-2 linea-gasto';
-            nuevaLinea.innerHTML = `
+    document.addEventListener('DOMContentLoaded', function () {
+        const container = document.getElementById('gastos-lineas-container');
+
+        container.addEventListener('click', function (e) {
+            if (e.target.closest('.btn-add-linea')) {
+                const nuevaLinea = document.createElement('div');
+                nuevaLinea.className = 'row g-2 align-items-center mb-2 linea-gasto';
+                nuevaLinea.innerHTML = `
                 <div class="col-5">
                     <input type="number" step="1" min="0" name="monto[]" class="form-control bg-light border-0" placeholder="Monto $" required>
                 </div>
@@ -233,11 +252,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     <button type="button" class="btn btn-sm btn-outline-danger rounded-circle btn-remove-linea"><i class="fa-solid fa-minus"></i></button>
                 </div>
             `;
-            container.appendChild(nuevaLinea);
-        } else if (e.target.closest('.btn-remove-linea')) {
-            e.target.closest('.linea-gasto').remove();
-        }
+                container.appendChild(nuevaLinea);
+            } else if (e.target.closest('.btn-remove-linea')) {
+                e.target.closest('.linea-gasto').remove();
+            }
+        });
     });
-});
 </script>
 {% endblock %}

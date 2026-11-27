@@ -131,9 +131,12 @@ def create_app():
     from routes.bodega import bodega_bp
     app.register_blueprint(bodega_bp, url_prefix='/bodega')
 
-    # Registro de Blueprint Celulares
-    from routes.celulares import celulares_bp
+    # Registro de Blueprint Celulares, Retomas y Productos Externos
+    from routes.celulares import celulares_bp, retomas_bp
+    from routes.externos import externos_bp
     app.register_blueprint(celulares_bp, url_prefix='/celulares')
+    app.register_blueprint(retomas_bp, url_prefix='/retomas')
+    app.register_blueprint(externos_bp, url_prefix='/externos')
 
     # Registro de Blueprint Legal (SIC, Ley 1581 de 2012 y Autorización Audiovisual)
     from routes.legal import legal_bp
@@ -434,8 +437,8 @@ def create_app():
         if current_user.rol == 'bodega' or current_user.rol == 'vendedor_bodega':
             return redirect(url_for('bodega_bp.dashboard'))
             
-        # Por defecto, Vendedores van directo a Cajas
-        return redirect(url_for('sales_bp.procesar_venta'))
+        # Por defecto, Vendedores van directo a la Caja Visual
+        return redirect(url_for('sales_bp.caja_visual'))
 
     @app.route('/sw.js')
     def service_worker():

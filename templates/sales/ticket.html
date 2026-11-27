@@ -1,233 +1,618 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket de Compra #{{ venta.id }} - cases.com</title>
-    <!-- Incluir solo la fuente base "Roboto Mono" (Letra de ticketera 80mm) -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <title>Recibo de Venta #{{ "%05d"|format(venta.id) }} - cases.com</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        body {
-            background-color: #555555; /* Fondo oscuro simulando el escritorio detrás del papel */
-            margin: 0;
-            padding: 30px;
-            display: flex;
-            justify-content: center;
-            font-family: 'Roboto Mono', monospace, sans-serif;
+        :root {
+            --ink-black: #0F172A;
+            --ink-dark: #1E293B;
+            --ink-muted: #475569;
+            --silver-bg: #F1F5F9;
+            --silver-border: #CBD5E1;
+            --accent-pink: #E11D48;
+            --accent-pink-soft: #FFF1F5;
         }
-        
-        .ticket {
-            background-color: #FFFFFF;
-            width: 100%;
-            max-width: 380px; /* Ancho de impresora térmica 80mm */
-            padding: 25px 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            color: #1A1A1A; /* Negro de nuestra paleta */
+
+        * {
             box-sizing: border-box;
         }
 
+        body {
+            background-color: #334155;
+            margin: 0;
+            padding: 28px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--ink-black);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .ticket-actions-top {
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 11px 16px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-print-main {
+            background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%);
+            color: #FFFFFF;
+            box-shadow: 0 6px 16px rgba(225, 29, 72, 0.35);
+        }
+
+        .btn-print-main:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(225, 29, 72, 0.45);
+        }
+
+        .btn-close-win {
+            background: #FFFFFF;
+            color: var(--ink-black);
+            border: 1px solid var(--silver-border);
+        }
+
+        .btn-close-win:hover {
+            background: var(--silver-bg);
+        }
+
+        .ticket {
+            background-color: #FFFFFF;
+            width: 100%;
+            max-width: 400px;
+            padding: 28px 24px;
+            border-radius: 16px;
+            box-shadow: 0 20px 45px rgba(15, 23, 42, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ticket::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, #0F172A 0%, #E11D48 50%, #CBD5E1 100%);
+        }
+
+        /* Cabecera de Marca */
         .header {
             text-align: center;
-            border-bottom: 2px dashed #1A1A1A;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+            border-bottom: 1.5px dashed #94A3B8;
         }
 
-        .logo {
-            font-size: 2.2rem;
+        .brand-logo-wrap {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .brand-logo-wrap img {
+            height: 46px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo-text {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.85rem;
+            font-weight: 800;
+            margin: 0;
+            letter-spacing: -0.8px;
+            color: var(--ink-black);
+        }
+
+        .logo-text span {
+            color: var(--accent-pink);
+        }
+
+        .brand-subtitle {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--ink-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin: 0 0 12px 0;
+        }
+
+        /* Metadatos del Ticket */
+        .meta-grid {
+            background: var(--silver-bg);
+            border: 1px solid var(--silver-border);
+            border-radius: 10px;
+            padding: 10px 12px;
+            text-align: left;
+            font-size: 0.82rem;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 2.5px 0;
+        }
+
+        .meta-label {
+            color: var(--ink-muted);
+            font-weight: 600;
+        }
+
+        .meta-value {
+            color: var(--ink-black);
             font-weight: 700;
-            margin: 0 0 10px 0;
-            letter-spacing: -1.5px;
+            font-family: 'Roboto Mono', monospace;
         }
 
-        .info {
-            font-size: 0.9rem;
-            margin: 3px 0;
-            line-height: 1.5;
+        .badge-metodo {
+            display: inline-block;
+            background: #0F172A;
+            color: #FFFFFF;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+            text-transform: uppercase;
         }
 
+        /* Bloque Cliente MinTIC / SIC */
+        .client-box {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            text-align: left;
+            font-size: 0.8rem;
+        }
+
+        .client-box-title {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--ink-dark);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .client-line {
+            margin: 2px 0;
+            color: var(--ink-dark);
+            line-height: 1.35;
+        }
+
+        .client-line strong {
+            color: var(--ink-black);
+        }
+
+        /* Tabla de Productos */
         .table-items {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.85rem;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
         }
 
-        .table-items th {
+        .table-items thead th {
             text-align: left;
-            border-bottom: 1px solid #1A1A1A;
-            padding-bottom: 8px;
-            font-weight: 700;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--ink-muted);
+            border-bottom: 1.5px solid var(--ink-black);
+            padding: 6px 0 8px 0;
         }
 
-        .table-items td {
+        .table-items tbody td {
             padding: 10px 0;
             vertical-align: top;
+            border-bottom: 1px dashed #E2E8F0;
+            font-size: 0.85rem;
         }
 
-        .col-qty { width: 15%; text-align: center; }
-        .col-prod { width: 55%; padding-right: 10px; }
-        .col-sub { width: 30%; text-align: right; }
-
-        .totals {
-            border-top: 2px dashed #1A1A1A;
-            padding-top: 20px;
-            margin-bottom: 25px;
+        .table-items tbody tr:last-child td {
+            border-bottom: none;
         }
 
-        .total-row {
+        .col-qty {
+            width: 12%;
+            text-align: center;
+            font-weight: 800;
+            font-family: 'Roboto Mono', monospace;
+            color: var(--ink-black);
+        }
+
+        .col-prod {
+            width: 58%;
+            padding-right: 8px;
+        }
+
+        .prod-name {
+            font-weight: 700;
+            color: var(--ink-black);
+            line-height: 1.3;
+            word-break: break-word;
+        }
+
+        .prod-meta {
+            display: block;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 0.72rem;
+            color: var(--ink-muted);
+            margin-top: 2px;
+        }
+
+        .col-sub {
+            width: 30%;
+            text-align: right;
+            font-weight: 700;
+            font-family: 'Roboto Mono', monospace;
+            color: var(--ink-black);
+        }
+
+        /* Totales y Retoma */
+        .totals-section {
+            border-top: 1.5px dashed #94A3B8;
+            padding-top: 14px;
+            margin-bottom: 18px;
+        }
+
+        .subtotal-line {
             display: flex;
             justify-content: space-between;
-            font-size: 1.4rem;
-            font-weight: 700;
-            /* Branding Inyectado: Resalte estricto en Azul Turquesa (#A3D8DE) */
-            background-color: #A3D8DE;
-            padding: 12px 15px;
-            border-radius: 6px;
-            border: 1px solid #1A1A1A;
+            font-size: 0.85rem;
+            padding: 3px 0;
+            color: var(--ink-dark);
         }
 
+        .retoma-line {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            margin: 4px 0 8px 0;
+            background: #FFFBEB;
+            border: 1px solid #FDE68A;
+            border-radius: 8px;
+            color: #92400E;
+            font-weight: 700;
+        }
+
+        .total-hero-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #FFF1F5 0%, #F1F5F9 100%);
+            border: 2px solid var(--ink-black);
+            padding: 12px 14px;
+            border-radius: 10px;
+            margin-top: 6px;
+        }
+
+        .total-hero-label {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            color: var(--ink-black);
+        }
+
+        .total-hero-amount {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--ink-black);
+        }
+
+        /* Desglose de Pagos */
+        .payments-box {
+            margin-top: 12px;
+            padding: 10px 12px;
+            background: var(--silver-bg);
+            border-radius: 10px;
+            border: 1px solid var(--silver-border);
+        }
+
+        .payments-title {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--ink-muted);
+            margin: 0 0 6px 0;
+        }
+
+        .payment-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.84rem;
+            padding: 2.5px 0;
+        }
+
+        .payment-method-name {
+            font-weight: 600;
+            text-transform: capitalize;
+            color: var(--ink-dark);
+        }
+
+        .payment-method-val {
+            font-weight: 700;
+            font-family: 'Roboto Mono', monospace;
+            color: var(--ink-black);
+        }
+
+        /* Pie de Ticket */
         .footer {
             text-align: center;
-            font-size: 0.85rem;
-            margin-top: 30px;
+            border-top: 1px dashed #CBD5E1;
+            padding-top: 14px;
+            font-size: 0.78rem;
+            color: var(--ink-muted);
+            line-height: 1.45;
         }
 
-        .btn-print {
-            display: block;
-            width: 100%;
-            padding: 15px;
-            background-color: #1A1A1A;
-            color: #FFFFFF;
-            border: 2px solid #1A1A1A;
-            font-size: 1.1rem;
-            border-radius: 6px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 30px;
-            font-family: inherit;
-            transition: 0.2s;
+        .footer-thanks {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--ink-black);
+            margin: 0 0 6px 0;
         }
 
-        .btn-print:hover {
-            background-color: #FFFFFF;
-            color: #1A1A1A;
+        .footer-zenic {
+            margin-top: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #64748B;
+            letter-spacing: 0.3px;
         }
 
-        /* MEDIA QUERY DE IMPRESIÓN RIGUROSA: Las reglas CSS aquí omiten UI inútil al imprimir en papel */
+        /* Impresión 80mm Limpia */
         @media print {
-            body { background-color: #FFFFFF; padding: 0; display: block; }
-            .ticket { box-shadow: none; max-width: 100%; padding: 0; margin: 0 auto; width: 80mm; border: none; }
-            .btn-print { display: none; }
-            .total-row { background-color: transparent !important; border: none !important; padding: 10px 0 !important; }
-            .total-row * { color: #1A1A1A !important; } /* Desactivar Azul para impresiones monocromas */
+            @page {
+                margin: 0;
+            }
+
+            body {
+                background-color: #FFFFFF !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                color: #000000 !important;
+            }
+
+            .ticket-actions-top {
+                display: none !important;
+            }
+
+            .ticket {
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                max-width: 80mm !important;
+                width: 80mm !important;
+                padding: 4mm 3mm !important;
+                margin: 0 auto !important;
+            }
+
+            .ticket::before {
+                display: none !important;
+            }
+
+            .meta-grid,
+            .client-box,
+            .payments-box,
+            .retoma-line {
+                background: transparent !important;
+                border: 1px solid #000000 !important;
+            }
+
+            .total-hero-box {
+                background: transparent !important;
+                border: 2px solid #000000 !important;
+            }
+
+            .badge-metodo {
+                background: transparent !important;
+                color: #000000 !important;
+                border: 1px solid #000000 !important;
+            }
+
+            * {
+                color: #000000 !important;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div class="ticket">
-    <div class="header">
-        <h1 class="logo">cases.com</h1>
-        <p class="info">Folio / Ticket: #{{ venta.id }}</p>
-        <p class="info">Expedido: {{ venta.fecha_venta.strftime('%d/%m/%Y %H:%M') }}</p>
-        <p class="info">Cajero Asignado: {{ venta.vendedor.nombre }}</p>
-        <p class="info" style="font-weight: bold; text-transform: uppercase;">
-            {% if venta.pagos|length > 1 %}
-                Método de Pago: PAGO DIVIDIDO
-            {% elif venta.pagos|length == 1 %}
-                Método de Pago: {{ venta.pagos[0].metodo_pago|upper }}
-            {% else %}
-                Método de Pago: {{ venta.metodo_pago|upper }}
-            {% endif %}
-        </p>
-
-        {% if venta.cliente %}
-        <div style="border-top: 1px dashed #1A1A1A; margin-top: 10px; padding-top: 10px; text-align: left;">
-            <p class="info" style="font-weight: bold; margin-bottom: 5px;">DATOS DEL CLIENTE:</p>
-            <p class="info">Nombre: {{ venta.cliente.nombre }}</p>
-            <p class="info">CC/NIT: {{ venta.cliente.documento }}</p>
-            <p class="info">Tel: {{ venta.cliente.telefono }}</p>
-        </div>
-        {% endif %}
+    <div class="ticket-actions-top">
+        <button class="btn-action btn-print-main" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Imprimir Recibo
+        </button>
+        <button class="btn-action btn-close-win" onclick="window.close(); if(!window.closed){ window.history.back(); }">
+            <i class="fa-solid fa-arrow-left"></i> Volver
+        </button>
     </div>
 
-    <table class="table-items">
-        <thead>
-            <tr>
-                <th class="col-qty">CANT</th>
-                <th class="col-prod">CONCEPTO</th>
-                <th class="col-sub">IMPORTE</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for detalle in venta.detalles %}
-            <tr>
-                <td class="col-qty">{{ detalle.cantidad_vendida }}</td>
-                <!-- Cortar la longitud del título si es gigantesco para no descuadrar la ticketera -->
-                <td class="col-prod">
-                    {% if detalle.nombre_manual %}
-                        {{ detalle.nombre_manual[:40] }}{% if detalle.nombre_manual|length > 40 %}...{% endif %}
-                    {% else %}
-                        {{ detalle.producto.nombre[:40] }}{% if detalle.producto.nombre|length > 40 %}...{% endif %}
-                        {% if detalle.variante %}
-                            <br><small style="font-size: 0.75rem;">{{ detalle.variante.nombre_variante }}</small>
-                        {% endif %}
-                    {% endif %}
-                </td>
-                <td class="col-sub">
-                    {% if detalle.precio_venta_final == 0 %}
-                        OBSEQUIO
-                    {% else %}
-                        ${{ (detalle.precio_venta_final * detalle.cantidad_vendida)|cop }}
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <div class="totals">
-        <div class="total-row">
-            <span>TOTAL:</span>
-            <span>${{ (venta.monto_total)|cop }}</span>
-        </div>
-        
-        {% if venta.pagos|length > 1 %}
-        <!-- Desglose de pagos mixtos -->
-        <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ccc;">
-            <p style="font-weight: 700; font-size: 0.9rem; margin-bottom: 8px; text-align: center;">DESGLOSE DE PAGOS:</p>
-            {% for pago in venta.pagos %}
-            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; padding: 3px 0;">
-                <span style="text-transform: capitalize;">{{ pago.metodo_pago }}:</span>
-                <span style="font-weight: 700;">${{ (pago.monto)|cop }}</span>
+    <div class="ticket">
+        <div class="header">
+            <div class="brand-logo-wrap">
+                <img src="{{ url_for('static', filename='img/cases.png', v=3) }}" alt="cases.com">
+                <h1 class="logo-text">cases<span>.com</span></h1>
             </div>
-            {% endfor %}
+            <p class="brand-subtitle">Celulares · Accesorios · Servicio Técnico</p>
+
+            <div class="meta-grid">
+                <div class="meta-row">
+                    <span class="meta-label">Recibo / Ticket:</span>
+                    <span class="meta-value">#{{ "%05d"|format(venta.id) }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Fecha y Hora:</span>
+                    <span class="meta-value">{{ venta.fecha_venta.strftime('%d/%m/%Y · %H:%M') }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Atendido por:</span>
+                    <span class="meta-value" style="font-family: inherit;">{{ venta.vendedor.nombre if venta.vendedor
+                        else 'Cajero Principal' }}</span>
+                </div>
+                <div class="meta-row" style="margin-top: 2px;">
+                    <span class="meta-label">Modalidad Pago:</span>
+                    <span class="badge-metodo">
+                        {% if venta.pagos|length > 1 %}
+                        PAGO MIXTO
+                        {% elif venta.pagos|length == 1 %}
+                        {{ venta.pagos[0].metodo_pago|upper }}
+                        {% else %}
+                        {{ (venta.metodo_pago or 'EFECTIVO')|upper }}
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            {% if venta.cliente %}
+            <div class="client-box">
+                <div class="client-box-title">
+                    <i class="fa-solid fa-user-check"></i> Datos del Comprador
+                </div>
+                <p class="client-line"><strong>Cliente:</strong> {{ venta.cliente.nombre }}</p>
+                <p class="client-line"><strong>CC / NIT:</strong> {{ venta.cliente.documento }} · <strong>Tel:</strong>
+                    {{ venta.cliente.telefono }}</p>
+                {% if venta.cliente.direccion %}
+                <p class="client-line"><strong>Dirección:</strong> {{ venta.cliente.direccion }}</p>
+                {% endif %}
+                {% if venta.cliente.email %}
+                <p class="client-line"><strong>Email:</strong> {{ venta.cliente.email }}</p>
+                {% endif %}
+            </div>
+            {% endif %}
         </div>
-        {% endif %}
+
+        <table class="table-items">
+            <thead>
+                <tr>
+                    <th class="col-qty">CANT</th>
+                    <th class="col-prod">DESCRIPCIÓN</th>
+                    <th class="col-sub">IMPORTE</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for detalle in venta.detalles %}
+                <tr>
+                    <td class="col-qty">{{ detalle.cantidad_vendida }}</td>
+                    <td class="col-prod">
+                        <div class="prod-name">
+                            {% if detalle.nombre_manual %}
+                            {{ detalle.nombre_manual }}
+                            {% elif detalle.producto %}
+                            {{ detalle.producto.nombre }}
+                            {% else %}
+                            Producto #{{ detalle.id }}
+                            {% endif %}
+                        </div>
+                        {% if detalle.variante %}
+                        <span class="prod-meta">Variante: {{ detalle.variante.nombre_variante }}</span>
+                        {% endif %}
+                        {% if detalle.producto and detalle.producto.imei %}
+                        <span class="prod-meta">IMEI: {{ detalle.producto.imei }}</span>
+                        {% elif detalle.producto and detalle.producto.sku %}
+                        <span class="prod-meta">Ref: {{ detalle.producto.sku }}</span>
+                        {% endif %}
+                        {% if detalle.cantidad_vendida > 1 and detalle.precio_venta_final > 0 %}
+                        <span class="prod-meta">${{ (detalle.precio_venta_final)|cop }} c/u</span>
+                        {% endif %}
+                    </td>
+                    <td class="col-sub">
+                        {% if detalle.precio_venta_final == 0 %}
+                        OBSEQUIO
+                        {% else %}
+                        ${{ (detalle.precio_venta_final * detalle.cantidad_vendida)|cop }}
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="totals-section">
+            {% set monto_ret = (venta.monto_retoma or 0)|float %}
+            {% if monto_ret > 0 %}
+            <div class="subtotal-line">
+                <span>Subtotal Productos:</span>
+                <span style="font-family: 'Roboto Mono', monospace; font-weight: 700;">${{ ((venta.monto_total|float) +
+                    monto_ret)|cop }}</span>
+            </div>
+            <div class="retoma-line">
+                <span><i class="fa-solid fa-rotate-left"></i> Retoma en Parte de Pago:</span>
+                <span style="font-family: 'Roboto Mono', monospace;">-${{ monto_ret|cop }}</span>
+            </div>
+            {% endif %}
+
+            <div class="total-hero-box">
+                <span class="total-hero-label">TOTAL NETO:</span>
+                <span class="total-hero-amount">${{ (venta.monto_total)|cop }}</span>
+            </div>
+
+            {% if venta.pagos %}
+            <div class="payments-box">
+                <p class="payments-title">Desglose de Medios de Pago</p>
+                {% for pago in venta.pagos %}
+                <div class="payment-item">
+                    <span class="payment-method-name">{{ pago.metodo_pago }}:</span>
+                    <span class="payment-method-val">${{ (pago.monto)|cop }}</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="footer">
+            <p class="footer-thanks">¡Gracias por tu compra!</p>
+            <p style="margin: 4px 0;">Para efectos de garantía o cambios es indispensable presentar este recibo impreso
+                o digital.</p>
+            <p style="margin: 4px 0; font-weight: 600; color: var(--ink-dark);">Soporte y Ventas: ventas@cases.com</p>
+            <p class="footer-zenic">Tecnología impulsada por ZENIC S.A.S</p>
+        </div>
     </div>
-
-    <div class="footer">
-        <p style="font-size: 1rem; font-weight: bold;">¡Gracias por tu compra!</p>
-        <p>Políticas de Tienda: Devoluciones únicamente presentando ticket impreso o digital.</p>
-        <p>Soporte: ventas@cases.com</p>
-        <p style="margin-top: 10px; font-size: 0.75rem; font-weight: bold;">Aliado tecnológico ZENIC S.A.S</p>
-    </div>
-
-    <button class="btn-print" onclick="window.print()">
-        [ IMPRIMIR TICKET ]
-    </button>
-</div>
-
-<!-- Lógica de Auto-Impresión Reactiva -->
-<script>
-    // Evento silencioso que detona el pop-up de impresora nativo de Windows al renderizar
-    window.onload = function() {
-        setTimeout(() => {
-            window.print();
-        }, 700); // 700ms de retraso para asegurar carga asíncrona de tipografías de Google
-    };
-</script>
 
 </body>
+
 </html>

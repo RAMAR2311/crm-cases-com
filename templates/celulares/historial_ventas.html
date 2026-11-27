@@ -4,10 +4,9 @@
 
 {% block content %}
 {% set total_recaudado = (historial|sum(attribute='precio_venta')) if (historial is defined and historial) else 0 %}
+{% set total_utilidad = (historial|sum(attribute='utilidad')) if (historial is defined and historial) else 0 %}
 {% set total_equipos = (historial|length) if (historial is defined and historial) else 0 %}
-{% set ticket_promedio = ((total_recaudado / total_equipos)|round|int) if total_equipos > 0 else 0 %}
 
-<!-- Encabezado de la Sección -->
 <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
     <div>
         <div class="d-flex align-items-center gap-2">
@@ -15,72 +14,54 @@
                 <i class="fa-solid fa-mobile-screen fs-4"></i>
             </span>
             <div>
-                <h2 class="fw-bold text-brand-black m-0 lh-1">Historial de Ventas de Celulares</h2>
-                <small class="text-muted">Registro consolidado de smartphones vendidos y garantías activas</small>
+                <h2 class="fw-bold text-brand-black m-0 lh-1">Historial y Auditoría de Celulares Vendidos</h2>
+                <small class="text-muted">Auditoría de equipos vendidos, cliente, IMEI, método de pago y utilidad neta</small>
             </div>
         </div>
     </div>
-    <div class="d-flex align-items-center gap-2 w-100 w-md-auto">
+    <div class="d-flex align-items-center gap-2">
         <a href="{{ url_for('celulares_bp.inventario') }}" class="btn btn-outline-secondary rounded-pill px-3 fw-bold">
             <i class="fa-solid fa-boxes-stacked me-1"></i> Inventario Celulares
         </a>
-        <a href="{{ url_for('sales_bp.caja_visual') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" style="background: linear-gradient(135deg, #E11D48 0%, #BE185D 100%); border: none;">
-            <i class="fa-solid fa-cash-register me-1"></i> Ir a Caja
+        <a href="{{ url_for('celulares_bp.trazabilidad') }}" class="btn btn-outline-dark rounded-pill px-3 fw-bold">
+            <i class="fa-solid fa-timeline me-1"></i> Trazabilidad IMEI
         </a>
     </div>
 </div>
 
-<!-- Tarjetas KPI de Resumen -->
+<!-- Tarjetas KPI -->
 <div class="row g-3 mb-4">
     <div class="col-12 col-md-4">
         <div class="card border-0 rounded-4 shadow-sm p-4 h-100" style="background: linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%); border-left: 5px solid #E11D48 !important;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-uppercase fw-bold small" style="color: #9F1239; letter-spacing: 0.5px;">Total Recaudado</span>
-                <span class="p-2 rounded-circle" style="background: rgba(225, 29, 72, 0.15); color: #E11D48;">
-                    <i class="fa-solid fa-dollar-sign fs-5"></i>
-                </span>
-            </div>
-            <h3 class="fw-bolder mb-1" style="color: #881337;">${{ (total_recaudado)|cop }}</h3>
-            <span class="text-muted small">Ingresos generados por celulares</span>
+            <span class="text-uppercase fw-bold small" style="color: #9F1239;">Total Facturado Celulares</span>
+            <h3 class="fw-bolder mt-1 mb-0" style="color: #881337;">${{ (total_recaudado or 0)|cop }}</h3>
         </div>
     </div>
-
     <div class="col-12 col-md-4">
         <div class="card border-0 rounded-4 shadow-sm p-4 h-100" style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border-left: 5px solid #16A34A !important;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-uppercase fw-bold small text-success" style="letter-spacing: 0.5px;">Equipos Vendidos</span>
-                <span class="p-2 rounded-circle bg-success bg-opacity-15 text-success">
-                    <i class="fa-solid fa-mobile-screen-button fs-5"></i>
-                </span>
-            </div>
-            <h3 class="fw-bolder mb-1 text-success">{{ total_equipos }}</h3>
-            <span class="text-muted small">Smartphones despachados</span>
+            <span class="text-uppercase fw-bold small text-success">Equipos Vendidos</span>
+            <h3 class="fw-bolder mt-1 mb-0 text-success">{{ total_equipos }}</h3>
         </div>
     </div>
-
+    {% if current_user.rol == 'admin' %}
     <div class="col-12 col-md-4">
         <div class="card border-0 rounded-4 shadow-sm p-4 h-100" style="background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%); border-left: 5px solid #2563EB !important;">
-            <div class="d-flex justify-content-between align-items-center mb-2">
-                <span class="text-uppercase fw-bold small text-primary" style="letter-spacing: 0.5px;">Ticket Promedio</span>
-                <span class="p-2 rounded-circle bg-primary bg-opacity-15 text-primary">
-                    <i class="fa-solid fa-chart-line fs-5"></i>
-                </span>
-            </div>
-            <h3 class="fw-bolder mb-1 text-primary">${{ (ticket_promedio)|cop }}</h3>
-            <span class="text-muted small">Valor medio por equipo</span>
+            <span class="text-uppercase fw-bold small text-primary">Utilidad Neta Generada</span>
+            <h3 class="fw-bolder mt-1 mb-0 text-primary">${{ (total_utilidad or 0)|cop }}</h3>
         </div>
     </div>
+    {% endif %}
 </div>
 
-<!-- Buscador y Tabla -->
+<!-- Tabla de Auditoría (Sin switches OK Contabilidad / OK Inventario) -->
 <div class="card card-custom border-0 shadow-sm rounded-4 overflow-hidden">
     <div class="p-3 bg-white border-bottom d-flex flex-column flex-md-row justify-content-between align-items-stretch align-items-md-center gap-3">
         <div class="input-group" style="max-width: 450px;">
             <span class="input-group-text bg-light border-0 ps-3"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
-            <input type="text" id="buscadorHistorial" class="form-control border-0 bg-light" placeholder="Buscar por ID, modelo, IMEI o vendedor...">
+            <input type="text" id="buscadorHistorial" class="form-control border-0 bg-light" placeholder="Buscar por Ticket, Cliente, IMEI, Modelo o Vendedor...">
         </div>
         <span class="text-muted small align-self-center">
-            Mostrando <strong id="contadorFilas">{{ total_equipos }}</strong> transacciones
+            Mostrando <strong id="contadorFilas">{{ total_equipos }}</strong> ventas de celulares
         </span>
     </div>
 
@@ -88,13 +69,16 @@
         <table class="table table-hover align-middle mb-0" id="tablaVentasCelulares">
             <thead class="table-light">
                 <tr class="text-muted small text-uppercase">
-                    <th class="ps-4">Ticket</th>
-                    <th>Fecha y Hora</th>
+                    <th class="ps-4">Fecha / Ticket</th>
                     <th>Vendedor</th>
-                    <th>Equipo Celular / IMEI</th>
+                    <th>Cliente</th>
+                    <th>Equipo / IMEI Vendido</th>
                     <th>Método de Pago</th>
-                    <th class="text-end pe-4">Total Venta</th>
-                    <th class="text-center">Recibo</th>
+                    <th class="text-end">Precio Venta</th>
+                    {% if current_user.rol == 'admin' %}
+                    <th class="text-end">Utilidad</th>
+                    {% endif %}
+                    <th class="text-center pe-4">Recibo</th>
                 </tr>
             </thead>
             <tbody>
@@ -102,68 +86,45 @@
                 <tr>
                     <td class="ps-4">
                         <span class="badge bg-light text-dark border px-2 py-1 fw-bold">#{{ "%05d"|format(v.id_venta) if v.id_venta is number else v.id_venta }}</span>
+                        <div class="small fw-semibold text-dark mt-1">{{ v.fecha.strftime('%d/%m/%Y %H:%M') if v.fecha else '-' }}</div>
                     </td>
                     <td>
-                        <div class="fw-semibold text-dark">{{ v.fecha.strftime('%d/%m/%Y') }}</div>
-                        <small class="text-muted">{{ v.fecha.strftime('%I:%M %p') }}</small>
+                        <span class="fw-semibold text-dark">{{ v.vendedor }}</span>
                     </td>
                     <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <span class="d-inline-flex align-items-center justify-content-center rounded-circle bg-light text-secondary" style="width: 28px; height: 28px;">
-                                <i class="fa-solid fa-user small"></i>
-                            </span>
-                            <span class="fw-semibold text-dark">{{ v.vendedor }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        <div class="d-flex align-items-center gap-2">
-                            <i class="fa-solid fa-mobile-screen-button text-muted"></i>
-                            <span class="fw-bold text-dark">{{ v.celular }}</span>
-                        </div>
-                    </td>
-                    <td>
-                        {% if 'Mixto' in v.metodo_pago %}
-                            <span class="badge px-3 py-2 rounded-pill" style="background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D;">
-                                <i class="fa-solid fa-coins me-1"></i> Mixto
-                            </span>
-                        {% elif 'Efectivo' in v.metodo_pago %}
-                            <span class="badge px-3 py-2 rounded-pill" style="background: #DCFCE7; color: #166534; border: 1px solid #86EFAC;">
-                                <i class="fa-solid fa-money-bill-wave me-1"></i> Efectivo
-                            </span>
-                        {% elif 'Nequi' in v.metodo_pago %}
-                            <span class="badge px-3 py-2 rounded-pill" style="background: #F3E8FF; color: #6B21A8; border: 1px solid #D8B4FE;">
-                                <i class="fa-solid fa-mobile-screen me-1"></i> Nequi
-                            </span>
-                        {% elif 'Bancolombia' in v.metodo_pago %}
-                            <span class="badge px-3 py-2 rounded-pill" style="background: #FEF9C3; color: #854D0E; border: 1px solid #FDE047;">
-                                <i class="fa-solid fa-building-columns me-1"></i> Bancolombia
-                            </span>
-                        {% else %}
-                            <span class="badge px-3 py-2 rounded-pill" style="background: #E0F2FE; color: #075985; border: 1px solid #BAE6FD;">
-                                <i class="fa-solid fa-wallet me-1"></i> {{ v.metodo_pago }}
-                            </span>
+                        <div class="fw-bold text-dark">{{ v.cliente_nombre }}</div>
+                        {% if v.cliente_documento %}
+                        <small class="text-muted font-monospace">CC: {{ v.cliente_documento }}</small>
                         {% endif %}
                     </td>
-                    <td class="text-end fw-bolder text-success pe-4 fs-6">
-                        ${{ (v.precio_venta)|cop }}
+                    <td>
+                        <div class="fw-bold text-dark">{{ v.celular }}</div>
+                        <div class="small font-monospace text-muted">
+                            IMEI: <a href="{{ url_for('celulares_bp.trazabilidad', imei=v.imei) }}" class="fw-bold text-decoration-none">{{ v.imei }}</a>
+                        </div>
                     </td>
-                    <td class="text-center">
-                        <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=v.id_venta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1" title="Ver Recibo Térmico">
+                    <td>
+                        <span class="badge bg-light text-dark border rounded-pill px-3 py-1 fw-bold">{{ v.metodo_pago }}</span>
+                    </td>
+                    <td class="text-end font-monospace fw-bolder text-brand-black">
+                        ${{ (v.precio_venta or 0)|cop }}
+                    </td>
+                    {% if current_user.rol == 'admin' %}
+                    <td class="text-end font-monospace fw-bolder {% if v.utilidad >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        ${{ (v.utilidad or 0)|cop }}
+                    </td>
+                    {% endif %}
+                    <td class="text-center pe-4">
+                        <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=v.id_venta) }}" target="_blank" class="btn btn-sm btn-outline-secondary rounded-pill px-3 py-1">
                             <i class="fa-solid fa-receipt me-1"></i> Tirilla
                         </a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="7" class="text-center py-5 text-muted">
-                        <div class="p-4">
-                            <i class="fa-solid fa-mobile-screen-button fa-3x mb-3 text-brand-pink opacity-50"></i>
-                            <h5 class="fw-bold text-muted">Aún no se han registrado ventas de celulares</h5>
-                            <p class="small text-muted mb-3">Las ventas procesadas desde caja con productos tipo celulares aparecerán aquí automáticamente.</p>
-                            <a href="{{ url_for('sales_bp.caja_visual') }}" class="btn btn-primary rounded-pill px-4 fw-bold">
-                                Realizar primera venta
-                            </a>
-                        </div>
+                    <td colspan="8" class="text-center py-5 text-muted">
+                        <i class="fa-solid fa-mobile-screen-button fa-3x mb-3 text-brand-pink opacity-50 d-block"></i>
+                        <h6 class="fw-bold text-muted">Aún no se han registrado ventas de celulares</h6>
                     </td>
                 </tr>
                 {% endfor %}
@@ -177,14 +138,12 @@
         const input = document.getElementById('buscadorHistorial');
         const rows = document.querySelectorAll('#tablaVentasCelulares tbody tr');
         const contador = document.getElementById('contadorFilas');
-
         if (input) {
             input.addEventListener('keyup', function(e) {
                 const term = e.target.value.toLowerCase().trim();
                 let visibles = 0;
                 rows.forEach(row => {
-                    const text = row.innerText.toLowerCase();
-                    if (text.includes(term)) {
+                    if (row.innerText.toLowerCase().includes(term)) {
                         row.style.display = '';
                         visibles++;
                     } else {

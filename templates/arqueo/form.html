@@ -161,10 +161,29 @@
                             </div>
 
                             <div class="mb-3">
+                                <label for="efectivo_fisico_contado" class="form-label fw-bold text-dark small mb-1">
+                                    Efectivo Físico Contado en Caja <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group shadow-none">
+                                    <span class="input-group-text bg-light border-0 fw-bold text-success">$</span>
+                                    <input type="number" step="1" min="0" id="efectivo_fisico_contado" name="efectivo_fisico_contado" class="form-control border-0 bg-light fw-bold fs-6" placeholder="Dinero físico contado en cajón" required>
+                                </div>
+                                <small class="form-text text-muted">Billetes y monedas contados físicamente al cerrar.</small>
+                            </div>
+
+                            <!-- Indicador en Vivo de Diferencia (Faltante / Sobrante) -->
+                            <div id="box_diferencia_efectivo" class="p-3 rounded-4 mb-3 text-center border" style="background: #F8FAFC;">
+                                <span class="text-uppercase fw-bold small d-block mb-1 text-muted" id="label_diferencia_efectivo" style="font-size: 0.72rem;">
+                                    Diferencia de Efectivo (Faltante / Sobrante)
+                                </span>
+                                <h4 class="fw-bolder mb-0" id="valor_diferencia_efectivo">$ 0</h4>
+                            </div>
+
+                            <div class="mb-3">
                                 <label for="observaciones_gastos" class="form-label fw-bold text-dark small mb-1">
                                     Observaciones o Novedades de Caja
                                 </label>
-                                <textarea id="observaciones_gastos" name="observaciones_gastos" rows="3" class="form-control bg-light border-0" placeholder="Anota cualquier descuadre, detalle de gasto o justificación relevante..."></textarea>
+                                <textarea id="observaciones_gastos" name="observaciones_gastos" rows="2" class="form-control bg-light border-0" placeholder="Anota cualquier descuadre, detalle de gasto o justificación relevante..."></textarea>
                             </div>
                         </div>
 
@@ -254,7 +273,11 @@ document.addEventListener("DOMContentLoaded", function() {
     
     const inputBaseInicial = document.getElementById("base_inicial");
     const inputGastos = document.getElementById("gastos_del_dia");
+    const inputFisicoContado = document.getElementById("efectivo_fisico_contado");
     const spanEsperado = document.getElementById("efectivo_esperado");
+    const boxDif = document.getElementById("box_diferencia_efectivo");
+    const labelDif = document.getElementById("label_diferencia_efectivo");
+    const valorDif = document.getElementById("valor_diferencia_efectivo");
 
     const formatoCOP = (num) => Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 
@@ -262,14 +285,41 @@ document.addEventListener("DOMContentLoaded", function() {
         if(!inputBaseInicial || !spanEsperado) return;
         const base = parseFloat(inputBaseInicial.value) || 0;
         const gastos = parseFloat(inputGastos.value) || 0;
+        const contado = parseFloat(inputFisicoContado ? inputFisicoContado.value : 0) || 0;
 
-        const formula = (base + totalEfectivo) - gastos - totalCH - totalCelulares;
-        spanEsperado.textContent = formatoCOP(formula);
+        const esperado = (base + totalEfectivo) - gastos - totalCH - totalCelulares;
+        spanEsperado.textContent = formatoCOP(esperado);
+
+        if (inputFisicoContado && valorDif) {
+            const diff = contado - esperado;
+            if (!inputFisicoContado.value) {
+                boxDif.style.background = "#F8FAFC";
+                labelDif.textContent = "Ingresa el conteo físico para calcular diferencia";
+                valorDif.textContent = "$ 0";
+                valorDif.className = "fw-bolder mb-0 text-muted";
+            } else if (Math.round(diff) === 0) {
+                boxDif.style.background = "#ECFDF5";
+                labelDif.textContent = "✅ Caja Cuadrada Exacta";
+                valorDif.textContent = "$ 0";
+                valorDif.className = "fw-bolder mb-0 text-success";
+            } else if (diff > 0) {
+                boxDif.style.background = "#EFF6FF";
+                labelDif.textContent = "➕ Sobrante en Caja";
+                valorDif.textContent = "+ $" + formatoCOP(diff);
+                valorDif.className = "fw-bolder mb-0 text-primary";
+            } else {
+                boxDif.style.background = "#FEF2F2";
+                labelDif.textContent = "⚠️ Faltante en Caja";
+                valorDif.textContent = "- $" + formatoCOP(Math.abs(diff));
+                valorDif.className = "fw-bolder mb-0 text-danger";
+            }
+        }
     }
 
     if(inputBaseInicial) {
         inputBaseInicial.addEventListener("input", calcularEsperado);
         if(inputGastos) inputGastos.addEventListener("input", calcularEsperado);
+        if(inputFisicoContado) inputFisicoContado.addEventListener("input", calcularEsperado);
         calcularEsperado(); // Cálculo inicial
     }
 });
