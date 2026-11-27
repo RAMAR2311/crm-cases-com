@@ -298,6 +298,7 @@ def _ejecutar_procesamiento_venta(data):
 
         # Registrar Retoma en estado CUARENTENA si aplica
         cliente_data = data.get('cliente')
+        nueva_retoma = None
         if monto_retoma_dec > 0 and retoma_data:
             nueva_retoma = Retoma(
                 sale_id=nueva_venta.id,
@@ -377,6 +378,7 @@ def _ejecutar_procesamiento_venta(data):
             'success': True,
             'message': 'Venta registrada e inventario descontado con éxito.',
             'sale_id': nueva_venta.id,
+            'retoma_id': nueva_retoma.id if nueva_retoma else None,
             'total': str(monto_total_neto),
             'monto_retoma': str(monto_retoma_dec)
         }), 201

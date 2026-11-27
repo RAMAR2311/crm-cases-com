@@ -218,6 +218,15 @@
                                 <i class="fa-solid fa-receipt"></i>
                             </a>
 
+                            <!-- 1b. Contrato de Compraventa de Retoma (si aplica) -->
+                            {% if venta.retomas %}
+                            <a href="{{ url_for('retomas_bp.contrato_compraventa', id=venta.retomas[0].id) }}" target="_blank"
+                               class="btn-action-icon btn-action-amber"
+                               title="Contrato de Compraventa (Retoma)">
+                                <i class="fa-solid fa-file-signature"></i>
+                            </a>
+                            {% endif %}
+
                             <!-- 2. Cambiar Método de Pago -->
                             <button type="button"
                                     class="btn-action-icon btn-action-blue"

@@ -1257,7 +1257,8 @@
             return alert('⏳ No puedes facturar todavía: tienes un producto con precio por debajo del mínimo esperando respuesta del Administrador (o rechazado pendiente de ajustar).');
         }
         const tieneCelular = carrito.some(item => item.tipo_inventario === 'celulares' || (item.tipo_inventario === 'externos' && item.subtipo_externo === 'celular'));
-        if (tieneCelular) {
+        const tieneRetoma = Boolean(retomaActual && retomaActual.valor_recibido > 0);
+        if (tieneCelular || tieneRetoma) {
             new bootstrap.Modal(document.getElementById('modalClienteCelular')).show();
         } else {
             ejecutarCobroFinal(null);
@@ -1348,8 +1349,13 @@
             const data = await response.json();
             if (response.ok) {
                 const autoPrint = document.getElementById('toggle_auto_print')?.checked;
-                if (autoPrint) window.open(`/sales/recibo/${data.sale_id}`, '_blank');
-                alert(`✅ ¡Cobro en Caja Procesado! Ticket #${data.sale_id}`);
+                if (autoPrint) {
+                    window.open(`/sales/recibo/${data.sale_id}`, '_blank');
+                    if (data.retoma_id) {
+                        window.open(`/retomas/contrato/${data.retoma_id}`, '_blank');
+                    }
+                }
+                alert(`✅ ¡Cobro en Caja Procesado! Ticket #${data.sale_id}` + (data.retoma_id ? `\n📄 Contrato de Compraventa de Retoma #${data.retoma_id} generado automáticamente.` : ''));
                 window.location.reload();
             } else {
                 alert(`Error: ${data.error}`);

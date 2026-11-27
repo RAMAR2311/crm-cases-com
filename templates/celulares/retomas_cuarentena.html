@@ -184,8 +184,15 @@
                         {% endif %}
                     </td>
                     <td class="text-center pe-4">
+                        <div class="d-inline-flex flex-wrap align-items-center justify-content-center gap-1.5">
+                            <!-- Botón Circular: Ver Contrato de Compraventa de Retoma -->
+                            <a href="{{ url_for('retomas_bp.contrato_compraventa', id=r.id) }}" target="_blank"
+                               class="btn-action-icon btn-action-amber"
+                               title="Ver / Imprimir Contrato de Compraventa (Retoma)">
+                                <i class="fa-solid fa-file-signature"></i>
+                            </a>
+
                         {% if r.estado == 'CUARENTENA' %}
-                        <div class="d-inline-flex flex-wrap justify-content-center gap-1.5">
                             <!-- Acción 1: Mandar a Arreglos -->
                             <button type="button" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold shadow-2xs" data-bs-toggle="modal" data-bs-target="#modalEnviarArreglo{{ r.id }}">
                                 <i class="fa-solid fa-screwdriver-wrench me-1"></i> A Arreglos
@@ -196,7 +203,18 @@
                                 <i class="fa-solid fa-box-open me-1"></i> A Inventario
                             </button>
                             {% endif %}
+                        {% elif r.estado == 'EN_ARREGLO' %}
+                            <a href="{{ url_for('retomas_bp.arreglos') }}" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
+                                <i class="fa-solid fa-screwdriver-wrench me-1"></i> Ver en Arreglos
+                            </a>
+                        {% elif r.product_id_generado %}
+                            <a href="{{ url_for('celulares_bp.editar_celular', id=r.product_id_generado) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
+                                <i class="fa-solid fa-mobile-screen-button me-1"></i> Ver en Inventario
+                            </a>
+                        {% endif %}
                         </div>
+
+                        {% if r.estado == 'CUARENTENA' %}
 
                         <!-- Modal 1: Mandar a Módulo de Arreglos con Observación -->
                         <div class="modal fade text-start" id="modalEnviarArreglo{{ r.id }}" tabindex="-1" aria-hidden="true">
@@ -293,15 +311,6 @@
                             </div>
                         </div>
                         {% endif %}
-
-                        {% elif r.estado == 'EN_ARREGLO' %}
-                        <a href="{{ url_for('retomas_bp.arreglos') }}" class="btn btn-sm btn-outline-danger rounded-pill px-3 fw-bold">
-                            <i class="fa-solid fa-screwdriver-wrench me-1"></i> Ver en Arreglos
-                        </a>
-                        {% elif r.product_id_generado %}
-                        <a href="{{ url_for('celulares_bp.editar_celular', id=r.product_id_generado) }}" class="btn btn-sm btn-outline-secondary rounded-pill px-3 fw-semibold">
-                            <i class="fa-solid fa-mobile-screen-button me-1"></i> Ver en Inventario
-                        </a>
                         {% endif %}
                     </td>
                 </tr>

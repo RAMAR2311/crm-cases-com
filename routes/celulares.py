@@ -1064,6 +1064,46 @@ def arreglos():
     )
 
 
+@retomas_bp.route('/contrato/<int:id>', methods=['GET'])
+@login_required
+def contrato_compraventa(id):
+    retoma = Retoma.query.get_or_404(id)
+    venta = Sale.query.get(retoma.sale_id) if retoma.sale_id else None
+    cliente_venta = venta.cliente if (venta and venta.cliente) else None
+
+    nombre_vendedor_equipo = retoma.cliente_nombre or (cliente_venta.nombre if cliente_venta else '')
+    documento_vendedor_equipo = retoma.cliente_documento or (cliente_venta.documento if cliente_venta else '')
+    telefono_vendedor_equipo = retoma.cliente_telefono or (cliente_venta.telefono if cliente_venta else '')
+
+    fecha_doc = retoma.fecha_recepcion or (venta.fecha_venta if venta else obtener_hora_bogota())
+    meses_es = [
+        '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'
+    ]
+    dia_firma = fecha_doc.day
+    mes_firma = meses_es[fecha_doc.month] if 1 <= fecha_doc.month <= 12 else str(fecha_doc.month)
+    anio_firma = fecha_doc.year
+
+    return render_template(
+        'celulares/contrato_retoma.html',
+        retoma=retoma,
+        venta=venta,
+        nombre_vendedor_equipo=nombre_vendedor_equipo,
+        documento_vendedor_equipo=documento_vendedor_equipo,
+        telefono_vendedor_equipo=telefono_vendedor_equipo,
+        dia_firma=dia_firma,
+        mes_firma=mes_firma,
+        anio_firma=anio_firma
+    )
+
+
+@retomas_bp.route('/contrato_por_venta/<int:sale_id>', methods=['GET'])
+@login_required
+def contrato_por_venta(sale_id):
+    retoma = Retoma.query.filter_by(sale_id=sale_id).order_by(Retoma.id.desc()).first_or_404()
+    return redirect(url_for('retomas_bp.contrato_compraventa', id=retoma.id))
+
+
 @retomas_bp.route('/aprobar/<int:id>', methods=['POST'])
 @login_required
 @admin_required
@@ -1335,6 +1375,7 @@ def historial_ventas():
 
             datos_historial.append({
                 'id_venta': v.id,
+                'retoma_id': v.retomas[0].id if v.retomas else None,
                 'fecha': v.fecha_venta,
                 'vendedor': v.vendedor.nombre if v.vendedor else 'Cajero',
                 'cliente_nombre': v.cliente.nombre if v.cliente else 'Cliente Mostrador',

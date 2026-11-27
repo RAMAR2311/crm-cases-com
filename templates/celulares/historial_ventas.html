@@ -131,6 +131,11 @@
                             <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=v.id_venta) }}" target="_blank" class="btn-action-icon btn-action-pink" title="Ver / Imprimir Recibo">
                                 <i class="fa-solid fa-receipt"></i>
                             </a>
+                            {% if v.retoma_id %}
+                            <a href="{{ url_for('retomas_bp.contrato_compraventa', id=v.retoma_id) }}" target="_blank" class="btn-action-icon btn-action-amber" title="Contrato de Compraventa (Retoma)">
+                                <i class="fa-solid fa-file-signature"></i>
+                            </a>
+                            {% endif %}
                             <button type="button" class="btn-action-icon btn-action-blue"
                                     data-bs-toggle="modal" data-bs-target="#modalCambiarPagoCel{{ v.id_venta }}_{{ loop.index }}"
                                     title="Cambiar Método de Pago">
