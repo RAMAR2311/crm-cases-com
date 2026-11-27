@@ -24,15 +24,16 @@ def index():
     query = Product.query.filter_by(tipo_inventario=tipo)
 
     if filtro == 'bajo_stock':
+        umbral_bajo = 3 if tipo == 'tienda' else 10
         has_variants = db.session.query(ProductVariant.id).filter(ProductVariant.product_id == Product.id).exists()
         low_variant_exists = db.session.query(ProductVariant.id).filter(
             ProductVariant.product_id == Product.id,
-            ProductVariant.cantidad_stock <= 10
+            ProductVariant.cantidad_stock <= umbral_bajo
         ).exists()
         query = query.filter(
             or_(
                 low_variant_exists,
-                and_(~has_variants, Product.cantidad_stock <= 10)
+                and_(~has_variants, Product.cantidad_stock <= umbral_bajo)
             )
         )
 

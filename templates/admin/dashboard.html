@@ -231,7 +231,7 @@
             </div>
             <h6 class="text-muted fw-bold small text-uppercase mb-1" style="letter-spacing: 0.5px;">Alertas Críticas de Stock</h6>
             <h2 class="kpi-metric-number text-danger mb-1">{{ productos_bajo_stock or 0 }} <span class="fs-5 fw-semibold text-danger">productos</span></h2>
-            <p class="text-muted small mb-0">Tienen existencias limitadas (&le; 10 unidades).</p>
+            <p class="text-muted small mb-0">Accesorios con existencias limitadas (&le; 3 unidades).</p>
             <div class="mt-auto pt-4">
                 <a href="{{ url_for('inventory_bp.index', filtro='bajo_stock') }}" class="btn btn-outline-danger w-100 rounded-pill fw-bold shadow-sm py-2">
                     <i class="fa-solid fa-eye me-2"></i> Revisar Urgencias

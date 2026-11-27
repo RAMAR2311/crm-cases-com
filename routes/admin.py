@@ -78,9 +78,8 @@ def vendedores():
             
         return redirect(url_for('admin_bp.vendedores'))
         
-    # Se pasa la lista para poblar la tabla HTML de gestión de personal
-    # Mostramos todos los usuarios que no son admin ni eliminados para gestión centralizada
-    lista_vendedores = User.query.filter(~User.rol.in_(['admin', 'eliminado'])).order_by(User.nombre).all()
+    # Mostramos todos los usuarios activos (incluyendo administradores y vendedores) excluyendo solo los eliminados
+    lista_vendedores = User.query.filter(User.rol != 'eliminado').order_by(User.rol.asc(), User.nombre.asc()).all()
     return render_template('admin/vendedores.html', vendedores=lista_vendedores)
 
 @admin_bp.route('/vendedores/<int:id>/eliminar', methods=['POST'])
@@ -111,17 +110,18 @@ def dashboard():
     # Se obtienen métricas clave para que el administrador tenga un resumen rápido de las operaciones del negocio
     total_productos = Product.query.count()
     
-    # Productos con stock bajo (<= 10) considerando variantes
+    # Productos de Accesorios (Tienda) con stock bajo (<= 3 unidades) considerando variantes
     from sqlalchemy import or_, and_
     has_variants = db.session.query(ProductVariant.id).filter(ProductVariant.product_id == Product.id).exists()
     low_variant_exists = db.session.query(ProductVariant.id).filter(
         ProductVariant.product_id == Product.id,
-        ProductVariant.cantidad_stock <= 10
+        ProductVariant.cantidad_stock <= 3
     ).exists()
     productos_bajo_stock = Product.query.filter(
+        Product.tipo_inventario == 'tienda',
         or_(
             low_variant_exists,
-            and_(~has_variants, Product.cantidad_stock <= 10)
+            and_(~has_variants, Product.cantidad_stock <= 3)
         )
     ).count()
 

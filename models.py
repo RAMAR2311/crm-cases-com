@@ -73,15 +73,17 @@ class Product(db.Model):
 
     @property
     def tiene_alerta_stock(self):
+        umbral = 3 if (self.tipo_inventario or 'tienda') == 'tienda' else 10
         if self.variantes:
-            return any((v.cantidad_stock or 0) <= 10 for v in self.variantes) or self.total_stock <= 10
-        return (self.cantidad_stock or 0) <= 10
+            return any((v.cantidad_stock or 0) <= umbral for v in self.variantes) or self.total_stock <= umbral
+        return (self.cantidad_stock or 0) <= umbral
 
     @property
     def subcategorias_bajo_stock(self):
         if not self.variantes:
             return []
-        return [v for v in self.variantes if (v.cantidad_stock or 0) <= 10]
+        umbral = 3 if (self.tipo_inventario or 'tienda') == 'tienda' else 10
+        return [v for v in self.variantes if (v.cantidad_stock or 0) <= umbral]
 
     @property
     def tiene_maneo_pendiente(self):

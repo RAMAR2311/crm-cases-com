@@ -4,11 +4,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Contrato Compraventa Celular (Retoma #{{ retoma.id }}) - cases.com</title>
+    <title>Contrato Compraventa Celular - cases.com</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;700&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Outfit:wght@600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Roboto+Mono:wght@500;700&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -135,13 +135,6 @@
             margin: 0;
         }
 
-        .doc-ref {
-            font-family: 'Roboto Mono', monospace;
-            font-size: 0.8rem;
-            color: #475569;
-            margin-top: 4px;
-        }
-
         .intro-text {
             font-size: 0.95rem;
             line-height: 1.6;
@@ -218,12 +211,12 @@
             letter-spacing: 0.4px;
         }
 
-        /* Bloque de Firmas Digitales e Impresas */
+        /* Bloque de Firmas Automáticas Predeterminadas */
         .signatures-row {
             display: flex;
             justify-content: space-between;
-            gap: 38px;
-            margin-top: 32px;
+            gap: 48px;
+            margin-top: 38px;
             padding-top: 10px;
         }
 
@@ -232,49 +225,18 @@
             text-align: center;
         }
 
-        .signature-pad-box {
-            position: relative;
-            border: 1.5px dashed #94A3B8;
-            border-radius: 10px;
-            background: #F8FAFC;
-            height: 115px;
-            margin-bottom: 6px;
-            overflow: hidden;
-            touch-action: none;
-        }
-
-        .signature-pad-box canvas {
-            width: 100%;
-            height: 100%;
-            display: block;
-            cursor: crosshair;
-        }
-
-        .sig-placeholder {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.76rem;
-            color: #94A3B8;
-            pointer-events: none;
-            font-weight: 600;
-            white-space: nowrap;
-        }
-
-        .btn-clear-sig {
-            position: absolute;
-            top: 6px;
-            right: 8px;
-            background: rgba(255, 255, 255, 0.9);
-            border: 1px solid #CBD5E1;
-            border-radius: 20px;
-            padding: 2px 9px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #DC2626;
-            cursor: pointer;
-            z-index: 5;
+        .auto-signature-script {
+            font-family: 'Great Vibes', cursive;
+            font-size: 2.35rem;
+            color: #0F172A;
+            line-height: 1.1;
+            min-height: 52px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding-bottom: 4px;
+            transform: rotate(-2deg);
+            user-select: none;
         }
 
         .signature-line {
@@ -319,17 +281,8 @@
                 margin: 0 !important;
             }
 
-            .actions-bar,
-            .btn-clear-sig,
-            .sig-placeholder {
+            .actions-bar {
                 display: none !important;
-            }
-
-            .signature-pad-box {
-                border: none !important;
-                background: transparent !important;
-                height: 100px !important;
-                margin-bottom: 2px !important;
             }
 
             .contract-sheet {
@@ -347,11 +300,8 @@
 
     <div class="actions-bar">
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button class="btn-top btn-print" onclick="guardarFirmasEImprimir(true)">
-                <i class="fa-solid fa-print"></i> Guardar Firmas e Imprimir
-            </button>
-            <button class="btn-top" id="btnGuardarFirmas" style="background: #10B981; color: #FFFFFF;" onclick="guardarFirmasEImprimir(false)">
-                <i class="fa-solid fa-floppy-disk"></i> Guardar Firmas
+            <button class="btn-top btn-print" onclick="window.print()">
+                <i class="fa-solid fa-print"></i> Imprimir Contrato de Compraventa
             </button>
             {% if venta %}
             <a href="{{ url_for('sales_bp.imprimir_ticket', sale_id=venta.id) }}" class="btn-top btn-ticket">
@@ -365,7 +315,7 @@
     </div>
 
     <div class="contract-sheet">
-        <!-- Encabezado con Logo y Título Legal -->
+        <!-- Encabezado con Logo y Título Legal (Sin Retoma #) -->
         <div class="contract-header">
             <div class="brand-box">
                 <img src="{{ url_for('static', filename='img/cases.png') }}" alt="cases.com"
@@ -425,13 +375,13 @@
             </div>
         </div>
 
-        <!-- CLÁUSULA SEGUNDA (Sin NIT y sin Cédula del comprador según lo solicitado) -->
+        <!-- CLÁUSULA SEGUNDA -->
         <div class="clause">
             <span class="clause-title">SEGUNDA:</span>
             Ya realizada la descripción, el vendedor
             <span class="fill-line" style="min-width: 240px;">{{ nombre_vendedor_equipo or '________________________________' }}</span>,
             le vende al comprador
-            <span class="fill-line" style="min-width: 180px;">cases.com</span>,
+            <span class="fill-line" style="min-width: 200px;">{{ nombre_comprador_tienda }} (cases.com)</span>,
             en la ciudad de <span class="fill-line" style="min-width: 120px;">Bogotá D.C.</span>,
             el celular que se ha descrito, cuyas características y procedencia se determinan anteriormente.
         </div>
@@ -468,19 +418,10 @@
             en la ciudad de Bogotá D.C.
         </div>
 
-        <!-- FIRMAS INTERACTIVAS (VENDEDOR Y COMPRADOR) -->
+        <!-- FIRMAS PREDETERMINADAS AUTOMÁTICAS SEGÚN EL NOMBRE -->
         <div class="signatures-row">
-            <!-- 1. Firma Vendedor (Cliente que entrega el celular) -->
             <div class="signature-col">
-                <div class="signature-pad-box">
-                    <button type="button" class="btn-clear-sig" onclick="limpiarCanvasFirma('vendedor')">
-                        <i class="fa-solid fa-eraser"></i> Borrar
-                    </button>
-                    <span class="sig-placeholder" id="placeholder_vendedor">
-                        <i class="fa-solid fa-pen-nib"></i> Firma aquí (Vendedor)...
-                    </span>
-                    <canvas id="canvas_vendedor" width="340" height="115"></canvas>
-                </div>
+                <div class="auto-signature-script">{{ nombre_vendedor_equipo or 'Propietario' }}</div>
                 <div class="signature-line">Vendedor</div>
                 <div class="signature-sub">
                     {{ nombre_vendedor_equipo or 'Propietario que entrega el equipo' }}
@@ -488,154 +429,14 @@
                     {% if telefono_vendedor_equipo %} · Tel: {{ telefono_vendedor_equipo }}{% endif %}
                 </div>
             </div>
-
-            <!-- 2. Firma Comprador (cases.com) -->
             <div class="signature-col">
-                <div class="signature-pad-box">
-                    <button type="button" class="btn-clear-sig" onclick="limpiarCanvasFirma('comprador')">
-                        <i class="fa-solid fa-eraser"></i> Borrar
-                    </button>
-                    <span class="sig-placeholder" id="placeholder_comprador">
-                        <i class="fa-solid fa-pen-nib"></i> Firma aquí (Comprador)...
-                    </span>
-                    <canvas id="canvas_comprador" width="340" height="115"></canvas>
-                </div>
+                <div class="auto-signature-script">{{ nombre_comprador_tienda }}</div>
                 <div class="signature-line">Comprador</div>
-                <div class="signature-sub">cases.com</div>
+                <div class="signature-sub">{{ nombre_comprador_tienda }} · cases.com</div>
             </div>
         </div>
     </div>
 
-    <script>
-        const CSRF_TOKEN_CONTRATO = "{{ csrf_token() }}";
-        const RETOMA_ID = {{ retoma.id }};
-        const FIRMA_VENDEDOR_GUARDADA = {{ (retoma.firma_vendedor or '')|tojson }};
-        const FIRMA_COMPRADOR_GUARDADA = {{ (retoma.firma_comprador or '')|tojson }};
-
-        const pads = {};
-
-        function inicializarPadFirma(role, initialDataUrl) {
-            const canvas = document.getElementById('canvas_' + role);
-            const placeholder = document.getElementById('placeholder_' + role);
-            if (!canvas) return;
-            const ctx = canvas.getContext('2d');
-            ctx.strokeStyle = '#0F172A';
-            ctx.lineWidth = 2.4;
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
-
-            pads[role] = { canvas, ctx, placeholder, hasSignature: false, dataUrl: initialDataUrl || '' };
-
-            if (initialDataUrl && initialDataUrl.startsWith('data:image/')) {
-                const img = new Image();
-                img.onload = function () {
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    pads[role].hasSignature = true;
-                    if (placeholder) placeholder.style.display = 'none';
-                };
-                img.src = initialDataUrl;
-            }
-
-            let drawing = false;
-
-            function getPos(e) {
-                const rect = canvas.getBoundingClientRect();
-                const cx = e.touches ? e.touches[0].clientX : e.clientX;
-                const cy = e.touches ? e.touches[0].clientY : e.clientY;
-                return {
-                    x: (cx - rect.left) * (canvas.width / rect.width),
-                    y: (cy - rect.top) * (canvas.height / rect.height)
-                };
-            }
-
-            function start(e) {
-                drawing = true;
-                const p = getPos(e);
-                ctx.beginPath();
-                ctx.moveTo(p.x, p.y);
-                if (placeholder) placeholder.style.display = 'none';
-            }
-
-            function move(e) {
-                if (!drawing) return;
-                e.preventDefault();
-                const p = getPos(e);
-                ctx.lineTo(p.x, p.y);
-                ctx.stroke();
-                pads[role].hasSignature = true;
-            }
-
-            function end() {
-                if (drawing) {
-                    drawing = false;
-                    if (pads[role].hasSignature) {
-                        pads[role].dataUrl = canvas.toDataURL('image/png');
-                    }
-                }
-            }
-
-            canvas.addEventListener('mousedown', start);
-            canvas.addEventListener('mousemove', move);
-            window.addEventListener('mouseup', end);
-
-            canvas.addEventListener('touchstart', start, { passive: false });
-            canvas.addEventListener('touchmove', move, { passive: false });
-            window.addEventListener('touchend', end);
-        }
-
-        function limpiarCanvasFirma(role) {
-            const p = pads[role];
-            if (!p) return;
-            p.ctx.clearRect(0, 0, p.canvas.width, p.canvas.height);
-            p.hasSignature = false;
-            p.dataUrl = '';
-            if (p.placeholder) p.placeholder.style.display = 'block';
-        }
-
-        async function guardarFirmasEImprimir(imprimirDespues) {
-            const btnSave = document.getElementById('btnGuardarFirmas');
-            const origHtml = btnSave ? btnSave.innerHTML : '';
-            try {
-                if (btnSave) {
-                    btnSave.disabled = true;
-                    btnSave.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
-                }
-                const payload = {
-                    firma_vendedor: pads.vendedor && pads.vendedor.hasSignature ? pads.vendedor.canvas.toDataURL('image/png') : '',
-                    firma_comprador: pads.comprador && pads.comprador.hasSignature ? pads.comprador.canvas.toDataURL('image/png') : ''
-                };
-                const resp = await fetch(`/retomas/contrato/${RETOMA_ID}/firmar`, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': CSRF_TOKEN_CONTRATO
-                    },
-                    body: JSON.stringify(payload)
-                });
-                if (btnSave) {
-                    btnSave.disabled = false;
-                    btnSave.innerHTML = '<i class="fa-solid fa-check"></i> Firmas Guardadas';
-                    setTimeout(() => { btnSave.innerHTML = origHtml; }, 2200);
-                }
-                if (imprimirDespues) {
-                    window.print();
-                }
-            } catch (e) {
-                if (btnSave) {
-                    btnSave.disabled = false;
-                    btnSave.innerHTML = origHtml;
-                }
-                if (imprimirDespues) window.print();
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            inicializarPadFirma('vendedor', FIRMA_VENDEDOR_GUARDADA);
-            inicializarPadFirma('comprador', FIRMA_COMPRADOR_GUARDADA);
-        });
-    </script>
 </body>
 
 </html>

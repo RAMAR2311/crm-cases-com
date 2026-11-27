@@ -1075,6 +1075,14 @@ def contrato_compraventa(id):
     documento_vendedor_equipo = retoma.cliente_documento or (cliente_venta.documento if cliente_venta else '')
     telefono_vendedor_equipo = retoma.cliente_telefono or (cliente_venta.telefono if cliente_venta else '')
 
+    # Nombre del vendedor de la tienda que realizó/recibió la retoma (o cajero de la venta)
+    if retoma.usuario_recibe and retoma.usuario_recibe.nombre:
+        nombre_comprador_tienda = retoma.usuario_recibe.nombre
+    elif venta and venta.vendedor and venta.vendedor.nombre:
+        nombre_comprador_tienda = venta.vendedor.nombre
+    else:
+        nombre_comprador_tienda = current_user.nombre or 'cases.com'
+
     fecha_doc = retoma.fecha_recepcion or (venta.fecha_venta if venta else obtener_hora_bogota())
     meses_es = [
         '', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
@@ -1091,6 +1099,7 @@ def contrato_compraventa(id):
         nombre_vendedor_equipo=nombre_vendedor_equipo,
         documento_vendedor_equipo=documento_vendedor_equipo,
         telefono_vendedor_equipo=telefono_vendedor_equipo,
+        nombre_comprador_tienda=nombre_comprador_tienda,
         dia_firma=dia_firma,
         mes_firma=mes_firma,
         anio_firma=anio_firma

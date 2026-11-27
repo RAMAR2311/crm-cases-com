@@ -83,8 +83,8 @@
             <i class="fa-solid fa-triangle-exclamation fs-5"></i>
         </div>
         <div>
-            <h6 class="fw-bold text-danger mb-0">Filtrando por Alertas de Stock Bajo (&le; 10 unidades)</h6>
-            <small class="text-muted">Mostrando productos o subcategorías con inventario crítico. Las variantes
+            <h6 class="fw-bold text-danger mb-0">Filtrando por Alertas de Stock Bajo (&le; 3 unidades)</h6>
+            <small class="text-muted">Mostrando accesorios o subcategorías con inventario crítico (3 unidades o menos). Las variantes
                 afectadas están destacadas.</small>
         </div>
     </div>
@@ -164,7 +164,7 @@
                                 style="background: #FEE2E2; font-size: 0.72rem;">
                                 <i class="fa-solid fa-triangle-exclamation me-1"></i> {{
                                 p.subcategorias_bajo_stock|length }} subcategoría{{ 's' if
-                                p.subcategorias_bajo_stock|length > 1 else '' }} con stock bajo (&le; 10)
+                                p.subcategorias_bajo_stock|length > 1 else '' }} con stock bajo (&le; 3)
                             </span>
                         </div>
                         {% endif %}
@@ -173,16 +173,12 @@
                         {% if (p.total_stock or 0) <= 3 %} <span class="badge bg-danger rounded-pill px-3 py-2"><i
                                 class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock or 0 }}
                             (Crítico)</span>
-                            {% elif (p.total_stock or 0) <= 10 %} <span
-                                class="badge bg-warning text-dark border border-warning rounded-pill px-3 py-2"><i
-                                    class="fa-solid fa-triangle-exclamation me-1"></i> {{ p.total_stock or 0 }}
-                                (Bajo)</span>
-                                {% else %}
-                                <!-- Badge en Rosa Pastel Suave con Contraste Óptimo -->
-                                <span class="badge rounded-pill px-3 py-2 border"
-                                    style="background: rgba(249, 200, 211, 0.45); color: #831843; border-color: rgba(249, 200, 211, 0.8) !important;">{{
-                                    p.total_stock or 0 }} unidades</span>
-                                {% endif %}
+                            {% else %}
+                            <!-- Badge en Rosa Pastel Suave con Contraste Óptimo -->
+                            <span class="badge rounded-pill px-3 py-2 border"
+                                style="background: rgba(249, 200, 211, 0.45); color: #831843; border-color: rgba(249, 200, 211, 0.8) !important;">{{
+                                p.total_stock or 0 }} unidades</span>
+                            {% endif %}
                     </td>
                     <!-- PRECIO COSTO: Destacado en tono Rosa de Alta Legibilidad -->
                     <td class="text-end">
